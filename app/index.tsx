@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Platform, Alert } from 'react-native';
-import { TextInput, Button, Text, Surface, Title, useTheme, HelperText, ProgressBar } from 'react-native-paper';
+import { View, StyleSheet, Platform, Alert, Animated, Easing } from 'react-native';
+import { TextInput, Button, Text, Surface, Title, useTheme, ProgressBar } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 export default function WeaverScreen() {
   const [themeInput, setThemeInput] = useState('');
@@ -12,15 +13,23 @@ export default function WeaverScreen() {
   const [loadingTime, setLoadingTime] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Allow user to override base URL for debugging if needed (could be an env var later)
   const defaultBaseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
-  const [baseUrl, setBaseUrl] = useState(defaultBaseUrl);
+  const [baseUrl] = useState(defaultBaseUrl);
 
   const router = useRouter();
   const theme = useTheme();
 
-  // Ref to store the abort controller so we can cancel if component unmounts
   const abortControllerRef = useRef<AbortController | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      easing: Easing.out(Easing.exp),
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -43,11 +52,10 @@ export default function WeaverScreen() {
     }
     setLoading(true);
 
-    // Create a new AbortController for this request
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // Set a timeout (e.g., 90 seconds)
+    // 90s timeout
     const timeoutId = setTimeout(() => controller.abort(), 90000);
 
     const url = `${baseUrl}/generate_worksheet`;
@@ -95,7 +103,6 @@ export default function WeaverScreen() {
           }
 
           setErrorMsg(msg);
-          // On mobile, also show alert
           if (Platform.OS !== 'web') {
             Alert.alert("Weaving Failed", msg);
           }
@@ -108,25 +115,33 @@ export default function WeaverScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.contentContainer}>
-        <Surface style={styles.surface} elevation={2}>
-          <Title style={styles.title}>The Weaver</Title>
-          <Text style={styles.subtitle}>Compose your curriculum</Text>
+      <StatusBar style="dark" />
+      <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
 
+        <View style={styles.header}>
+            <Text style={styles.headerEyebrow}>KOMBYPHANTIKE</Text>
+            <Title style={styles.title}>The Weaver</Title>
+            <Text style={styles.subtitle}>Compose your curriculum from the threads of history.</Text>
+        </View>
+
+        <Surface style={styles.formCard} elevation={0}>
           <TextInput
-            label="Theme"
-            placeholder="e.g. Ancient Rome, Quantum Physics"
+            label="Historical Theme"
+            placeholder="e.g. The Fall of Troy, Plato's Cave"
             value={themeInput}
             onChangeText={setThemeInput}
-            mode="outlined"
+            mode="flat"
             style={styles.input}
+            underlineColor={theme.colors.primary}
+            activeUnderlineColor={theme.colors.primary}
+            contentStyle={{ backgroundColor: 'transparent' }}
             disabled={loading}
             error={!!errorMsg}
           />
 
           <View style={styles.sliderContainer}>
             <View style={styles.sliderLabelRow}>
-              <Text style={styles.label}>Sentence Count</Text>
+              <Text style={styles.label}>Complexity (Sentences)</Text>
               <Text style={styles.countValue}>{count}</Text>
             </View>
             <Slider
@@ -137,13 +152,9 @@ export default function WeaverScreen() {
               value={count}
               onValueChange={setCount}
               minimumTrackTintColor={theme.colors.primary}
-              maximumTrackTintColor={theme.colors.surfaceVariant}
+              maximumTrackTintColor="#d7d7d7"
               thumbTintColor={theme.colors.primary}
             />
-            <View style={styles.sliderBounds}>
-              <Text style={styles.boundText}>5</Text>
-              <Text style={styles.boundText}>50</Text>
-            </View>
           </View>
 
           {errorMsg && (
@@ -152,34 +163,34 @@ export default function WeaverScreen() {
             </View>
           )}
 
-          {loading && (
+          {loading ? (
              <View style={styles.loadingContainer}>
                  <ProgressBar indeterminate color={theme.colors.primary} style={styles.progressBar} />
                  <Text style={styles.loadingText}>
                      {loadingTime > 10
-                       ? "The threads are complex... please wait..."
-                       : "Weaving your curriculum..."}
+                       ? "Consulting the Oracle..."
+                       : "Weaving threads..."}
                  </Text>
-                 <Text style={styles.timerText}>{loadingTime}s</Text>
              </View>
+          ) : (
+            <Button
+                mode="contained"
+                onPress={handleWeave}
+                style={styles.button}
+                contentStyle={styles.buttonContent}
+                labelStyle={styles.buttonLabel}
+            >
+                Begin Weaving
+            </Button>
           )}
 
-          <Button
-            mode="contained"
-            onPress={handleWeave}
-            loading={loading}
-            disabled={loading}
-            style={styles.button}
-            contentStyle={styles.buttonContent}
-          >
-            {loading ? "Weaving..." : "Weave Curriculum"}
-          </Button>
-
-          <Text style={styles.debugInfo}>
-             Target: {baseUrl}
-          </Text>
         </Surface>
-      </View>
+
+        <View style={styles.footer}>
+             <Text style={styles.footerText}>Connected to {baseUrl}</Text>
+        </View>
+
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -190,71 +201,94 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  surface: {
     padding: 24,
-    borderRadius: 16,
-    alignItems: 'stretch',
+    justifyContent: 'center',
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  header: {
+      alignItems: 'center',
+      marginBottom: 48,
+  },
+  headerEyebrow: {
+      fontSize: 12,
+      letterSpacing: 3,
+      fontWeight: '600',
+      opacity: 0.5,
+      marginBottom: 8,
+      textTransform: 'uppercase',
   },
   title: {
-    fontSize: 28,
+    fontSize: 42,
+    fontFamily: 'serif',
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 12,
+    letterSpacing: -1,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
-    marginBottom: 32,
-    opacity: 0.7,
+    opacity: 0.6,
+    fontFamily: 'serif',
+    fontStyle: 'italic',
+    maxWidth: '80%',
+  },
+  formCard: {
+    backgroundColor: 'transparent',
+    alignItems: 'stretch',
   },
   input: {
-    marginBottom: 24,
+    marginBottom: 32,
+    backgroundColor: 'transparent',
+    fontSize: 18,
   },
   sliderContainer: {
-    marginBottom: 24,
+    marginBottom: 48,
   },
   sliderLabelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   countValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6200ee',
+    fontSize: 24,
+    fontWeight: '300',
+    fontFamily: 'serif',
   },
   slider: {
     width: '100%',
     height: 40,
   },
-  sliderBounds: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-  },
-  boundText: {
-    fontSize: 12,
-    opacity: 0.5,
-  },
   button: {
-    borderRadius: 8,
+    borderRadius: 4,
+    elevation: 0,
+    backgroundColor: '#2A2A2A',
   },
   buttonContent: {
-    paddingVertical: 8,
+    paddingVertical: 12,
+  },
+  buttonLabel: {
+      fontSize: 16,
+      letterSpacing: 1,
+      fontWeight: 'bold',
   },
   errorContainer: {
-    marginBottom: 16,
-    padding: 8,
+    marginBottom: 24,
+    padding: 12,
     backgroundColor: '#ffebee',
-    borderRadius: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ffcdd2',
   },
   errorText: {
     textAlign: 'center',
@@ -263,26 +297,27 @@ const styles = StyleSheet.create({
   loadingContainer: {
       marginBottom: 16,
       alignItems: 'center',
+      paddingVertical: 10,
   },
   progressBar: {
-      height: 4,
+      height: 2,
       borderRadius: 2,
-      marginBottom: 8,
+      marginBottom: 16,
       width: '100%',
   },
   loadingText: {
-      fontSize: 12,
-      opacity: 0.7,
+      fontSize: 14,
+      fontFamily: 'serif',
+      fontStyle: 'italic',
+      opacity: 0.6,
   },
-  timerText: {
-      fontSize: 10,
-      opacity: 0.5,
-      marginTop: 2,
+  footer: {
+      position: 'absolute',
+      bottom: 20,
+      alignSelf: 'center',
   },
-  debugInfo: {
-      textAlign: 'center',
+  footerText: {
       fontSize: 10,
-      marginTop: 16,
-      opacity: 0.4
+      opacity: 0.3,
   }
 });

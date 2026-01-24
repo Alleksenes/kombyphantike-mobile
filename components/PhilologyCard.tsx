@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 
 interface PhilologyCardProps {
@@ -25,13 +25,17 @@ export default function PhilologyCard({
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <Surface style={styles.card} elevation={3}>
+      <Surface style={styles.card} elevation={4}>
+
+        {/* Decorative Header Line */}
+        <View style={styles.decorativeLine} />
+
         {/* Top: Modern Greek */}
         <View style={styles.topSection}>
           <Text
             variant="displaySmall"
             style={[styles.modernGreek, { color: theme.colors.primary }]}
-            numberOfLines={4}
+            numberOfLines={5}
             adjustsFontSizeToFit
           >
             {modernGreek}
@@ -49,6 +53,7 @@ export default function PhilologyCard({
 
         {/* Bottom: English Translation */}
         <View style={styles.bottomSection}>
+           <Text style={styles.translationLabel}>TRANSLATION</Text>
           <Text
             variant="bodyLarge"
             style={[styles.englishTranslation, { color: theme.colors.secondary }]}
@@ -58,8 +63,8 @@ export default function PhilologyCard({
         </View>
 
         <View style={styles.footer}>
-          <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
-            {index + 1} — {total}
+          <Text variant="labelSmall" style={{ color: theme.colors.outline, letterSpacing: 2 }}>
+            {index + 1} / {total}
           </Text>
         </View>
       </Surface>
@@ -72,46 +77,74 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
   card: {
     width: '100%',
     height: '100%',
-    borderRadius: 24,
+    borderRadius: 8, // More paper-like, less round
     padding: 32,
     justifyContent: 'space-between',
     backgroundColor: '#fff',
+    // Paper texture effect simulation (subtle borders)
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  decorativeLine: {
+      width: 40,
+      height: 4,
+      backgroundColor: '#E0E0E0',
+      alignSelf: 'center',
+      borderRadius: 2,
+      marginBottom: 16,
+      opacity: 0.5,
   },
   topSection: {
     flex: 2,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     marginBottom: 24,
   },
   modernGreek: {
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: -0.5,
+    lineHeight: 42,
   },
   middleSection: {
     flex: 3,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
+    marginVertical: 16,
   },
   ancientContext: {
-    fontFamily: 'serif',
+    fontFamily: Platform.select({ ios: 'Times New Roman', android: 'serif', default: 'serif' }),
     fontStyle: 'italic',
-    fontSize: 24,
+    fontSize: 22,
     textAlign: 'center',
-    lineHeight: 32,
+    lineHeight: 34,
+    opacity: 0.6, // "Fade" effect
   },
   bottomSection: {
     flex: 1,
     justifyContent: 'flex-end',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-    paddingTop: 24,
+    paddingTop: 16,
+  },
+  translationLabel: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      letterSpacing: 1.5,
+      opacity: 0.4,
+      marginBottom: 8,
   },
   englishTranslation: {
     textAlign: 'left',
     fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 24,
   },
   footer: {
     position: 'absolute',
