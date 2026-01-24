@@ -5,6 +5,7 @@ import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { saveToHistory } from '../services/storage';
 
 export default function WeaverScreen() {
   const [themeInput, setThemeInput] = useState('');
@@ -85,6 +86,9 @@ export default function WeaverScreen() {
 
       const data = await response.json();
       console.log("[Weaver] Response data:", JSON.stringify(data, null, 2));
+
+      // Save to History (Async - don't block navigation)
+      saveToHistory(themeInput, data).catch(err => console.error("Failed to save history", err));
 
       router.push({
         pathname: "/results",
@@ -173,15 +177,26 @@ export default function WeaverScreen() {
                  </Text>
              </View>
           ) : (
-            <Button
-                mode="contained"
-                onPress={handleWeave}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-                labelStyle={styles.buttonLabel}
-            >
-                Begin Weaving
-            </Button>
+            <View>
+              <Button
+                  mode="contained"
+                  onPress={handleWeave}
+                  style={styles.button}
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+              >
+                  Begin Weaving
+              </Button>
+
+              <Button
+                mode="text"
+                onPress={() => router.push('/history')}
+                style={styles.historyButton}
+                textColor={theme.colors.secondary}
+              >
+                  View Archived Scrolls
+              </Button>
+            </View>
           )}
 
         </Surface>
@@ -281,6 +296,9 @@ const styles = StyleSheet.create({
       fontSize: 16,
       letterSpacing: 1,
       fontWeight: 'bold',
+  },
+  historyButton: {
+      marginTop: 16,
   },
   errorContainer: {
     marginBottom: 24,
