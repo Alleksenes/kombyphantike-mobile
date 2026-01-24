@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, useWindowDimensions } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, StyleSheet, FlatList, useWindowDimensions, Dimensions } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,38 +9,58 @@ export default function ResultsScreen() {
   const { worksheetData } = useLocalSearchParams();
   const router = useRouter();
   const theme = useTheme();
-  const { width } = useWindowDimensions();
-  const [containerHeight, setContainerHeight] = useState(0);
+  const { width, height: windowHeight } = useWindowDimensions();
+  // Default to window height if layout hasn't happened yet, just to show something
+  const [listHeight, setListHeight] = useState<number>(windowHeight - 100);
 
-  let data: any[] = [];
-  let title = "The Scroll";
+  const { data, title, error } = useMemo(() => {
+    let data: any[] = [];
+    let title = "The Scroll";
+    let error = null;
 
-  try {
-    const parsed = worksheetData ? JSON.parse(worksheetData as string) : null;
-    if (parsed) {
-      if (Array.isArray(parsed)) {
-        data = parsed;
-      } else if (Array.isArray(parsed.sentences)) {
-        data = parsed.sentences;
-      } else if (Array.isArray(parsed.results)) {
-        data = parsed.results;
-      } else if (parsed.worksheet && Array.isArray(parsed.worksheet)) {
-        data = parsed.worksheet;
-      } else {
-        if (parsed.sentence || parsed.text || parsed.modern_greek) {
-          data = [parsed];
+    try {
+      if (!worksheetData) {
+        return { data: [], title, error: "No data received from the weaver." };
+      }
+
+      const raw = Array.isArray(worksheetData) ? worksheetData[0] : worksheetData;
+      const parsed = JSON.parse(raw as string);
+
+      if (parsed) {
+        if (Array.isArray(parsed)) {
+          data = parsed;
+        } else if (Array.isArray(parsed.sentences)) {
+          data = parsed.sentences;
+        } else if (Array.isArray(parsed.results)) {
+          data = parsed.results;
+        } else if (parsed.worksheet && Array.isArray(parsed.worksheet)) {
+          data = parsed.worksheet;
+        } else {
+          // Single item fallback
+          if (parsed.sentence || parsed.text || parsed.modern_greek) {
+            data = [parsed];
+          }
+        }
+        if (parsed.title) {
+          title = parsed.title;
         }
       }
-      if (parsed.title) {
-        title = parsed.title;
+
+      if (data.length === 0) {
+        // Debugging: Log what we got if we couldn't find an array
+        console.log("Parsed data but found no array:", parsed);
+        error = "The weaver produced a thread, but no sentences were found.";
       }
+
+    } catch (e: any) {
+      console.error("Failed to parse data", e);
+      error = `Failed to unravel the scroll: ${e.message}`;
     }
-  } catch (e) {
-    console.error("Failed to parse data", e);
-  }
+
+    return { data, title, error };
+  }, [worksheetData]);
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
-    // Robust data mapping
     const modern = item.modern_greek || item.sentence || item.text || item.content || "—";
     const ancient = item.ancient_context || item.context || item.etymology || item.explanation || "—";
     const english = item.english_translation || item.translation || item.english || item.definition || "—";
@@ -53,7 +73,7 @@ export default function ResultsScreen() {
         index={index}
         total={data.length}
         width={width}
-        height={containerHeight}
+        height={listHeight}
       />
     );
   };
@@ -75,26 +95,40 @@ export default function ResultsScreen() {
 
       <View
         style={styles.listContainer}
-        onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
+        onLayout={(e) => {
+            const { height } = e.nativeEvent.layout;
+            if (height > 0) setListHeight(height);
+        }}
       >
-        {containerHeight > 0 && (
-          data.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text variant="headlineSmall" style={{ color: theme.colors.secondary }}>
+        {error ? (
+          <View style={styles.centerContainer}>
+            <Text variant="bodyLarge" style={{ color: theme.colors.error, textAlign: 'center', padding: 20 }}>
+              {error}
+            </Text>
+            {/* Optional: Show raw data in dev mode for debugging */}
+            <Text variant="bodySmall" style={{ opacity: 0.5, marginTop: 10 }}>
+                Debug: {typeof worksheetData === 'string' ? worksheetData.slice(0, 50) + '...' : 'Invalid Type'}
+            </Text>
+          </View>
+        ) : data.length === 0 ? (
+          <View style={styles.centerContainer}>
+             <Text variant="headlineSmall" style={{ color: theme.colors.secondary }}>
                 The scroll is empty.
               </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={data}
-              renderItem={renderItem}
-              keyExtractor={(_, index) => index.toString()}
-              pagingEnabled
-              snapToAlignment="start"
-              decelerationRate="fast"
-              showsVerticalScrollIndicator={false}
-            />
-          )
+          </View>
+        ) : (
+          <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={(_, index) => index.toString()}
+            pagingEnabled
+            snapToAlignment="start"
+            decelerationRate="fast"
+            showsVerticalScrollIndicator={false}
+            getItemLayout={(data, index) => (
+                {length: listHeight, offset: listHeight * index, index}
+            )}
+          />
         )}
       </View>
     </SafeAreaView>
@@ -119,7 +153,7 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
   },
-  emptyContainer: {
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
