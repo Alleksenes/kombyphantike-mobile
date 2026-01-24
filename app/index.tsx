@@ -45,6 +45,7 @@ export default function WeaverScreen() {
       }
 
       const data = await response.json();
+      console.log("Weaver response data:", JSON.stringify(data, null, 2));
 
       // Navigate to results
       // Passing data as a string parameter
