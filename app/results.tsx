@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, useWindowDimensions, Dimensions } from 'react-native';
-import { Text, Button, useTheme } from 'react-native-paper';
+import { View, StyleSheet, FlatList, useWindowDimensions, Platform, Share, Alert } from 'react-native';
+import { Text, Button, useTheme, IconButton, Snackbar } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
 import PhilologyCard from '../components/PhilologyCard';
 
 export default function ResultsScreen() {
@@ -10,8 +11,8 @@ export default function ResultsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { width, height: windowHeight } = useWindowDimensions();
-  // Default to window height if layout hasn't happened yet, just to show something
   const [listHeight, setListHeight] = useState<number>(windowHeight - 100);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
 
   const { data, title, error } = useMemo(() => {
     let data: any[] = [];
@@ -36,7 +37,6 @@ export default function ResultsScreen() {
         } else if (parsed.worksheet && Array.isArray(parsed.worksheet)) {
           data = parsed.worksheet;
         } else {
-          // Single item fallback
           if (parsed.sentence || parsed.text || parsed.modern_greek) {
             data = [parsed];
           }
@@ -47,7 +47,6 @@ export default function ResultsScreen() {
       }
 
       if (data.length === 0) {
-        // Debugging: Log what we got if we couldn't find an array
         console.log("Parsed data but found no array:", parsed);
         error = "The weaver produced a thread, but no sentences were found.";
       }
@@ -59,6 +58,33 @@ export default function ResultsScreen() {
 
     return { data, title, error };
   }, [worksheetData]);
+
+  const handleShare = async () => {
+      if (data.length === 0) return;
+
+      const text = data.map((item, i) => {
+          const modern = item.modern_greek || item.sentence || "";
+          const ancient = item.ancient_context || "";
+          const english = item.english_translation || "";
+          return `${i+1}. ${modern}\n   [${ancient}]\n   (${english})`;
+      }).join('\n\n');
+
+      const message = `${title}\n\n${text}`;
+
+      if (Platform.OS === 'web') {
+          await Clipboard.setStringAsync(message);
+          setSnackbarVisible(true);
+      } else {
+          try {
+              const result = await Share.share({
+                  message: message,
+                  title: title,
+              });
+          } catch (error: any) {
+              Alert.alert(error.message);
+          }
+      }
+  };
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     const modern = item.modern_greek || item.sentence || item.text || item.content || "—";
@@ -90,7 +116,11 @@ export default function ResultsScreen() {
           Back
         </Button>
         <Text variant="titleMedium" style={styles.headerTitle}>{title}</Text>
-        <View style={{ width: 80 }} />
+        <IconButton
+            icon="share-variant"
+            onPress={handleShare}
+            disabled={data.length === 0}
+        />
       </View>
 
       <View
@@ -105,7 +135,6 @@ export default function ResultsScreen() {
             <Text variant="bodyLarge" style={{ color: theme.colors.error, textAlign: 'center', padding: 20 }}>
               {error}
             </Text>
-            {/* Optional: Show raw data in dev mode for debugging */}
             <Text variant="bodySmall" style={{ opacity: 0.5, marginTop: 10 }}>
                 Debug: {typeof worksheetData === 'string' ? worksheetData.slice(0, 50) + '...' : 'Invalid Type'}
             </Text>
@@ -131,6 +160,14 @@ export default function ResultsScreen() {
           />
         )}
       </View>
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={2000}
+      >
+        Curriculum copied to clipboard.
+      </Snackbar>
     </SafeAreaView>
   );
 }
@@ -149,6 +186,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontWeight: 'bold',
     opacity: 0.7,
+    flex: 1,
+    textAlign: 'center',
   },
   listContainer: {
     flex: 1,
