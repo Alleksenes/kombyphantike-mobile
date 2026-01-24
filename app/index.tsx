@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Platform, Alert } from 'react-native';
-import { TextInput, Button, Text, Surface, Title, useTheme } from 'react-native-paper';
+import { TextInput, Button, Text, Surface, Title, useTheme, HelperText, ProgressBar } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,24 +9,52 @@ export default function WeaverScreen() {
   const [themeInput, setThemeInput] = useState('');
   const [count, setCount] = useState(5);
   const [loading, setLoading] = useState(false);
+  const [loadingTime, setLoadingTime] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Allow user to override base URL for debugging if needed (could be an env var later)
+  const defaultBaseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+  const [baseUrl, setBaseUrl] = useState(defaultBaseUrl);
+
   const router = useRouter();
   const theme = useTheme();
 
+  // Ref to store the abort controller so we can cancel if component unmounts
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      setLoadingTime(0);
+      interval = setInterval(() => {
+        setLoadingTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
   const handleWeave = async () => {
+    setErrorMsg(null);
     if (!themeInput.trim()) {
-       Alert.alert("Error", "Please enter a theme");
+       const msg = "Please enter a theme";
+       setErrorMsg(msg);
+       if (Platform.OS !== 'web') Alert.alert("Error", msg);
        return;
     }
     setLoading(true);
-    // Use 10.0.2.2 for Android Emulator to access host localhost
-    const baseUrl = Platform.OS === 'android'
-      ? 'http://10.0.2.2:8000'
-      : 'http://localhost:8000';
+
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    // Set a timeout (e.g., 90 seconds)
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
 
     const url = `${baseUrl}/generate_worksheet`;
 
     try {
-      console.log(`Sending request to ${url} with theme: ${themeInput}, count: ${count}`);
+      console.log(`[Weaver] Requesting ${url} with theme: ${themeInput}, count: ${count}`);
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -37,7 +65,10 @@ export default function WeaverScreen() {
           count: count,
           complete_with_ai: true,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const text = await response.text();
@@ -45,18 +76,33 @@ export default function WeaverScreen() {
       }
 
       const data = await response.json();
+      console.log("[Weaver] Response data:", JSON.stringify(data, null, 2));
 
-      // Navigate to results
-      // Passing data as a string parameter
       router.push({
         pathname: "/results",
         params: { worksheetData: JSON.stringify(data) }
       });
     } catch (error: any) {
-      Alert.alert("Weaving Failed", error.message || "Could not connect to the loom.");
-      console.error(error);
+      if (error.name === 'AbortError') {
+         console.log('Fetch aborted');
+         setErrorMsg("The Weaver timed out. The ancient scrolls are taking too long to decipher.");
+      } else {
+          console.error("[Weaver] Error:", error);
+          let msg = error.message || "Could not connect to the loom.";
+
+          if (Platform.OS === 'web' && msg.includes('Failed to fetch')) {
+              msg += " (Check CORS config on backend or ensure server is running)";
+          }
+
+          setErrorMsg(msg);
+          // On mobile, also show alert
+          if (Platform.OS !== 'web') {
+            Alert.alert("Weaving Failed", msg);
+          }
+      }
     } finally {
       setLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -75,6 +121,7 @@ export default function WeaverScreen() {
             mode="outlined"
             style={styles.input}
             disabled={loading}
+            error={!!errorMsg}
           />
 
           <View style={styles.sliderContainer}>
@@ -99,6 +146,24 @@ export default function WeaverScreen() {
             </View>
           </View>
 
+          {errorMsg && (
+            <View style={styles.errorContainer}>
+               <Text style={[styles.errorText, { color: theme.colors.error }]}>{errorMsg}</Text>
+            </View>
+          )}
+
+          {loading && (
+             <View style={styles.loadingContainer}>
+                 <ProgressBar indeterminate color={theme.colors.primary} style={styles.progressBar} />
+                 <Text style={styles.loadingText}>
+                     {loadingTime > 10
+                       ? "The threads are complex... please wait..."
+                       : "Weaving your curriculum..."}
+                 </Text>
+                 <Text style={styles.timerText}>{loadingTime}s</Text>
+             </View>
+          )}
+
           <Button
             mode="contained"
             onPress={handleWeave}
@@ -109,6 +174,10 @@ export default function WeaverScreen() {
           >
             {loading ? "Weaving..." : "Weave Curriculum"}
           </Button>
+
+          <Text style={styles.debugInfo}>
+             Target: {baseUrl}
+          </Text>
         </Surface>
       </View>
     </SafeAreaView>
@@ -145,7 +214,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sliderContainer: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sliderLabelRow: {
     flexDirection: 'row',
@@ -160,7 +229,7 @@ const styles = StyleSheet.create({
   countValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#6200ee', // Default primary, will be overridden by theme usually but good fallback
+    color: '#6200ee',
   },
   slider: {
     width: '100%',
@@ -180,5 +249,40 @@ const styles = StyleSheet.create({
   },
   buttonContent: {
     paddingVertical: 8,
+  },
+  errorContainer: {
+    marginBottom: 16,
+    padding: 8,
+    backgroundColor: '#ffebee',
+    borderRadius: 4,
+  },
+  errorText: {
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  loadingContainer: {
+      marginBottom: 16,
+      alignItems: 'center',
+  },
+  progressBar: {
+      height: 4,
+      borderRadius: 2,
+      marginBottom: 8,
+      width: '100%',
+  },
+  loadingText: {
+      fontSize: 12,
+      opacity: 0.7,
+  },
+  timerText: {
+      fontSize: 10,
+      opacity: 0.5,
+      marginTop: 2,
+  },
+  debugInfo: {
+      textAlign: 'center',
+      fontSize: 10,
+      marginTop: 16,
+      opacity: 0.4
   }
 });
