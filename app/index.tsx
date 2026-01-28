@@ -5,13 +5,11 @@ import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { saveToHistory } from '../services/storage';
 
 export default function WeaverScreen() {
   const [themeInput, setThemeInput] = useState('');
   const [count, setCount] = useState(5);
   const [loading, setLoading] = useState(false);
-  const [loadingTime, setLoadingTime] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const defaultBaseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
@@ -20,7 +18,6 @@ export default function WeaverScreen() {
   const router = useRouter();
   const theme = useTheme();
 
-  const abortControllerRef = useRef<AbortController | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -32,17 +29,6 @@ export default function WeaverScreen() {
     }).start();
   }, []);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (loading) {
-      setLoadingTime(0);
-      interval = setInterval(() => {
-        setLoadingTime(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [loading]);
-
   const handleWeave = async () => {
     setErrorMsg(null);
     if (!themeInput.trim()) {
@@ -53,16 +39,11 @@ export default function WeaverScreen() {
     }
     setLoading(true);
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    // 90s timeout
-    const timeoutId = setTimeout(() => controller.abort(), 90000);
-
-    const url = `${baseUrl}/generate_worksheet`;
+    // Use the draft_curriculum endpoint for instant feedback
+    const url = `${baseUrl}/draft_curriculum`;
 
     try {
-      console.log(`[Weaver] Requesting ${url} with theme: ${themeInput}, count: ${count}`);
+      console.log(`[Weaver] Requesting draft ${url} with theme: ${themeInput}, count: ${count}`);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -72,12 +53,9 @@ export default function WeaverScreen() {
         body: JSON.stringify({
           theme: themeInput,
           count: count,
-          complete_with_ai: true,
+          // complete_with_ai removed as we now fill later
         }),
-        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const text = await response.text();
@@ -85,35 +63,31 @@ export default function WeaverScreen() {
       }
 
       const data = await response.json();
-      console.log("[Weaver] Response data:", JSON.stringify(data, null, 2));
+      console.log("[Weaver] Draft data received, navigating...");
 
-      // Save to History (Async - don't block navigation)
-      saveToHistory(themeInput, data).catch(err => console.error("Failed to save history", err));
+      // NOTE: We do NOT save to history yet. We save only fully filled curriculums in results.tsx.
 
       router.push({
         pathname: "/results",
-        params: { worksheetData: JSON.stringify(data) }
+        params: {
+            worksheetData: JSON.stringify(data),
+            isDraft: "true"
+        }
       });
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-         console.log('Fetch aborted');
-         setErrorMsg("The Weaver timed out. The ancient scrolls are taking too long to decipher.");
-      } else {
-          console.error("[Weaver] Error:", error);
-          let msg = error.message || "Could not connect to the loom.";
+        console.error("[Weaver] Error:", error);
+        let msg = error.message || "Could not connect to the loom.";
 
-          if (Platform.OS === 'web' && msg.includes('Failed to fetch')) {
-              msg += " (Check CORS config on backend or ensure server is running)";
-          }
+        if (Platform.OS === 'web' && msg.includes('Failed to fetch')) {
+            msg += " (Check CORS config on backend or ensure server is running)";
+        }
 
-          setErrorMsg(msg);
-          if (Platform.OS !== 'web') {
-            Alert.alert("Weaving Failed", msg);
-          }
-      }
+        setErrorMsg(msg);
+        if (Platform.OS !== 'web') {
+        Alert.alert("Weaving Failed", msg);
+        }
     } finally {
       setLoading(false);
-      abortControllerRef.current = null;
     }
   };
 
@@ -167,37 +141,29 @@ export default function WeaverScreen() {
             </View>
           )}
 
-          {loading ? (
-             <View style={styles.loadingContainer}>
-                 <ProgressBar indeterminate color={theme.colors.primary} style={styles.progressBar} />
-                 <Text style={styles.loadingText}>
-                     {loadingTime > 10
-                       ? "Consulting the Oracle..."
-                       : "Weaving threads..."}
-                 </Text>
-             </View>
-          ) : (
-            <View>
-              <Button
-                  mode="contained"
-                  onPress={handleWeave}
-                  style={styles.button}
-                  contentStyle={styles.buttonContent}
-                  labelStyle={styles.buttonLabel}
-              >
-                  Begin Weaving
-              </Button>
+          <View>
+            <Button
+                mode="contained"
+                onPress={handleWeave}
+                style={styles.button}
+                loading={loading}
+                disabled={loading}
+                contentStyle={styles.buttonContent}
+                labelStyle={styles.buttonLabel}
+            >
+                {loading ? "Preparing threads..." : "Begin Weaving"}
+            </Button>
 
-              <Button
-                mode="text"
-                onPress={() => router.push('/history')}
-                style={styles.historyButton}
-                textColor={theme.colors.secondary}
-              >
-                  View Archived Scrolls
-              </Button>
-            </View>
-          )}
+            <Button
+            mode="text"
+            onPress={() => router.push('/history')}
+            style={styles.historyButton}
+            textColor={theme.colors.secondary}
+            disabled={loading}
+            >
+                View Archived Scrolls
+            </Button>
+          </View>
 
         </Surface>
 
@@ -311,23 +277,6 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
     fontSize: 14,
-  },
-  loadingContainer: {
-      marginBottom: 16,
-      alignItems: 'center',
-      paddingVertical: 10,
-  },
-  progressBar: {
-      height: 2,
-      borderRadius: 2,
-      marginBottom: 16,
-      width: '100%',
-  },
-  loadingText: {
-      fontSize: 14,
-      fontFamily: 'serif',
-      fontStyle: 'italic',
-      opacity: 0.6,
   },
   footer: {
       position: 'absolute',

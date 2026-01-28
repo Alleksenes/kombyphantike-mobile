@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Platform, Animated } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 
 interface PhilologyCardProps {
@@ -10,6 +10,7 @@ interface PhilologyCardProps {
   total: number;
   width: number;
   height: number;
+  loading?: boolean;
 }
 
 export default function PhilologyCard({
@@ -19,9 +20,32 @@ export default function PhilologyCard({
   index,
   total,
   width,
-  height
+  height,
+  loading = false
 }: PhilologyCardProps) {
   const theme = useTheme();
+  const pulseAnim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    if (loading) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.7,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 0.3,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+        pulseAnim.setValue(1);
+    }
+  }, [loading]);
 
   return (
     <View style={[styles.container, { width, height }]}>
@@ -32,17 +56,21 @@ export default function PhilologyCard({
 
         {/* Top: Modern Greek */}
         <View style={styles.topSection}>
-          <Text
-            variant="displaySmall"
-            style={[styles.modernGreek, { color: theme.colors.primary }]}
-            numberOfLines={5}
-            adjustsFontSizeToFit
-          >
-            {modernGreek}
-          </Text>
+          {loading ? (
+             <Animated.View style={[styles.skeletonText, { width: '80%', height: 32, opacity: pulseAnim, backgroundColor: theme.colors.surfaceVariant }]} />
+          ) : (
+            <Text
+                variant="displaySmall"
+                style={[styles.modernGreek, { color: theme.colors.primary }]}
+                numberOfLines={5}
+                adjustsFontSizeToFit
+            >
+                {modernGreek}
+            </Text>
+          )}
         </View>
 
-        {/* Middle: Ancient Context (The Ghost) */}
+        {/* Middle: Ancient Context (The Ghost) - Always Visible */}
         <View style={styles.middleSection}>
           <Text
             style={[styles.ancientContext, { color: theme.colors.onSurfaceVariant }]}
@@ -54,12 +82,16 @@ export default function PhilologyCard({
         {/* Bottom: English Translation */}
         <View style={styles.bottomSection}>
            <Text style={styles.translationLabel}>TRANSLATION</Text>
-          <Text
-            variant="bodyLarge"
-            style={[styles.englishTranslation, { color: theme.colors.secondary }]}
-          >
-            {englishTranslation}
-          </Text>
+           {loading ? (
+             <Animated.View style={[styles.skeletonText, { width: '60%', height: 16, opacity: pulseAnim, backgroundColor: theme.colors.surfaceVariant }]} />
+           ) : (
+            <Text
+                variant="bodyLarge"
+                style={[styles.englishTranslation, { color: theme.colors.secondary }]}
+            >
+                {englishTranslation}
+            </Text>
+           )}
         </View>
 
         <View style={styles.footer}>
@@ -83,11 +115,10 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     height: '100%',
-    borderRadius: 8, // More paper-like, less round
+    borderRadius: 8,
     padding: 32,
     justifyContent: 'space-between',
     backgroundColor: '#fff',
-    // Paper texture effect simulation (subtle borders)
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
   },
@@ -126,7 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     textAlign: 'center',
     lineHeight: 34,
-    opacity: 0.6, // "Fade" effect
+    opacity: 0.6,
   },
   bottomSection: {
     flex: 1,
@@ -150,5 +181,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 32,
     right: 32,
+  },
+  skeletonText: {
+      borderRadius: 4,
+      marginBottom: 8,
   }
 });
