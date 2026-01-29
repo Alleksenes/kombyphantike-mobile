@@ -90,6 +90,7 @@ export default function ResultsScreen() {
     const modern = item.modern_greek || item.sentence || item.text || item.content || "—";
     const ancient = item.ancient_context || item.context || item.etymology || item.explanation || "—";
     const english = item.english_translation || item.translation || item.english || item.definition || "—";
+    const tokens = item.target_tokens || [];
 
     return (
       <PhilologyCard
@@ -100,6 +101,8 @@ export default function ResultsScreen() {
         total={data.length}
         width={width}
         height={listHeight}
+        tokens={tokens}
+        onTokenPress={(token) => console.log('Token pressed:', token)}
       />
     );
   };

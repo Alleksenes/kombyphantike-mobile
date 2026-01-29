@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
+import WordChip, { Token } from './WordChip';
 
 interface PhilologyCardProps {
   modernGreek: string;
@@ -10,6 +11,8 @@ interface PhilologyCardProps {
   total: number;
   width: number;
   height: number;
+  tokens?: Token[];
+  onTokenPress?: (token: Token) => void;
 }
 
 export default function PhilologyCard({
@@ -19,7 +22,9 @@ export default function PhilologyCard({
   index,
   total,
   width,
-  height
+  height,
+  tokens,
+  onTokenPress
 }: PhilologyCardProps) {
   const theme = useTheme();
 
@@ -32,14 +37,26 @@ export default function PhilologyCard({
 
         {/* Top: Modern Greek */}
         <View style={styles.topSection}>
-          <Text
-            variant="displaySmall"
-            style={[styles.modernGreek, { color: theme.colors.primary }]}
-            numberOfLines={5}
-            adjustsFontSizeToFit
-          >
-            {modernGreek}
-          </Text>
+          {tokens && tokens.length > 0 ? (
+            <View style={styles.tokenContainer}>
+              {tokens.map((token, i) => (
+                <WordChip
+                  key={i}
+                  token={token}
+                  onPress={onTokenPress || (() => {})}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text
+              variant="displaySmall"
+              style={[styles.modernGreek, { color: theme.colors.primary }]}
+              numberOfLines={5}
+              adjustsFontSizeToFit
+            >
+              {modernGreek}
+            </Text>
+          )}
         </View>
 
         {/* Middle: Ancient Context (The Ghost) */}
@@ -104,6 +121,11 @@ const styles = StyleSheet.create({
     flex: 2,
     justifyContent: 'center',
     marginBottom: 24,
+  },
+  tokenContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   modernGreek: {
     fontWeight: '800',
