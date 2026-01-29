@@ -1,8 +1,7 @@
-import React from 'react';
 import { Stack } from 'expo-router';
-import { PaperProvider, MD3LightTheme as DefaultTheme, configureFonts } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
+import { MD3LightTheme as DefaultTheme, PaperProvider, configureFonts } from 'react-native-paper';
 
 const baseFont = Platform.select({
   ios: 'Helvetica Neue',

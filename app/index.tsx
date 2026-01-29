@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Platform, Alert, Animated, Easing } from 'react-native';
-import { TextInput, Button, Text, Surface, Title, useTheme, ProgressBar } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { saveToHistory } from '../services/storage';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Easing, Platform, StyleSheet, View } from 'react-native';
+import { Button, ProgressBar, Surface, Text, TextInput, Title, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WeaverScreen() {
   const [themeInput, setThemeInput] = useState('');
@@ -43,41 +42,34 @@ export default function WeaverScreen() {
     return () => clearInterval(interval);
   }, [loading]);
 
+
   const handleWeave = async () => {
-    setErrorMsg(null);
     if (!themeInput.trim()) {
-       const msg = "Please enter a theme";
-       setErrorMsg(msg);
-       if (Platform.OS !== 'web') Alert.alert("Error", msg);
-       return;
+      Alert.alert("Error", "Please enter a theme");
+      return;
     }
     setLoading(true);
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
+    // Adjust URL based on platform
+    const baseUrl = Platform.OS === 'android'
+      ? 'http://10.0.2.2:8000'
+      : 'http://localhost:8000';
 
-    // 90s timeout
-    const timeoutId = setTimeout(() => controller.abort(), 90000);
-
-    const url = `${baseUrl}/generate_worksheet`;
+    // CHANGE 1: Call the Draft Endpoint
+    const url = `${baseUrl}/draft_curriculum`;
 
     try {
-      console.log(`[Weaver] Requesting ${url} with theme: ${themeInput}, count: ${count}`);
+      console.log(`[Weaver] Requesting Draft from ${url}`);
 
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        // CHANGE 2: Send only theme and count (no complete_with_ai)
         body: JSON.stringify({
           theme: themeInput,
-          count: count,
-          complete_with_ai: true,
+          count: count
         }),
-        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const text = await response.text();
@@ -85,35 +77,22 @@ export default function WeaverScreen() {
       }
 
       const data = await response.json();
-      console.log("[Weaver] Response data:", JSON.stringify(data, null, 2));
 
-      // Save to History (Async - don't block navigation)
-      saveToHistory(themeInput, data).catch(err => console.error("Failed to save history", err));
-
+      // CHANGE 3: Pass the Draft Data to Results
+      // We pass it as a string to avoid navigation size limits
       router.push({
         pathname: "/results",
-        params: { worksheetData: JSON.stringify(data) }
+        params: {
+          draftData: JSON.stringify(data.worksheet_data),
+          instructionText: data.instruction_text
+        }
       });
+
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-         console.log('Fetch aborted');
-         setErrorMsg("The Weaver timed out. The ancient scrolls are taking too long to decipher.");
-      } else {
-          console.error("[Weaver] Error:", error);
-          let msg = error.message || "Could not connect to the loom.";
-
-          if (Platform.OS === 'web' && msg.includes('Failed to fetch')) {
-              msg += " (Check CORS config on backend or ensure server is running)";
-          }
-
-          setErrorMsg(msg);
-          if (Platform.OS !== 'web') {
-            Alert.alert("Weaving Failed", msg);
-          }
-      }
+      Alert.alert("Weaving Failed", error.message);
+      console.error(error);
     } finally {
       setLoading(false);
-      abortControllerRef.current = null;
     }
   };
 
@@ -123,14 +102,14 @@ export default function WeaverScreen() {
       <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
 
         <View style={styles.header}>
-            <Text style={styles.headerEyebrow}>KOMBYPHANTIKE</Text>
-            <Title style={styles.title}>The Weaver</Title>
-            <Text style={styles.subtitle}>Compose your curriculum from the threads of history.</Text>
+          <Text style={styles.headerEyebrow}>KOMBYPHANTIKE</Text>
+          <Title style={styles.title}>The Weaver</Title>
+          <Text style={styles.subtitle}>Compose your curriculum from the threads of history.</Text>
         </View>
 
         <Surface style={styles.formCard} elevation={0}>
           <TextInput
-            label="Historical Theme"
+            label="Theme"
             placeholder="e.g. The Fall of Troy, Plato's Cave"
             value={themeInput}
             onChangeText={setThemeInput}
@@ -163,29 +142,29 @@ export default function WeaverScreen() {
 
           {errorMsg && (
             <View style={styles.errorContainer}>
-               <Text style={[styles.errorText, { color: theme.colors.error }]}>{errorMsg}</Text>
+              <Text style={[styles.errorText, { color: theme.colors.error }]}>{errorMsg}</Text>
             </View>
           )}
 
           {loading ? (
-             <View style={styles.loadingContainer}>
-                 <ProgressBar indeterminate color={theme.colors.primary} style={styles.progressBar} />
-                 <Text style={styles.loadingText}>
-                     {loadingTime > 10
-                       ? "Consulting the Oracle..."
-                       : "Weaving threads..."}
-                 </Text>
-             </View>
+            <View style={styles.loadingContainer}>
+              <ProgressBar indeterminate color={theme.colors.primary} style={styles.progressBar} />
+              <Text style={styles.loadingText}>
+                {loadingTime > 10
+                  ? "Consulting the Oracle..."
+                  : "Weaving threads..."}
+              </Text>
+            </View>
           ) : (
             <View>
               <Button
-                  mode="contained"
-                  onPress={handleWeave}
-                  style={styles.button}
-                  contentStyle={styles.buttonContent}
-                  labelStyle={styles.buttonLabel}
+                mode="contained"
+                onPress={handleWeave}
+                style={styles.button}
+                contentStyle={styles.buttonContent}
+                labelStyle={styles.buttonLabel}
               >
-                  Begin Weaving
+                Begin Weaving
               </Button>
 
               <Button
@@ -194,7 +173,7 @@ export default function WeaverScreen() {
                 style={styles.historyButton}
                 textColor={theme.colors.secondary}
               >
-                  View Archived Scrolls
+                View Archived Scrolls
               </Button>
             </View>
           )}
@@ -202,7 +181,7 @@ export default function WeaverScreen() {
         </Surface>
 
         <View style={styles.footer}>
-             <Text style={styles.footerText}>Connected to {baseUrl}</Text>
+          <Text style={styles.footerText}>Connected to {baseUrl}</Text>
         </View>
 
       </Animated.View>
@@ -223,20 +202,20 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   header: {
-      alignItems: 'center',
-      marginBottom: 48,
+    alignItems: 'center',
+    marginBottom: 48,
   },
   headerEyebrow: {
-      fontSize: 12,
-      letterSpacing: 3,
-      fontWeight: '600',
-      opacity: 0.5,
-      marginBottom: 8,
-      textTransform: 'uppercase',
+    fontSize: 12,
+    letterSpacing: 3,
+    fontWeight: '600',
+    opacity: 0.5,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   title: {
     fontSize: 42,
-    fontFamily: 'serif',
+    fontFamily: 'EB Garamond',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 12,
@@ -293,12 +272,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   buttonLabel: {
-      fontSize: 16,
-      letterSpacing: 1,
-      fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 1,
+    fontWeight: 'bold',
   },
   historyButton: {
-      marginTop: 16,
+    marginTop: 16,
   },
   errorContainer: {
     marginBottom: 24,
@@ -313,29 +292,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loadingContainer: {
-      marginBottom: 16,
-      alignItems: 'center',
-      paddingVertical: 10,
+    marginBottom: 16,
+    alignItems: 'center',
+    paddingVertical: 10,
   },
   progressBar: {
-      height: 2,
-      borderRadius: 2,
-      marginBottom: 16,
-      width: '100%',
+    height: 2,
+    borderRadius: 2,
+    marginBottom: 16,
+    width: '100%',
   },
   loadingText: {
-      fontSize: 14,
-      fontFamily: 'serif',
-      fontStyle: 'italic',
-      opacity: 0.6,
+    fontSize: 14,
+    fontFamily: 'serif',
+    fontStyle: 'italic',
+    opacity: 0.6,
   },
   footer: {
-      position: 'absolute',
-      bottom: 20,
-      alignSelf: 'center',
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
   },
   footerText: {
-      fontSize: 10,
-      opacity: 0.3,
+    fontSize: 10,
+    opacity: 0.3,
   }
 });
