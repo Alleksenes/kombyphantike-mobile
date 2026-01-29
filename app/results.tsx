@@ -4,6 +4,7 @@ import { ActivityIndicator, FlatList, Platform, StyleSheet, useWindowDimensions,
 import { Button, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PhilologyCard from '../components/PhilologyCard';
+import { saveSession } from '../src/services/Database';
 
 export default function ResultsScreen() {
   const { draftData, instructionText } = useLocalSearchParams();
@@ -22,13 +23,14 @@ export default function ResultsScreen() {
       try {
         const parsed = JSON.parse(draftData as string);
         setData(parsed);
+        saveSession(instructionText as string || "Untitled", parsed);
         // Trigger AI Fill automatically
         fillCurriculum(parsed, instructionText as string);
       } catch (e) {
         console.error("Parse error", e);
       }
     }
-  }, [draftData]);
+  }, [draftData, instructionText]);
 
   // 2. The AI Fill Function
   const fillCurriculum = async (currentRows: any[], instructions: string) => {
