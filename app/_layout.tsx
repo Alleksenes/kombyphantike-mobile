@@ -1,7 +1,10 @@
+import '../global.css';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
 import { MD3LightTheme as DefaultTheme, PaperProvider, configureFonts } from 'react-native-paper';
+import { useEffect } from 'react';
+import { initDatabase } from '../src/services/Database';
 
 const baseFont = Platform.select({
   ios: 'Helvetica Neue',
@@ -42,6 +45,10 @@ const theme = {
 };
 
 export default function RootLayout() {
+  useEffect(() => {
+    initDatabase();
+  }, []);
+
   return (
     <PaperProvider theme={theme}>
       <StatusBar style="dark" />
