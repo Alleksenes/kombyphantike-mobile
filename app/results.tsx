@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
 import { FlatList, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Button, IconButton, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useColorScheme } from 'nativewind';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
 import PhilologyCard from '../components/PhilologyCard';
@@ -14,6 +15,7 @@ import { SessionStore } from '../services/SessionStore';
 export default function ResultsScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { colorScheme, toggleColorScheme } = useColorScheme();
   const { width } = useWindowDimensions();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -112,7 +114,14 @@ export default function ResultsScreen() {
             Back
           </Button>
           <Text variant="titleMedium" style={styles.headerTitle}>The Scroll</Text>
-          {isFilling && <ActivityIndicator animating={true} size="small" />}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {isFilling && <ActivityIndicator animating={true} size="small" style={{ marginRight: 8 }} />}
+            <IconButton
+              icon={colorScheme === 'dark' ? 'weather-sunny' : 'weather-night'}
+              onPress={toggleColorScheme}
+              iconColor={theme.colors.onSurface}
+            />
+          </View>
         </View>
 
         <View style={styles.listContainer}>
