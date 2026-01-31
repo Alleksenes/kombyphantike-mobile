@@ -69,6 +69,32 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                   {ancientContext}
                 </Text>
               </View>
+
+              {/* Row 4: Paradigm (If Available) */}
+              {selectedToken.has_paradigm && selectedToken.paradigm && (
+                <View className="mt-4 p-4 rounded-xl" style={{ backgroundColor: '#2C2C2C' }}>
+                  <Text className="text-xs font-bold text-[#F8F5F2] uppercase mb-4 tracking-widest">
+                    Paradigm
+                  </Text>
+                  <View>
+                    {selectedToken.paradigm.map((entry, idx) => {
+                      const isMatch = entry.form === selectedToken.text;
+                      return (
+                        <View key={idx} className="flex-row justify-between mb-2 pb-2 border-b border-gray-700 last:border-0 last:mb-0 last:pb-0">
+                          <Text
+                            className={`text-base ${isMatch ? 'font-bold text-[#C5A059]' : 'text-[#F8F5F2]'}`}
+                          >
+                            {entry.form}
+                          </Text>
+                          <Text className="text-sm text-gray-400">
+                            {entry.tags}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
             </View>
           ) : (
              <View className="flex-1 justify-center items-center">
