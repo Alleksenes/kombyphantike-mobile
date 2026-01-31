@@ -44,3 +44,14 @@ export const saveSession = async (theme: string, jsonData: any) => {
         console.error("Error saving session:", error);
     }
 };
+
+export const getSessions = async () => {
+    if (!db) return [];
+    try {
+        const result = await db.getAllAsync('SELECT * FROM sessions ORDER BY date DESC');
+        return result;
+    } catch (error) {
+        console.error("Error fetching sessions:", error);
+        return [];
+    }
+};

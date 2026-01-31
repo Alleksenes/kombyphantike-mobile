@@ -53,6 +53,7 @@ export default function WeaverScreen() {
       if (data.worksheet_data) {
         SessionStore.setDraft(data.worksheet_data);
         SessionStore.setInstructions(data.instruction_text);
+        SessionStore.setTheme(themeInput);
 
         console.log("Draft saved to store. Navigating...");
 
@@ -114,6 +115,15 @@ export default function WeaverScreen() {
             contentStyle={styles.buttonContent}
           >
             {loading ? "Weaving Draft..." : "Weave Curriculum"}
+          </Button>
+
+          <Button
+            mode="text"
+            onPress={() => router.push("/history")}
+            disabled={loading}
+            style={[styles.button, { marginTop: 16 }]}
+          >
+            View History
           </Button>
         </Surface>
       </View>
