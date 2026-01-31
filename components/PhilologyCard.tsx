@@ -35,7 +35,7 @@ export default function PhilologyCard({
 
   return (
     <View
-      className="bg-[#F8F5F2] rounded-3xl p-6 mr-4 shadow-sm border border-gray-200"
+      className="bg-paper rounded-3xl p-6 mr-4 shadow-sm border border-gray-200 dark:border-gray-700"
       style={{ width: CARD_WIDTH, height: 500 }}
     >
       <View className="flex-row justify-between mb-4">
@@ -44,13 +44,13 @@ export default function PhilologyCard({
       </View>
 
       <View className="mb-6">
-        <Text className="text-base text-gray-800 leading-6">
+        <Text className="text-base text-ink leading-6">
           {knot}
         </Text>
       </View>
 
-      <View className="mb-8 border-l-2 border-yellow-600 pl-4">
-        <Text className="text-lg font-serif italic text-gray-800 opacity-80 leading-7">
+      <View className="mb-8 border-l-2 border-gold pl-4">
+        <Text className="text-lg font-serif italic text-ancient opacity-80 leading-7">
           {ancientContext}
         </Text>
       </View>
@@ -62,13 +62,13 @@ export default function PhilologyCard({
               <WordChip key={`${token.text}-${idx}`} token={token} onPress={handleWordPress} />
             ))
           ) : (
-            <Text className="text-2xl font-bold text-gray-900 leading-9">{modernGreek}</Text>
+            <Text className="text-2xl font-bold text-ink leading-9">{modernGreek}</Text>
           )}
         </View>
       </View>
 
-      <View className="mt-8 pt-4 border-t border-gray-100">
-        <Text className="text-base text-gray-700">{englishTranslation}</Text>
+      <View className="mt-8 pt-4 border-t border-gray-100 dark:border-gray-800">
+        <Text className="text-base text-ink">{englishTranslation}</Text>
       </View>
     </View>
   );
