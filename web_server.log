@@ -1,0 +1,46 @@
+
+> app@1.0.0 web
+> expo start --web
+
+Starting project at /app
+React Compiler enabled
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.31 - expected version: ~54.0.33
+  expo-router@6.0.22 - expected version: ~6.0.23
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓░░░░░░░░░░░░░░ 18.4% (15/90)
+λ node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 16.8% (119/290)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.3% (189/264)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.5% (351/489)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.3% (297/458)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 61.9% (605/818)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 60.7% (424/544)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.1% (841/958)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.1% (705/932)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.7% (1008/1162)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.5% ( 992/1073)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 84.2% (1216/1325)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 86.2% (1228/1338)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.3% (1367/1414)
+λ Bundled 27906ms node_modules/expo-router/node/render.js (1511 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.6% (1569/1572)
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  ERROR  Accessing element.ref was removed in React 19. ref is now a regular prop. It will be removed from the JSX Element type in a future release.
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1572/1573)
+Web Bundled 32365ms node_modules/expo-router/entry.js (1573 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.6% (471/690)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 82.7% (1022/1154)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.3% (1423/1458)
+Web Bundled 11134ms node_modules/expo-router/entry.js (1574 modules)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 56ms node_modules/expo-router/node/render.js (1 module)
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  ERROR  Accessing element.ref was removed in React 19. ref is now a regular prop. It will be removed from the JSX Element type in a future release.
+Web Bundled 1214ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 109ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web Bundled 804ms node_modules/expo-sqlite/web/worker.ts (16 modules)

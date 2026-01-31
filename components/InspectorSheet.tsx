@@ -6,13 +6,20 @@ import { Token } from './WordChip';
 
 // Helper to parse paradigm tags
 const parseParadigm = (paradigm: { form: string; tags: string }[]) => {
+  const rowsOrder = ['Nom', 'Gen', 'Acc', 'Voc'];
   const result: Record<string, { Singular: string; Plural: string }> = {};
+
+  // Initialize all required rows
+  rowsOrder.forEach((r) => {
+    result[r] = { Singular: '-', Plural: '-' };
+  });
+
   const casesMap: Record<string, string> = {
     nominative: 'Nom',
     genitive: 'Gen',
-    dative: 'Dat',
     accusative: 'Acc',
     vocative: 'Voc',
+    // Dative is excluded
   };
 
   paradigm.forEach((entry) => {
@@ -28,15 +35,15 @@ const parseParadigm = (paradigm: { form: string; tags: string }[]) => {
       }
     }
 
-    if (number && caseLabel) {
-      if (!result[caseLabel]) {
-        result[caseLabel] = { Singular: '-', Plural: '-' };
-      }
+    if (number && caseLabel && result[caseLabel]) {
       result[caseLabel][number] = entry.form;
     }
   });
 
-  return result;
+  return rowsOrder.map((label) => ({
+    caseName: label,
+    forms: result[label],
+  }));
 };
 
 interface InspectorSheetProps {
@@ -126,7 +133,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
                   {/* Grid Body */}
                   <View>
-                    {Object.entries(parseParadigm(selectedToken.paradigm)).map(([caseName, forms], idx) => {
+                    {parseParadigm(selectedToken.paradigm).map(({ caseName, forms }, idx) => {
                       const isSingularMatch = forms.Singular === selectedToken.text;
                       const isPluralMatch = forms.Plural === selectedToken.text;
 
@@ -139,7 +146,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
                           {/* Singular */}
                           <View className="flex-1 items-center justify-center px-1">
-                             <View className={`px-2 py-1 rounded ${isSingularMatch ? 'border border-gold bg-gold/10' : ''}`}>
+                             <View className={`px-2 py-1 rounded ${isSingularMatch ? 'border border-gold bg-gold/20' : ''}`}>
                                 <Text className={`text-base ${isSingularMatch ? 'text-gold font-bold' : 'text-paper dark:text-gray-200'}`}>
                                   {forms.Singular}
                                 </Text>
@@ -148,7 +155,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
                           {/* Plural */}
                           <View className="flex-1 items-center justify-center px-1">
-                            <View className={`px-2 py-1 rounded ${isPluralMatch ? 'border border-gold bg-gold/10' : ''}`}>
+                            <View className={`px-2 py-1 rounded ${isPluralMatch ? 'border border-gold bg-gold/20' : ''}`}>
                                 <Text className={`text-base ${isPluralMatch ? 'text-gold font-bold' : 'text-paper dark:text-gray-200'}`}>
                                   {forms.Plural}
                                 </Text>
