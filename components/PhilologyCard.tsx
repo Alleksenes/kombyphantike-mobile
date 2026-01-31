@@ -11,6 +11,7 @@ interface PhilologyCardProps {
   englishTranslation: string;
   index: number;
   total: number;
+  onTokenPress?: (token: Token) => void;
 }
 
 export default function PhilologyCard({
@@ -19,11 +20,15 @@ export default function PhilologyCard({
   ancientContext,
   englishTranslation,
   index,
-  total
+  total,
+  onTokenPress
 }: PhilologyCardProps) {
 
   const handleWordPress = (token: Token) => {
     console.log("Touched Token:", token);
+    if (onTokenPress) {
+      onTokenPress(token);
+    }
   };
 
   return (
