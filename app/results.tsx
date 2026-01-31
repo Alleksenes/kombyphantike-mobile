@@ -11,6 +11,7 @@ import InspectorSheet from '../components/InspectorSheet';
 import { Token } from '../components/WordChip';
 // Import the store
 import { SessionStore } from '../services/SessionStore';
+import { saveSession } from '../src/services/Database';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -31,13 +32,18 @@ export default function ResultsScreen() {
     // 1. Load Draft from Store immediately
     const draft = SessionStore.getDraft();
     const instructions = SessionStore.getInstructions();
+    const isFilled = SessionStore.isFilled();
 
     if (draft && Array.isArray(draft)) {
       console.log("Loaded Draft from Store:", draft.length, "items");
       setData(draft);
 
       // 2. Trigger AI Fill (The Slow Part)
-      fillCurriculum(draft, instructions);
+      if (!isFilled) {
+        fillCurriculum(draft, instructions);
+      } else {
+        console.log("Loaded fully filled curriculum from history.");
+      }
     } else {
       console.error("No draft found in store.");
     }
@@ -67,6 +73,10 @@ export default function ResultsScreen() {
       if (result.worksheet_data) {
         console.log("AI Generation Complete.");
         setData(result.worksheet_data);
+
+        // Save to DB
+        const currentTheme = SessionStore.getTheme() || "Unknown Theme";
+        saveSession(currentTheme, result.worksheet_data);
       }
     } catch (e) {
       console.error("AI Fill Failed", e);
