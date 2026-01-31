@@ -9,6 +9,7 @@ interface PhilologyCardProps {
   targetTokens?: Token[];
   ancientContext: string;
   englishTranslation: string;
+  knot: string;
   index: number;
   total: number;
   onTokenPress?: (token: Token) => void;
@@ -19,6 +20,7 @@ export default function PhilologyCard({
   targetTokens,
   ancientContext,
   englishTranslation,
+  knot,
   index,
   total,
   onTokenPress
@@ -39,6 +41,12 @@ export default function PhilologyCard({
       <View className="flex-row justify-between mb-4">
         <Text className="text-xs font-bold tracking-widest text-gray-400 uppercase">Knot</Text>
         <Text className="text-xs text-gray-400">{index + 1} / {total}</Text>
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-base text-gray-800 leading-6">
+          {knot}
+        </Text>
       </View>
 
       <View className="mb-8 border-l-2 border-yellow-600 pl-4">
