@@ -1,9 +1,13 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { FlatList, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import BottomSheet from '@gorhom/bottom-sheet';
 import PhilologyCard from '../components/PhilologyCard';
+import InspectorSheet from '../components/InspectorSheet';
+import { Token } from '../components/WordChip';
 // Import the store
 import { SessionStore } from '../services/SessionStore';
 
@@ -11,10 +15,15 @@ export default function ResultsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { width } = useWindowDimensions();
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   // State for the data
   const [data, setData] = useState<any[]>([]);
   const [isFilling, setIsFilling] = useState(false);
+
+  // State for Inspector
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const [selectedContext, setSelectedContext] = useState<string>('');
 
   useEffect(() => {
     // 1. Load Draft from Store immediately
@@ -64,6 +73,13 @@ export default function ResultsScreen() {
     }
   };
 
+  const handleTokenPress = (token: Token, context: string) => {
+    setSelectedToken(token);
+    setSelectedContext(context);
+    // Snap to the first open point (index 0, which is 45%)
+    bottomSheetRef.current?.snapToIndex(0);
+  };
+
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     // Map Snake_Case to UI Props
     const modern = item.target_sentence || "Generating..."; // Show placeholder while filling
@@ -80,35 +96,44 @@ export default function ResultsScreen() {
           englishTranslation={english}
           index={index}
           total={data.length}
+          onTokenPress={(token) => handleTokenPress(token, ancient)}
         />
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Button mode="text" onPress={() => router.back()} icon="arrow-left" textColor={theme.colors.onSurface}>
-          Back
-        </Button>
-        <Text variant="titleMedium" style={styles.headerTitle}>The Scroll</Text>
-        {isFilling && <ActivityIndicator animating={true} size="small" />}
-      </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.header}>
+          <Button mode="text" onPress={() => router.back()} icon="arrow-left" textColor={theme.colors.onSurface}>
+            Back
+          </Button>
+          <Text variant="titleMedium" style={styles.headerTitle}>The Scroll</Text>
+          {isFilling && <ActivityIndicator animating={true} size="small" />}
+        </View>
 
-      <View style={styles.listContainer}>
-        <FlatList
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={(_, index) => index.toString()}
-          horizontal
-          pagingEnabled
-          snapToAlignment="center"
-          decelerationRate="fast"
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingVertical: 20 }}
+        <View style={styles.listContainer}>
+          <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={(_, index) => index.toString()}
+            horizontal
+            pagingEnabled
+            snapToAlignment="center"
+            decelerationRate="fast"
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingVertical: 20 }}
+          />
+        </View>
+
+        <InspectorSheet
+          ref={bottomSheetRef}
+          selectedToken={selectedToken}
+          ancientContext={selectedContext}
         />
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
