@@ -1,20 +1,47 @@
-import React from 'react';
-import { Text, Pressable } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
-interface WordChipProps {
+export interface Token {
   text: string;
-  pos?: string;
-  isHero?: boolean;
-  onPress?: () => void;
+  lemma: string;
+  pos: string;
+  tag?: string;
+  dep?: string;
+  is_alpha?: boolean;
 }
 
-export default function WordChip({ text, pos, isHero, onPress }: WordChipProps) {
+interface WordChipProps {
+  token: Token;
+  onPress: (token: Token) => void;
+}
+
+export default function WordChip({ token, onPress }: WordChipProps) {
+  // Logic: Is this a "heavy" word?
+  const isHeavy = ['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(token.pos);
+  const isPunctuation = token.pos === 'PUNCT';
+
+  if (isPunctuation) {
+    return (
+      <Text className="text-xl text-ink font-serif self-end mb-1">
+        {token.text}
+      </Text>
+    );
+  }
+
   return (
     <Pressable
-      onPress={onPress}
-      className={`px-2 py-1 m-1 rounded-md bg-white border border-gray-200 ${isHero ? 'border-gold bg-yellow-50' : ''}`}
+      onPress={() => onPress(token)}
+      className={`
+        mr-1.5 mb-2 px-2 py-1 rounded-lg border
+        ${isHeavy ? 'bg-white border-gray-300' : 'bg-transparent border-transparent'}
+        active:bg-yellow-50
+      `}
     >
-      <Text className="text-ink text-base font-normal">{text}</Text>
+      <Text className={`
+        text-lg font-medium
+        ${isHeavy ? 'text-gray-900' : 'text-gray-500'}
+      `}>
+        {token.text}
+      </Text>
     </Pressable>
   );
 }

@@ -1,104 +1,112 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Button, Text, useTheme } from 'react-native-paper';
+import { FlatList, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PhilologyCard from '../components/PhilologyCard';
-import { saveSession } from '../src/services/Database';
+// Import the store
+import { SessionStore } from '../services/SessionStore';
 
 export default function ResultsScreen() {
-  const { draftData, instructionText } = useLocalSearchParams();
   const router = useRouter();
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  const [containerHeight, setContainerHeight] = useState(0);
-  
-  // State for the data (starts with draft, updates with filled)
+
+  // State for the data
   const [data, setData] = useState<any[]>([]);
   const [isFilling, setIsFilling] = useState(false);
 
-  // 1. Load Draft Immediately
   useEffect(() => {
-    if (draftData) {
-      try {
-        const parsed = JSON.parse(draftData as string);
-        setData(parsed);
-        saveSession(instructionText as string || "Untitled", parsed);
-        // Trigger AI Fill automatically
-        fillCurriculum(parsed, instructionText as string);
-      } catch (e) {
-        console.error("Parse error", e);
-      }
-    }
-  }, [draftData, instructionText]);
+    // 1. Load Draft from Store immediately
+    const draft = SessionStore.getDraft();
+    const instructions = SessionStore.getInstructions();
 
-  // 2. The AI Fill Function
-  const fillCurriculum = async (currentRows: any[], instructions: string) => {
+    if (draft && Array.isArray(draft)) {
+      console.log("Loaded Draft from Store:", draft.length, "items");
+      setData(draft);
+
+      // 2. Trigger AI Fill (The Slow Part)
+      fillCurriculum(draft, instructions);
+    } else {
+      console.error("No draft found in store.");
+    }
+  }, []);
+
+  const fillCurriculum = async (draftData: any[], instructions: string) => {
     setIsFilling(true);
+    console.log("Igniting AI Generation...");
+
     const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
-    const url = `${baseUrl}/fill_curriculum`;
 
     try {
-        console.log("Igniting AI Generation...");
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                worksheet_data: currentRows,
-                instruction_text: instructions
-            })
-        });
+      const response = await fetch(`${baseUrl}/fill_curriculum`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          worksheet_data: draftData,
+          instruction_text: instructions
+        }),
+      });
 
-        if (!response.ok) throw new Error("AI Fill Failed");
-        
-        const json = await response.json();
-        // Update state with the filled sentences
-        setData(json.worksheet_data);
+      if (!response.ok) throw new Error("Fill failed");
+
+      const result = await response.json();
+
+      // 3. Update UI with filled sentences
+      if (result.worksheet_data) {
+        console.log("AI Generation Complete.");
+        setData(result.worksheet_data);
+      }
     } catch (e) {
-        console.error(e);
-        // Optional: Alert user
+      console.error("AI Fill Failed", e);
     } finally {
-        setIsFilling(false);
+      setIsFilling(false);
     }
   };
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
-    // Map Snake Case Keys (New Backend Format)
-    const modern = item.target_sentence || "Generating...";
-    const ancient = item.ancient_context || "";
-    const english = item.source_sentence || "";
+    // Map Snake_Case to UI Props
+    const modern = item.target_sentence || "Generating..."; // Show placeholder while filling
+    const ancient = item.ancient_context || "NO_CITATION_FOUND";
+    const english = item.source_sentence || "Pending translation...";
+    const tokens = item.target_tokens || undefined;
 
     return (
-      <PhilologyCard
-        modernGreek={modern}
-        ancientContext={ancient}
-        englishTranslation={english}
-        index={index}
-        total={data.length}
-        width={width}
-        height={containerHeight}
-      />
+      <View style={{ width: width, alignItems: 'center' }}>
+        <PhilologyCard
+          modernGreek={modern}
+          targetTokens={tokens}
+          ancientContext={ancient}
+          englishTranslation={english}
+          index={index}
+          total={data.length}
+        />
+      </View>
     );
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Button mode="text" onPress={() => router.back()} icon="arrow-left">Back</Button>
-        <Text variant="titleMedium">The Scroll</Text>
-        {isFilling && <ActivityIndicator size="small" color={theme.colors.primary} />}
+        <Button mode="text" onPress={() => router.back()} icon="arrow-left" textColor={theme.colors.onSurface}>
+          Back
+        </Button>
+        <Text variant="titleMedium" style={styles.headerTitle}>The Scroll</Text>
+        {isFilling && <ActivityIndicator animating={true} size="small" />}
       </View>
 
-      <View style={styles.listContainer} onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}>
-          <FlatList
-            data={data}
-            renderItem={renderItem}
-            keyExtractor={(_, index) => index.toString()}
-            pagingEnabled
-            snapToAlignment="start"
-            decelerationRate="fast"
-            showsVerticalScrollIndicator={false}
-          />
+      <View style={styles.listContainer}>
+        <FlatList
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={(_, index) => index.toString()}
+          horizontal
+          pagingEnabled
+          snapToAlignment="center"
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingVertical: 20 }}
+        />
       </View>
     </SafeAreaView>
   );
@@ -106,11 +114,7 @@ export default function ResultsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 8,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 8 },
+  headerTitle: { fontWeight: 'bold', opacity: 0.7 },
   listContainer: { flex: 1 },
 });

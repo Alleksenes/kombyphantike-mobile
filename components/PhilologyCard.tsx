@@ -1,154 +1,62 @@
-import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import { Text, Surface, useTheme } from 'react-native-paper';
+import { Dimensions, Text, View } from 'react-native';
+import WordChip, { Token } from './WordChip'; // <--- This works because they are neighbors
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.85;
 
 interface PhilologyCardProps {
   modernGreek: string;
+  targetTokens?: Token[];
   ancientContext: string;
   englishTranslation: string;
   index: number;
   total: number;
-  width: number;
-  height: number;
 }
 
 export default function PhilologyCard({
   modernGreek,
+  targetTokens,
   ancientContext,
   englishTranslation,
   index,
-  total,
-  width,
-  height
+  total
 }: PhilologyCardProps) {
-  const theme = useTheme();
+
+  const handleWordPress = (token: Token) => {
+    console.log("Touched Token:", token);
+  };
 
   return (
-    <View style={[styles.container, { width, height }]}>
-      <Surface style={styles.card} elevation={4}>
+    <View
+      className="bg-[#F8F5F2] rounded-3xl p-6 mr-4 shadow-sm border border-gray-200"
+      style={{ width: CARD_WIDTH, height: 500 }}
+    >
+      <View className="flex-row justify-between mb-4">
+        <Text className="text-xs font-bold tracking-widest text-gray-400 uppercase">Knot</Text>
+        <Text className="text-xs text-gray-400">{index + 1} / {total}</Text>
+      </View>
 
-        {/* Decorative Header Line */}
-        <View style={styles.decorativeLine} />
+      <View className="mb-8 border-l-2 border-yellow-600 pl-4">
+        <Text className="text-lg font-serif italic text-gray-800 opacity-80 leading-7">
+          {ancientContext}
+        </Text>
+      </View>
 
-        {/* Top: Modern Greek */}
-        <View style={styles.topSection}>
-          <Text
-            variant="displaySmall"
-            style={[styles.modernGreek, { color: theme.colors.primary }]}
-            numberOfLines={5}
-            adjustsFontSizeToFit
-          >
-            {modernGreek}
-          </Text>
+      <View className="flex-1 justify-center">
+        <View className="flex-row flex-wrap items-end">
+          {targetTokens && targetTokens.length > 0 ? (
+            targetTokens.map((token, idx) => (
+              <WordChip key={`${token.text}-${idx}`} token={token} onPress={handleWordPress} />
+            ))
+          ) : (
+            <Text className="text-2xl font-bold text-gray-900 leading-9">{modernGreek}</Text>
+          )}
         </View>
+      </View>
 
-        {/* Middle: Ancient Context (The Ghost) */}
-        <View style={styles.middleSection}>
-          <Text
-            style={[styles.ancientContext, { color: theme.colors.onSurfaceVariant }]}
-          >
-            {ancientContext}
-          </Text>
-        </View>
-
-        {/* Bottom: English Translation */}
-        <View style={styles.bottomSection}>
-           <Text style={styles.translationLabel}>TRANSLATION</Text>
-          <Text
-            variant="bodyLarge"
-            style={[styles.englishTranslation, { color: theme.colors.secondary }]}
-          >
-            {englishTranslation}
-          </Text>
-        </View>
-
-        <View style={styles.footer}>
-          <Text variant="labelSmall" style={{ color: theme.colors.outline, letterSpacing: 2 }}>
-            {index + 1} / {total}
-          </Text>
-        </View>
-      </Surface>
+      <View className="mt-8 pt-4 border-t border-gray-100">
+        <Text className="text-base text-gray-700">{englishTranslation}</Text>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
-  card: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8, // More paper-like, less round
-    padding: 32,
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    // Paper texture effect simulation (subtle borders)
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  decorativeLine: {
-      width: 40,
-      height: 4,
-      backgroundColor: '#E0E0E0',
-      alignSelf: 'center',
-      borderRadius: 2,
-      marginBottom: 16,
-      opacity: 0.5,
-  },
-  topSection: {
-    flex: 2,
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  modernGreek: {
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 42,
-  },
-  middleSection: {
-    flex: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
-    marginVertical: 16,
-  },
-  ancientContext: {
-    fontFamily: Platform.select({ ios: 'Times New Roman', android: 'serif', default: 'serif' }),
-    fontStyle: 'italic',
-    fontSize: 22,
-    textAlign: 'center',
-    lineHeight: 34,
-    opacity: 0.6, // "Fade" effect
-  },
-  bottomSection: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingTop: 16,
-  },
-  translationLabel: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      letterSpacing: 1.5,
-      opacity: 0.4,
-      marginBottom: 8,
-  },
-  englishTranslation: {
-    textAlign: 'left',
-    fontWeight: '500',
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 32,
-    right: 32,
-  }
-});
