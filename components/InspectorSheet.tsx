@@ -16,6 +16,7 @@ const parseParadigm = (paradigm: { form: string; tags: string }[]) => {
   };
 
   paradigm.forEach((entry) => {
+    if (typeof entry.tags !== 'string') return;
     const tags = entry.tags.toLowerCase();
     const number = tags.includes('plural') ? 'Plural' : tags.includes('singular') ? 'Singular' : null;
 
