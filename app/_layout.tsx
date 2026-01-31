@@ -2,8 +2,9 @@ import '../global.css';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
-import { MD3LightTheme as DefaultTheme, PaperProvider, configureFonts } from 'react-native-paper';
+import { MD3LightTheme as DefaultTheme, MD3DarkTheme, PaperProvider, configureFonts } from 'react-native-paper';
 import { useEffect } from 'react';
+import { useColorScheme } from 'nativewind';
 import { initDatabase } from '../src/services/Database';
 
 const baseFont = Platform.select({
@@ -30,28 +31,47 @@ const fontConfig = {
   bodySmall: { fontFamily: baseFont },
 };
 
-const theme = {
+const lightTheme = {
   ...DefaultTheme,
   fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...DefaultTheme.colors,
-    primary: '#2A2A2A', // Dark aesthetic
-    secondary: '#625B71',
-    tertiary: '#7D5260',
-    background: '#F8F5F2', // Soft paper-like off-white
+    primary: '#2A2A2A', // ink
+    secondary: '#5D4037', // ancient
+    tertiary: '#C5A059', // gold
+    background: '#F8F5F2', // paper
     surface: '#FFFFFF',
-    onSurfaceVariant: 'rgba(0,0,0,0.4)', // Using this for the "Fade" / Ghost text
+    onSurface: '#2A2A2A', // ink
+    onSurfaceVariant: 'rgba(0,0,0,0.4)',
+  },
+};
+
+const darkTheme = {
+  ...MD3DarkTheme,
+  fonts: configureFonts({ config: fontConfig }),
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: '#E5E5E5', // ink (Dark)
+    secondary: '#B39DDB', // ancient (Dark)
+    tertiary: '#C5A059', // gold
+    background: '#232226', // paper (Dark)
+    surface: '#2C2C2C', // slightly lighter than background
+    onSurface: '#E5E5E5', // ink (Dark)
+    onSurfaceVariant: 'rgba(255,255,255,0.4)',
   },
 };
 
 export default function RootLayout() {
+  const { colorScheme } = useColorScheme();
+  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+
   useEffect(() => {
     initDatabase();
   }, []);
 
   return (
     <PaperProvider theme={theme}>
-      <StatusBar style="dark" />
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
