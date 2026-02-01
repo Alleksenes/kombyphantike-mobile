@@ -38,22 +38,18 @@ export default function PhilologyCard({
       className="bg-paper rounded-3xl p-6 mr-4 shadow-sm border border-gray-200 dark:border-gray-700"
       style={{ width: CARD_WIDTH, height: 500 }}
     >
-      <View className="flex-row justify-between mb-4">
+      <View className="flex-row justify-between mb-2">
         <Text className="text-xs font-bold tracking-widest text-gray-400 uppercase">Knot</Text>
         <Text className="text-xs text-gray-400">{index + 1} / {total}</Text>
       </View>
 
-      <View className="mb-6">
-        <Text className="text-base text-ink leading-6">
+      <View className="mb-8">
+        <Text className="text-xl font-bold text-ink leading-7 text-center italic">
           {knot}
         </Text>
       </View>
 
-      <View className="mb-8 border-l-2 border-gold pl-4">
-        <Text className="text-lg font-serif italic text-ancient opacity-80 leading-7">
-          {ancientContext}
-        </Text>
-      </View>
+      {/* Ancient Context removed from here as per redesign */}
 
       <View className="flex-1 justify-center">
         <View className="flex-row flex-wrap items-end">
