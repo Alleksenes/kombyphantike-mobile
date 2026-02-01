@@ -1,59 +1,22 @@
-import React, { useMemo, forwardRef } from 'react';
-import { View, Text } from 'react-native';
+import React, { useMemo, forwardRef, useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Token } from './WordChip';
-
-// Helper to parse paradigm tags
-const parseParadigm = (paradigm: { form: string; tags: string }[]) => {
-  const rowsOrder = ['Nom', 'Gen', 'Acc', 'Voc'];
-  const result: Record<string, { Singular: string; Plural: string }> = {};
-
-  // Initialize all required rows
-  rowsOrder.forEach((r) => {
-    result[r] = { Singular: '-', Plural: '-' };
-  });
-
-  const casesMap: Record<string, string> = {
-    nominative: 'Nom',
-    genitive: 'Gen',
-    accusative: 'Acc',
-    vocative: 'Voc',
-    // Dative is excluded
-  };
-
-  paradigm.forEach((entry) => {
-    if (typeof entry.tags !== 'string') return;
-    const tags = entry.tags.toLowerCase();
-    const number = tags.includes('plural') ? 'Plural' : tags.includes('singular') ? 'Singular' : null;
-
-    let caseLabel = null;
-    for (const [key, label] of Object.entries(casesMap)) {
-      if (tags.includes(key)) {
-        caseLabel = label;
-        break;
-      }
-    }
-
-    if (number && caseLabel && result[caseLabel]) {
-      result[caseLabel][number] = entry.form;
-    }
-  });
-
-  return rowsOrder.map((label) => ({
-    caseName: label,
-    forms: result[label],
-  }));
-};
+import ParadigmGrid from './ParadigmGrid';
 
 interface InspectorSheetProps {
   selectedToken: Token | null;
   ancientContext: string;
 }
 
+type TabType = 'grammar' | 'context' | 'table';
+
 const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
   ({ selectedToken, ancientContext }, ref) => {
     const { colorScheme } = useColorScheme();
+    const [activeTab, setActiveTab] = useState<TabType>('grammar');
+
     // Snap points for the bottom sheet
     const snapPoints = useMemo(() => ['45%', '70%'], []);
 
@@ -68,21 +31,46 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
     const bgPaper = colorScheme === 'dark' ? '#232226' : '#F8F5F2';
     const indicatorColor = colorScheme === 'dark' ? '#B39DDB' : '#5D4037';
+    const activeTabColor = colorScheme === 'dark' ? '#B39DDB' : '#5D4037';
+    const inactiveTabColor = colorScheme === 'dark' ? '#555' : '#999';
 
-    return (
-      <BottomSheet
-        ref={ref}
-        index={-1} // Closed by default
-        snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        backgroundStyle={{ backgroundColor: bgPaper }}
-        handleIndicatorStyle={{ backgroundColor: indicatorColor }}
-      >
-        <BottomSheetView className="flex-1 px-6 pt-2 pb-6">
-          {selectedToken ? (
+    const renderTabHeader = () => (
+      <View className="flex-row border-b border-gray-200 dark:border-gray-700 mb-4">
+        {(['grammar', 'context', 'table'] as TabType[]).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            className="flex-1 pb-3 items-center"
+            style={{
+              borderBottomWidth: activeTab === tab ? 2 : 0,
+              borderBottomColor: activeTab === tab ? activeTabColor : 'transparent',
+            }}
+          >
+            <Text
+              style={{
+                color: activeTab === tab ? activeTabColor : inactiveTabColor,
+                fontWeight: activeTab === tab ? 'bold' : 'normal',
+                textTransform: 'uppercase',
+                fontSize: 12,
+                letterSpacing: 1,
+              }}
+            >
+              {tab}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+
+    const renderContent = () => {
+      if (!selectedToken) return null;
+
+      switch (activeTab) {
+        case 'grammar':
+          return (
             <View className="flex-1 gap-4">
-              {/* Header: The Word */}
-              <View>
+               {/* Header: The Word */}
+               <View>
                 <Text className="text-4xl font-bold text-ink mb-1">
                   {selectedToken.text}
                 </Text>
@@ -91,7 +79,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
               {/* Row 1: Badges */}
               <View className="flex-row flex-wrap">
                 {selectedToken.pos && renderBadge(selectedToken.pos)}
-                {/* Parse morphological tags if available (assuming tag string like "N-G-P") */}
+                {/* Parse morphological tags if available */}
                 {selectedToken.tag && selectedToken.tag.split('-').map((t, i) => (
                   <View key={i}>{renderBadge(t, true)}</View>
                 ))}
@@ -106,68 +94,51 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                   {selectedToken.lemma}
                 </Text>
               </View>
-
-              {/* Row 3: The Context */}
-              <View className="mt-4 p-4 bg-yellow-50/50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100/50 dark:border-yellow-700/30">
-                <Text className="text-xs font-bold text-gold uppercase mb-2 tracking-widest">
-                  Context
-                </Text>
-                <Text className="text-lg text-ancient italic font-serif leading-7">
-                  {ancientContext}
-                </Text>
-              </View>
-
-              {/* Row 4: Paradigm (If Available) */}
-              {selectedToken.has_paradigm && selectedToken.paradigm && (
-                <View className="mt-4 p-4 rounded-xl bg-ink dark:bg-gray-800 border border-transparent dark:border-gray-700">
-                  <Text className="text-xs font-bold text-paper dark:text-gray-300 uppercase mb-4 tracking-widest">
-                    Paradigm
-                  </Text>
-
-                  {/* Grid Header */}
-                  <View className="flex-row mb-2 border-b border-gray-600 dark:border-gray-700 pb-2">
-                    <View style={{ width: 50 }} />
-                    <Text className="flex-1 text-center font-bold text-gray-400 dark:text-gray-500 text-xs uppercase">Singular</Text>
-                    <Text className="flex-1 text-center font-bold text-gray-400 dark:text-gray-500 text-xs uppercase">Plural</Text>
-                  </View>
-
-                  {/* Grid Body */}
-                  <View>
-                    {parseParadigm(selectedToken.paradigm).map(({ caseName, forms }, idx) => {
-                      const isSingularMatch = forms.Singular === selectedToken.text;
-                      const isPluralMatch = forms.Plural === selectedToken.text;
-
-                      return (
-                        <View key={idx} className="flex-row items-center py-2 border-b border-gray-800 dark:border-gray-700 last:border-0">
-                          {/* Case Label */}
-                          <View style={{ width: 50 }}>
-                            <Text className="text-gray-500 dark:text-gray-400 font-bold text-xs uppercase">{caseName}</Text>
-                          </View>
-
-                          {/* Singular */}
-                          <View className="flex-1 items-center justify-center px-1">
-                             <View className={`px-2 py-1 rounded ${isSingularMatch ? 'border border-gold bg-gold/20' : ''}`}>
-                                <Text className={`text-base ${isSingularMatch ? 'text-gold font-bold' : 'text-paper dark:text-gray-200'}`}>
-                                  {forms.Singular}
-                                </Text>
-                             </View>
-                          </View>
-
-                          {/* Plural */}
-                          <View className="flex-1 items-center justify-center px-1">
-                            <View className={`px-2 py-1 rounded ${isPluralMatch ? 'border border-gold bg-gold/20' : ''}`}>
-                                <Text className={`text-base ${isPluralMatch ? 'text-gold font-bold' : 'text-paper dark:text-gray-200'}`}>
-                                  {forms.Plural}
-                                </Text>
-                             </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
+            </View>
+          );
+        case 'context':
+          return (
+            <View className="mt-4 p-4 bg-yellow-50/50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100/50 dark:border-yellow-700/30">
+              <Text className="text-xs font-bold text-gold uppercase mb-2 tracking-widest">
+                Ancient Context
+              </Text>
+              <Text className="text-lg text-ancient italic font-serif leading-7">
+                {ancientContext || "No citation available."}
+              </Text>
+            </View>
+          );
+        case 'table':
+          return (
+            <View className="mt-2">
+              {selectedToken.has_paradigm && selectedToken.paradigm ? (
+                <ParadigmGrid paradigm={selectedToken.paradigm} highlightForm={selectedToken.text} />
+              ) : (
+                <View className="p-4 items-center justify-center">
+                  <Text className="text-gray-400 italic">No paradigm available for this word.</Text>
                 </View>
               )}
             </View>
+          );
+      }
+    };
+
+    return (
+      <BottomSheet
+        ref={ref}
+        index={-1} // Closed by default
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        backgroundStyle={{ backgroundColor: bgPaper }}
+        handleIndicatorStyle={{ backgroundColor: indicatorColor }}
+      >
+        <BottomSheetView className="flex-1 px-6 pt-2 pb-6">
+          {selectedToken ? (
+            <>
+              {renderTabHeader()}
+              <View className="flex-1">
+                {renderContent()}
+              </View>
+            </>
           ) : (
              <View className="flex-1 justify-center items-center">
                 <Text className="text-gray-400">Select a word to inspect</Text>
