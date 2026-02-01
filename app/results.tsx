@@ -12,6 +12,7 @@ import { Token } from '../components/WordChip';
 // Import the store
 import { SessionStore } from '../services/SessionStore';
 import { saveSession } from '../src/services/Database';
+import { generateId } from '../utils/generateId';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -36,11 +37,17 @@ export default function ResultsScreen() {
 
     if (draft && Array.isArray(draft)) {
       console.log("Loaded Draft from Store:", draft.length, "items");
-      setData(draft);
+
+      // Assign unique IDs if missing
+      const draftWithIds = draft.map((item: any) => ({
+        ...item,
+        id: item.id || generateId()
+      }));
+      setData(draftWithIds);
 
       // 2. Trigger AI Fill (The Slow Part)
       if (!isFilled) {
-        fillCurriculum(draft, instructions);
+        fillCurriculum(draftWithIds, instructions);
       } else {
         console.log("Loaded fully filled curriculum from history.");
       }
@@ -70,13 +77,20 @@ export default function ResultsScreen() {
       const result = await response.json();
 
       // 3. Update UI with filled sentences
-      if (result.worksheet_data) {
+      if (result.worksheet_data && Array.isArray(result.worksheet_data)) {
         console.log("AI Generation Complete.");
-        setData(result.worksheet_data);
+
+        // Preserve IDs from the draft (assuming order is preserved)
+        const filledWithIds = result.worksheet_data.map((item: any, index: number) => ({
+          ...item,
+          id: draftData[index]?.id || generateId()
+        }));
+
+        setData(filledWithIds);
 
         // Save to DB
         const currentTheme = SessionStore.getTheme() || "Unknown Theme";
-        saveSession(currentTheme, result.worksheet_data);
+        saveSession(currentTheme, filledWithIds);
       }
     } catch (e) {
       console.error("AI Fill Failed", e);
@@ -138,7 +152,7 @@ export default function ResultsScreen() {
           <FlatList
             data={data}
             renderItem={renderItem}
-            keyExtractor={(_, index) => index.toString()}
+            keyExtractor={(item) => item.id}
             horizontal
             pagingEnabled
             snapToAlignment="center"
