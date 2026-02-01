@@ -55,8 +55,7 @@ const parseNounParadigm = (paradigm: ParadigmEntry[]) => {
   }));
 };
 
-// Parse logic for Verbs
-const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
+onst parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
   // Structure: Tense -> Person (1,2,3) -> { Singular: string, Plural: string }
   const result: Record<string, Record<string, { Singular: string; Plural: string }>> = {
     Present: {},
@@ -168,22 +167,22 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
                   <Text className={labelTextClass}>{person}</Text>
                 </View>
 
-                 {/* Singular */}
+                {/* Singular */}
                 <View className="flex-1 items-center justify-center px-1">
-                   <View className={`px-3 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                      <Text className={isSingularMatch ? 'text-gold font-bold' : cellTextClass}>
-                        {forms.Singular}
-                      </Text>
-                   </View>
+                  <View className={`px-3 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
+                    <Text className={isSingularMatch ? 'text-gold font-bold' : cellTextClass}>
+                      {forms.Singular}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Plural */}
                 <View className="flex-1 items-center justify-center px-1">
                   <View className={`px-3 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                      <Text className={isPluralMatch ? 'text-gold font-bold' : cellTextClass}>
-                        {forms.Plural}
-                      </Text>
-                   </View>
+                    <Text className={isPluralMatch ? 'text-gold font-bold' : cellTextClass}>
+                      {forms.Plural}
+                    </Text>
+                  </View>
                 </View>
               </View>
             );
@@ -224,20 +223,20 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
 
               {/* Singular */}
               <View className="flex-1 items-center justify-center px-1">
-                 <View className={`px-3 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                    <Text className={isSingularMatch ? 'text-gold font-bold' : cellTextClass}>
-                      {forms.Singular}
-                    </Text>
-                 </View>
+                <View className={`px-3 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
+                  <Text className={isSingularMatch ? 'text-gold font-bold' : cellTextClass}>
+                    {forms.Singular}
+                  </Text>
+                </View>
               </View>
 
               {/* Plural */}
               <View className="flex-1 items-center justify-center px-1">
                 <View className={`px-3 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                    <Text className={isPluralMatch ? 'text-gold font-bold' : cellTextClass}>
-                      {forms.Plural}
-                    </Text>
-                 </View>
+                  <Text className={isPluralMatch ? 'text-gold font-bold' : cellTextClass}>
+                    {forms.Plural}
+                  </Text>
+                </View>
               </View>
             </View>
           );
