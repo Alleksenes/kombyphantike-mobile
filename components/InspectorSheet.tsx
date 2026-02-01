@@ -10,7 +10,7 @@ interface InspectorSheetProps {
   ancientContext: string;
 }
 
-type TabType = 'grammar' | 'context' | 'table';
+type TabType = 'grammar' | 'context' | 'family';
 
 const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
   ({ selectedToken, ancientContext }, ref) => {
@@ -36,7 +36,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
     const renderTabHeader = () => (
       <View className="flex-row border-b border-gray-200 dark:border-gray-700 mb-4">
-        {(['grammar', 'context', 'table'] as TabType[]).map((tab) => (
+        {(['grammar', 'context', 'family'] as TabType[]).map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => setActiveTab(tab)}
@@ -107,11 +107,15 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
               </Text>
             </View>
           );
-        case 'table':
+        case 'family':
           return (
             <View className="mt-2">
               {selectedToken.has_paradigm && selectedToken.paradigm ? (
-                <ParadigmGrid paradigm={selectedToken.paradigm} highlightForm={selectedToken.text} />
+                <ParadigmGrid
+                  paradigm={selectedToken.paradigm}
+                  highlightForm={selectedToken.text}
+                  pos={selectedToken.pos}
+                />
               ) : (
                 <View className="p-4 items-center justify-center">
                   <Text className="text-gray-400 italic">No paradigm available for this word.</Text>
