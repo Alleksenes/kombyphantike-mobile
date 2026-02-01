@@ -22,12 +22,13 @@ export default function HistoryScreen() {
 
   const handleSessionPress = (item: any) => {
     try {
-      const parsedData = JSON.parse(item.json_data);
-      SessionStore.setDraft(parsedData, true); // true = already filled
+      // PERF: Pass raw JSON string to store to avoid blocking UI thread with JSON.parse
+      // The Results screen will handle parsing.
+      SessionStore.setDraft(item.json_data, true); // true = already filled
       SessionStore.setTheme(item.theme);
       router.push("/results");
     } catch (e) {
-      console.error("Failed to parse session data", e);
+      console.error("Failed to set session data", e);
     }
   };
 
