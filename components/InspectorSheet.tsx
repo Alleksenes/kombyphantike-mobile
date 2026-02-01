@@ -57,6 +57,13 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
     // Snap points for the bottom sheet
     const snapPoints = useMemo(() => ['45%', '70%'], []);
 
+    const parsedParadigm = useMemo(() => {
+      if (selectedToken?.paradigm) {
+        return parseParadigm(selectedToken.paradigm);
+      }
+      return [];
+    }, [selectedToken]);
+
     // Helper to render a badge
     const renderBadge = (label: string, isMorph: boolean = false) => (
       <View className={`px-2 py-1 rounded mr-2 ${isMorph ? 'bg-orange-100 dark:bg-orange-900' : 'bg-gray-200 dark:bg-gray-700'}`}>
@@ -133,7 +140,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
                   {/* Grid Body */}
                   <View>
-                    {parseParadigm(selectedToken.paradigm).map(({ caseName, forms }, idx) => {
+                    {parsedParadigm.map(({ caseName, forms }, idx) => {
                       const isSingularMatch = forms.Singular === selectedToken.text;
                       const isPluralMatch = forms.Plural === selectedToken.text;
 
