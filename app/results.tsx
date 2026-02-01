@@ -30,9 +30,21 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     // 1. Load Draft from Store immediately
-    const draft = SessionStore.getDraft();
+    let draft = SessionStore.getDraft();
     const instructions = SessionStore.getInstructions();
     const isFilled = SessionStore.isFilled();
+
+    // PERF: Handle lazy parsing if draft was passed as a string (from History)
+    if (typeof draft === 'string') {
+      try {
+        draft = JSON.parse(draft);
+        // Update store with parsed object to maintain consistency for other consumers
+        SessionStore.setDraft(draft, isFilled);
+      } catch (e) {
+        console.error("Failed to parse draft from store", e);
+        draft = [];
+      }
+    }
 
     if (draft && Array.isArray(draft)) {
       console.log("Loaded Draft from Store:", draft.length, "items");
