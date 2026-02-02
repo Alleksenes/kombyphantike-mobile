@@ -8,7 +8,9 @@ export interface Token {
   dep?: string;
   is_alpha?: boolean;
   has_paradigm?: boolean;
-  paradigm?: { form: string; tags: string }[];
+  paradigm?: { form: string; tags: string[] }[];
+  ancient_context?: string;
+  definition?: string;
 }
 
 interface WordChipProps {

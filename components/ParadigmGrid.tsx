@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 
 interface ParadigmEntry {
   form: string;
-  tags: string;
+  tags: string[];
 }
 
 interface ParadigmGridProps {
@@ -12,50 +12,57 @@ interface ParadigmGridProps {
   pos?: string;
 }
 
+// Helper to find a form matching ALL required tags (case-insensitive)
+const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => {
+  console.log("Searching for:", requiredTags, "In:", paradigm);
+
+  const normalizedRequired = requiredTags.map(t => t.toLowerCase());
+
+  const match = paradigm.find(entry => {
+    // Ensure entry.tags is an array
+    if (!Array.isArray(entry.tags)) return false;
+
+    const entryTags = entry.tags.map(t => t.toLowerCase());
+    // Check if ALL required tags are present in entryTags
+    const isMatch = normalizedRequired.every(req => entryTags.includes(req));
+
+    // Log for debugging (optional, can be noisy)
+    // if (isMatch) console.log("Match found:", entry.form);
+
+    return isMatch;
+  });
+
+  if (match) {
+    console.log("Found match:", match.form, "for tags:", requiredTags);
+    return match.form;
+  }
+
+  return '-';
+};
+
 // Parse logic for Nouns
 const parseNounParadigm = (paradigm: ParadigmEntry[]) => {
   const rowsOrder = ['Nom', 'Gen', 'Acc', 'Voc'];
-  const result: Record<string, { Singular: string; Plural: string }> = {};
-
-  // Initialize all required rows
-  rowsOrder.forEach((r) => {
-    result[r] = { Singular: '-', Plural: '-' };
-  });
-
   const casesMap: Record<string, string> = {
-    nominative: 'Nom',
-    genitive: 'Gen',
-    accusative: 'Acc',
-    vocative: 'Voc',
-    // Dative is excluded as per previous logic
+    'Nom': 'nominative',
+    'Gen': 'genitive',
+    'Acc': 'accusative',
+    'Voc': 'vocative',
   };
 
-  paradigm.forEach((entry) => {
-    if (typeof entry.tags !== 'string') return;
-    const tags = entry.tags.toLowerCase();
-    const number = (tags.includes('plural') || tags.includes('plur')) ? 'Plural'
-      : (tags.includes('singular') || tags.includes('sing')) ? 'Singular' : null;
-
-    let caseLabel = null;
-    for (const [key, label] of Object.entries(casesMap)) {
-      if (tags.includes(key)) {
-        caseLabel = label;
-        break;
-      }
-    }
-
-    if (number && caseLabel && result[caseLabel]) {
-      result[caseLabel][number] = entry.form;
-    }
+  return rowsOrder.map((label) => {
+    const caseTag = casesMap[label];
+    return {
+      label,
+      forms: {
+        Singular: findForm(paradigm, [caseTag, 'singular']),
+        Plural: findForm(paradigm, [caseTag, 'plural']),
+      },
+    };
   });
-
-  return rowsOrder.map((label) => ({
-    label,
-    forms: result[label],
-  }));
 };
 
-onst parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
+const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
   // Structure: Tense -> Person (1,2,3) -> { Singular: string, Plural: string }
   const result: Record<string, Record<string, { Singular: string; Plural: string }>> = {
     Present: {},
@@ -63,39 +70,32 @@ onst parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
     Future: {}
   };
 
-  // Initialize rows for each tense
+  const tenseMap: Record<string, string[]> = {
+    Present: ['pres', 'present'],
+    Past: ['past', 'aor', 'imp', 'perf', 'imperfect', 'aorist', 'perfect'],
+    Future: ['fut', 'future'],
+  };
+
   ['Present', 'Past', 'Future'].forEach(tense => {
+    const possibleTenseTags = tenseMap[tense];
+
     ['1', '2', '3'].forEach(person => {
-      result[tense][person] = { Singular: '-', Plural: '-' };
+      // We need to find a form that has (One of possibleTenseTags) + Person + Number
+      // Since findForm requires ALL tags, we iterate possible tense tags until we find a match
+
+      const findForNumber = (number: string) => {
+        for (const tenseTag of possibleTenseTags) {
+            const form = findForm(paradigm, [tenseTag, person, number]);
+            if (form !== '-') return form;
+        }
+        return '-';
+      };
+
+      result[tense][person] = {
+        Singular: findForNumber('singular'),
+        Plural: findForNumber('plural')
+      };
     });
-  });
-
-  paradigm.forEach(entry => {
-    if (typeof entry.tags !== 'string') return;
-    const tags = entry.tags.toLowerCase();
-
-    // Determine Tense
-    let tense = null;
-    if (tags.includes('fut')) tense = 'Future';
-    else if (tags.includes('past') || tags.includes('aor') || tags.includes('imp') || tags.includes('perf')) tense = 'Past';
-    else if (tags.includes('pres')) tense = 'Present';
-
-    // Fallback or skip if tense not found
-    if (!tense) return;
-
-    // Determine Person
-    let person = null;
-    if (tags.includes('1')) person = '1';
-    else if (tags.includes('2')) person = '2';
-    else if (tags.includes('3')) person = '3';
-
-    // Determine Number
-    const number = (tags.includes('plural') || tags.includes('plur')) ? 'Plural'
-      : (tags.includes('singular') || tags.includes('sing')) ? 'Singular' : null;
-
-    if (tense && person && number) {
-      result[tense][person][number] = entry.form;
-    }
   });
 
   return result;
