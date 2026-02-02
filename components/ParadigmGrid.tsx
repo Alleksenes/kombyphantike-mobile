@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 
 interface ParadigmEntry {
   form: string;
-  tags: string;
+  tags: string[];
 }
 
 interface ParadigmGridProps {
@@ -12,50 +12,38 @@ interface ParadigmGridProps {
   pos?: string;
 }
 
+// Helper function to find a form with specific tags
+const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => {
+  console.log("Searching for:", requiredTags, "In:", paradigm);
+
+  const match = paradigm.find(entry => {
+    if (!Array.isArray(entry.tags)) return false;
+    const entryTags = entry.tags.map(t => t.toLowerCase());
+    return requiredTags.every(req => entryTags.includes(req.toLowerCase()));
+  });
+
+  return match ? match.form : '-';
+};
+
 // Parse logic for Nouns
 const parseNounParadigm = (paradigm: ParadigmEntry[]) => {
-  const rowsOrder = ['Nom', 'Gen', 'Acc', 'Voc'];
-  const result: Record<string, { Singular: string; Plural: string }> = {};
+  const rowsOrder = [
+    { label: 'Nom', tags: ['nominative'] },
+    { label: 'Gen', tags: ['genitive'] },
+    { label: 'Acc', tags: ['accusative'] },
+    { label: 'Voc', tags: ['vocative'] },
+  ];
 
-  // Initialize all required rows
-  rowsOrder.forEach((r) => {
-    result[r] = { Singular: '-', Plural: '-' };
-  });
-
-  const casesMap: Record<string, string> = {
-    nominative: 'Nom',
-    genitive: 'Gen',
-    accusative: 'Acc',
-    vocative: 'Voc',
-    // Dative is excluded as per previous logic
-  };
-
-  paradigm.forEach((entry) => {
-    if (typeof entry.tags !== 'string') return;
-    const tags = entry.tags.toLowerCase();
-    const number = (tags.includes('plural') || tags.includes('plur')) ? 'Plural'
-      : (tags.includes('singular') || tags.includes('sing')) ? 'Singular' : null;
-
-    let caseLabel = null;
-    for (const [key, label] of Object.entries(casesMap)) {
-      if (tags.includes(key)) {
-        caseLabel = label;
-        break;
-      }
-    }
-
-    if (number && caseLabel && result[caseLabel]) {
-      result[caseLabel][number] = entry.form;
-    }
-  });
-
-  return rowsOrder.map((label) => ({
-    label,
-    forms: result[label],
+  return rowsOrder.map((row) => ({
+    label: row.label,
+    forms: {
+      Singular: findForm(paradigm, [...row.tags, 'singular']),
+      Plural: findForm(paradigm, [...row.tags, 'plural']),
+    },
   }));
 };
 
-onst parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
+const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
   // Structure: Tense -> Person (1,2,3) -> { Singular: string, Plural: string }
   const result: Record<string, Record<string, { Singular: string; Plural: string }>> = {
     Present: {},
@@ -63,39 +51,42 @@ onst parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
     Future: {}
   };
 
-  // Initialize rows for each tense
-  ['Present', 'Past', 'Future'].forEach(tense => {
-    ['1', '2', '3'].forEach(person => {
+  const tenses = ['Present', 'Past', 'Future'];
+  const persons = ['1', '2', '3'];
+  const numbers = ['Singular', 'Plural'];
+
+  // Map UI Tense to Backend Tags
+  // Past can be 'past', 'aorist', 'imperfect', 'perfect'
+  const tenseMap: Record<string, string[]> = {
+    Present: ['present'],
+    Future: ['future'],
+  };
+
+  const pastTenseCandidates = ['past', 'aorist', 'imperfect', 'perfect', 'pluperfect'];
+
+  tenses.forEach(tense => {
+    persons.forEach(person => {
+      // Initialize
       result[tense][person] = { Singular: '-', Plural: '-' };
+
+      numbers.forEach(number => {
+        let form = '-';
+
+        if (tense === 'Past') {
+          // Iterate through candidate past tags until we find a match
+          for (const pastTag of pastTenseCandidates) {
+            form = findForm(paradigm, [pastTag, person, number]);
+            if (form !== '-') break;
+          }
+        } else {
+          // For Present and Future, use the mapped tag
+          const tenseTag = tenseMap[tense][0]; // Assuming single tag for now
+          form = findForm(paradigm, [tenseTag, person, number]);
+        }
+
+        result[tense][person][number] = form;
+      });
     });
-  });
-
-  paradigm.forEach(entry => {
-    if (typeof entry.tags !== 'string') return;
-    const tags = entry.tags.toLowerCase();
-
-    // Determine Tense
-    let tense = null;
-    if (tags.includes('fut')) tense = 'Future';
-    else if (tags.includes('past') || tags.includes('aor') || tags.includes('imp') || tags.includes('perf')) tense = 'Past';
-    else if (tags.includes('pres')) tense = 'Present';
-
-    // Fallback or skip if tense not found
-    if (!tense) return;
-
-    // Determine Person
-    let person = null;
-    if (tags.includes('1')) person = '1';
-    else if (tags.includes('2')) person = '2';
-    else if (tags.includes('3')) person = '3';
-
-    // Determine Number
-    const number = (tags.includes('plural') || tags.includes('plur')) ? 'Plural'
-      : (tags.includes('singular') || tags.includes('sing')) ? 'Singular' : null;
-
-    if (tense && person && number) {
-      result[tense][person][number] = entry.form;
-    }
   });
 
   return result;

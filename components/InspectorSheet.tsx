@@ -98,13 +98,28 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
           );
         case 'context':
           return (
-            <View className="mt-4 p-4 bg-yellow-50/50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100/50 dark:border-yellow-700/30">
-              <Text className="text-xs font-bold text-gold uppercase mb-2 tracking-widest">
-                Ancient Context
-              </Text>
-              <Text className="text-lg text-ancient italic font-serif leading-7">
-                {ancientContext || "No citation available."}
-              </Text>
+            <View className="mt-4 gap-4">
+               {/* Definition Section */}
+               {selectedToken.definition && (
+                 <View className="p-4 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <Text className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">
+                      Definition
+                    </Text>
+                    <Text className="text-lg text-ink font-serif leading-6">
+                      {selectedToken.definition}
+                    </Text>
+                 </View>
+               )}
+
+              {/* Ancient Context Section */}
+              <View className="p-4 bg-yellow-50/50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100/50 dark:border-yellow-700/30">
+                <Text className="text-xs font-bold text-gold uppercase mb-2 tracking-widest">
+                  Ancient Context
+                </Text>
+                <Text className="text-lg text-ancient italic font-serif leading-7">
+                  {selectedToken.ancient_context || ancientContext || "No citation available."}
+                </Text>
+              </View>
             </View>
           );
         case 'family':
