@@ -1,8 +1,8 @@
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Button, Text, useTheme, Surface, IconButton } from 'react-native-paper';
+import { FlatList, View, Pressable } from 'react-native';
+import { Text, ActivityIndicator, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { getSessions } from '../src/services/Database';
 import { SessionStore } from '../services/SessionStore';
 
@@ -10,74 +10,105 @@ export default function HistoryScreen() {
   const router = useRouter();
   const theme = useTheme();
   const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadHistory();
+    loadSessions();
   }, []);
 
-  const loadHistory = async () => {
-    const data = await getSessions();
-    setSessions(data);
-  };
-
-  const handleSessionPress = (item: any) => {
+  const loadSessions = async () => {
+    setLoading(true);
     try {
-      // PERF: Pass raw JSON string to store to avoid blocking UI thread with JSON.parse
-      // The Results screen will handle parsing.
-      SessionStore.setDraft(item.json_data, true); // true = already filled
-      SessionStore.setTheme(item.theme);
-      router.push("/results");
+      const data = await getSessions();
+      setSessions(data);
     } catch (e) {
-      console.error("Failed to set session data", e);
+      console.error("Failed to load sessions", e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-    const date = new Date(item.date).toLocaleDateString() + ' ' + new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return (
-      <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
-        <TouchableOpacity onPress={() => handleSessionPress(item)} style={styles.cardContent}>
-            <View>
-                <Text variant="titleMedium" style={{color: theme.colors.primary, fontWeight: 'bold'}}>{item.theme || "Untitled Theme"}</Text>
-                <Text variant="bodySmall" style={{color: theme.colors.onSurfaceVariant}}>{date}</Text>
-            </View>
-            <IconButton icon="chevron-right" iconColor={theme.colors.onSurfaceVariant} />
-        </TouchableOpacity>
-      </Surface>
-    );
+  const handlePress = (session: any) => {
+    // Pass raw string if it is a string. Database.ts saves it as string.
+    SessionStore.setDraft(session.json_data, true);
+    SessionStore.setTheme(session.theme);
+    router.push('/results');
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(date);
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const renderItem = ({ item }: { item: any }) => (
+    <Pressable
+      onPress={() => handlePress(item)}
+      className="mb-4 mx-4 p-4 rounded-lg bg-paper border border-gold/30 active:opacity-70"
+      style={{
+         shadowColor: '#000',
+         shadowOffset: { width: 0, height: 2 },
+         shadowOpacity: 0.1,
+         shadowRadius: 4,
+         elevation: 2,
+      }}
+    >
+      <View className="flex-row justify-between items-center">
+          <View className="flex-1 mr-4">
+            <Text className="text-xl font-bold text-ink mb-1" numberOfLines={1}>
+                {item.theme || "Untitled Scroll"}
+            </Text>
+            <Text className="text-sm text-ancient">
+                {formatDate(item.date)}
+            </Text>
+          </View>
+          <View>
+             <IconButton icon="chevron-right" iconColor={theme.colors.onSurfaceVariant} size={20} />
+          </View>
+      </View>
+    </Pressable>
+  );
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Button mode="text" onPress={() => router.back()} icon="arrow-left" textColor={theme.colors.onSurface}>
-          Back
-        </Button>
-        <Text variant="titleMedium" style={styles.headerTitle}>History</Text>
+    <SafeAreaView className="flex-1 bg-paper" style={{ backgroundColor: theme.colors.background }}>
+      <View className="flex-row items-center justify-between px-2 py-2">
+        <IconButton
+          icon="arrow-left"
+          onPress={() => router.back()}
+          iconColor={theme.colors.onSurface}
+        />
+        <Text variant="headlineSmall" className="font-bold text-ink">
+          Archived Scrolls
+        </Text>
         <View style={{ width: 48 }} />
       </View>
 
-      <FlatList
-        data={sessions}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-                <Text style={{color: theme.colors.onSurfaceVariant}}>No saved curriculums yet.</Text>
+      {loading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={sessions}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}
+          ListEmptyComponent={
+            <View className="flex-1 justify-center items-center mt-20">
+              <Text className="text-ancient text-lg italic">No scrolls found.</Text>
             </View>
-        }
-      />
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 8 },
-  headerTitle: { fontWeight: 'bold', opacity: 0.7 },
-  listContent: { padding: 16 },
-  card: { marginBottom: 12, borderRadius: 12, overflow: 'hidden' },
-  cardContent: { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  emptyContainer: { padding: 40, alignItems: 'center' }
-});
