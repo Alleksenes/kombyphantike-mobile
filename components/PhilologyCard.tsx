@@ -10,6 +10,7 @@ interface PhilologyCardProps {
   ancientContext: string;
   englishTranslation: string;
   knot: string;
+  knotContext?: string;
   index: number;
   total: number;
   onTokenPress?: (token: Token) => void;
@@ -21,6 +22,7 @@ export default function PhilologyCard({
   ancientContext,
   englishTranslation,
   knot,
+  knotContext,
   index,
   total,
   onTokenPress
@@ -45,7 +47,7 @@ export default function PhilologyCard({
 
       <View className="mb-8">
         <Text className="text-xl font-bold text-ink leading-7 text-center italic">
-          {knot}
+          {knotContext || knot}
         </Text>
       </View>
 
