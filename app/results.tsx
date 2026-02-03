@@ -111,6 +111,7 @@ export default function ResultsScreen() {
     const english = item.source_sentence || "Pending translation...";
     const tokens = item.target_tokens || undefined;
     const knot = item.grammar_nuance || item.knot || item.nuance || "Grammar note pending...";
+    const knotContext = item.knot_context;
 
     return (
       <View style={{ width: width, alignItems: 'center' }}>
@@ -120,6 +121,7 @@ export default function ResultsScreen() {
           ancientContext={ancient}
           englishTranslation={english}
           knot={knot}
+          knotContext={knotContext}
           index={index}
           total={data.length}
           onTokenPress={(token) => handleTokenPress(token, ancient)}

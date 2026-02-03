@@ -12,20 +12,59 @@ interface ParadigmGridProps {
   pos?: string;
 }
 
-// Helper function to find a form with specific tags
+// Helper function to find a form with specific tags using a relaxed "best match" scoring
 const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => {
-  // console.log("Searching for:", requiredTags, "In:", paradigm);
+  let bestScore = -1;
+  let bestMatches: string[] = [];
 
-  const matches = paradigm.filter(entry => {
-    if (!Array.isArray(entry.tags)) return false;
+  paradigm.forEach(entry => {
+    if (!Array.isArray(entry.tags)) return;
     const entryTags = entry.tags.map(t => t.toLowerCase());
-    return requiredTags.every(req => entryTags.includes(req.toLowerCase()));
+
+    // Strict requirements: Person and Number
+    // We infer these from requiredTags if they exist there
+    const personTag = requiredTags.find(t => t.includes('person') || ['1', '2', '3'].includes(t));
+    const numberTag = requiredTags.find(t => ['singular', 'plural'].includes(t.toLowerCase()));
+
+    if (personTag) {
+        if (!entryTags.includes(personTag.toLowerCase())) return;
+    }
+    if (numberTag) {
+        if (!entryTags.includes(numberTag.toLowerCase())) return;
+    }
+
+    let score = 0;
+    requiredTags.forEach(tag => {
+        if (tag === personTag || tag === numberTag) return; // Already checked strict
+
+        const lowerTag = tag.toLowerCase();
+
+        if (entryTags.includes(lowerTag)) {
+            // Scoring Strategy
+            if (['present', 'past', 'future', 'aorist'].includes(lowerTag)) {
+                score += 20; // High priority for Tense
+            } else if (['active', 'passive'].includes(lowerTag)) {
+                score += 5;  // Medium priority for Voice
+            } else if (['imperfective', 'perfective'].includes(lowerTag)) {
+                score += 2;  // Low priority for Aspect (often implied or inconsistent)
+            } else {
+                score += 1;
+            }
+        }
+    });
+
+    if (score > bestScore) {
+        bestScore = score;
+        bestMatches = [entry.form];
+    } else if (score === bestScore) {
+        bestMatches.push(entry.form);
+    }
   });
 
-  if (matches.length === 0) return '-';
+  if (bestMatches.length === 0) return '-';
 
   // Deduplicate forms and join
-  const uniqueForms = Array.from(new Set(matches.map(m => m.form)));
+  const uniqueForms = Array.from(new Set(bestMatches));
   return uniqueForms.join(', ');
 };
 
@@ -168,8 +207,8 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
         <View>
           {persons.map((person, idx) => {
             const forms = currentData[person];
-            const isSingularMatch = highlightForm && forms.Singular.includes(highlightForm);
-            const isPluralMatch = highlightForm && forms.Plural.includes(highlightForm);
+            const isSingularMatch = highlightForm && forms.Singular.split(', ').includes(highlightForm);
+            const isPluralMatch = highlightForm && forms.Plural.split(', ').includes(highlightForm);
 
             return (
               <View key={person} className={`flex-row items-center py-3 ${idx < persons.length - 1 ? rowBorderClass : ''}`}>
@@ -221,8 +260,8 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
       {/* Grid Body */}
       <View>
         {nounData.map(({ label, forms }, idx) => {
-          const isSingularMatch = highlightForm && forms.Singular.includes(highlightForm);
-          const isPluralMatch = highlightForm && forms.Plural.includes(highlightForm);
+          const isSingularMatch = highlightForm && forms.Singular.split(', ').includes(highlightForm);
+          const isPluralMatch = highlightForm && forms.Plural.split(', ').includes(highlightForm);
 
           return (
             <View key={idx} className={`flex-row items-center py-3 ${idx < nounData.length - 1 ? rowBorderClass : ''}`}>
