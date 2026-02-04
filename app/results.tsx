@@ -27,6 +27,7 @@ export default function ResultsScreen() {
   // State for Inspector
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [selectedContext, setSelectedContext] = useState<string>('');
+  const [selectedKnotContext, setSelectedKnotContext] = useState<string>('');
 
   useEffect(() => {
     // 1. Load Draft from Store immediately
@@ -97,9 +98,10 @@ export default function ResultsScreen() {
     }
   };
 
-  const handleTokenPress = (token: Token, context: string) => {
+  const handleTokenPress = (token: Token, context: string, knotContext: string) => {
     setSelectedToken(token);
     setSelectedContext(context);
+    setSelectedKnotContext(knotContext);
     // Snap to the first open point (index 0, which is 45%)
     bottomSheetRef.current?.snapToIndex(0);
   };
@@ -124,7 +126,7 @@ export default function ResultsScreen() {
           knotContext={knotContext}
           index={index}
           total={data.length}
-          onTokenPress={(token) => handleTokenPress(token, ancient)}
+          onTokenPress={(token) => handleTokenPress(token, ancient, knotContext)}
         />
       </View>
     );
@@ -166,6 +168,7 @@ export default function ResultsScreen() {
           ref={bottomSheetRef}
           selectedToken={selectedToken}
           ancientContext={selectedContext}
+          knotContext={selectedKnotContext}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

@@ -8,12 +8,13 @@ import ParadigmGrid from './ParadigmGrid';
 interface InspectorSheetProps {
   selectedToken: Token | null;
   ancientContext: string;
+  knotContext?: string;
 }
 
 type TabType = 'grammar' | 'context' | 'family';
 
 const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
-  ({ selectedToken, ancientContext }, ref) => {
+  ({ selectedToken, ancientContext, knotContext }, ref) => {
     const { colorScheme } = useColorScheme();
     const [activeTab, setActiveTab] = useState<TabType>('grammar');
 
@@ -85,12 +86,28 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                 ))}
               </View>
 
-              {/* Row 2: The Soul (Lemma) */}
+              {/* The Knot (Rule Explanation) */}
+              {knotContext ? (
+                 <View className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg mt-2">
+                   <Text className="text-xs font-bold text-gray-500 uppercase mb-1">The Knot</Text>
+                   <Text className="text-sm text-ink leading-5">{knotContext}</Text>
+                 </View>
+               ) : null}
+
+              {/* The Morphology */}
+              {selectedToken.morphology ? (
+                 <View className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg mt-2 border border-orange-100 dark:border-orange-800">
+                   <Text className="text-xs font-bold text-orange-700 dark:text-orange-300 uppercase mb-1">Morphology</Text>
+                   <Text className="text-sm text-ink leading-5">{selectedToken.morphology}</Text>
+                 </View>
+               ) : null}
+
+              {/* The Lemma */}
               <View className="flex-row items-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
                 <Text className="text-sm font-bold text-gray-500 uppercase mr-2 tracking-wider">
-                  Lemma
+                  From:
                 </Text>
-                <Text className="text-2xl font-medium text-ancient font-serif">
+                <Text className="text-xl font-medium text-ancient font-serif italic">
                   {selectedToken.lemma}
                 </Text>
               </View>
