@@ -1,4 +1,7 @@
-import { Dimensions, Text, View } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { Dimensions, Platform, Text, View } from 'react-native';
+import { Audio } from 'expo-av';
+import { ActivityIndicator, IconButton } from 'react-native-paper';
 import WordChip, { Token } from './WordChip'; // <--- This works because they are neighbors
 
 const { width } = Dimensions.get('window');
@@ -27,11 +30,61 @@ export default function PhilologyCard({
   total,
   onTokenPress
 }: PhilologyCardProps) {
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
 
   const handleWordPress = (token: Token) => {
     console.log("Touched Token:", token);
     if (onTokenPress) {
       onTokenPress(token);
+    }
+  };
+
+  const handleSpeak = async () => {
+    if (isLoadingAudio) return;
+    setIsLoadingAudio(true);
+    try {
+      const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+      const response = await fetch(`${baseUrl}/speak`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: modernGreek }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio');
+      }
+
+      const data = await response.json();
+      if (data.audio) {
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync();
+        }
+
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: `data:audio/mp3;base64,${data.audio}` },
+          { shouldPlay: true }
+        );
+        soundRef.current = sound;
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync();
+            soundRef.current = null;
+          }
+        });
+      }
+    } catch (e) {
+      console.error("Audio playback failed", e);
+    } finally {
+      setIsLoadingAudio(false);
     }
   };
 
@@ -62,6 +115,19 @@ export default function PhilologyCard({
           ) : (
             <Text className="text-2xl font-bold text-ink leading-9">{modernGreek}</Text>
           )}
+
+          <View className="ml-2 mb-1 h-8 w-8 justify-center items-center">
+            {isLoadingAudio ? (
+              <ActivityIndicator size={20} />
+            ) : (
+              <IconButton
+                icon="volume-high"
+                size={20}
+                onPress={handleSpeak}
+                style={{ margin: 0 }}
+              />
+            )}
+          </View>
         </View>
       </View>
 
