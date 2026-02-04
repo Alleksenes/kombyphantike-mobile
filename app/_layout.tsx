@@ -79,9 +79,8 @@ export default function RootLayout() {
           animation: 'fade',
         }}
       >
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="results" />
-        <Stack.Screen name="history" />
       </Stack>
     </PaperProvider>
   );

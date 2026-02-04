@@ -3,8 +3,8 @@ import { FlatList, View, Pressable } from 'react-native';
 import { Text, ActivityIndicator, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { getSessions } from '../src/services/Database';
-import { SessionStore } from '../services/SessionStore';
+import { getHistory, getSession } from '../../src/services/Database';
+import { SessionStore } from '../../services/SessionStore';
 
 export default function HistoryScreen() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function HistoryScreen() {
   const loadSessions = async () => {
     setLoading(true);
     try {
-      const data = await getSessions();
+      const data = await getHistory(50, 0); // Fetch top 50
       setSessions(data);
     } catch (e) {
       console.error("Failed to load sessions", e);
@@ -28,11 +28,27 @@ export default function HistoryScreen() {
     }
   };
 
-  const handlePress = (session: any) => {
-    // Pass raw string if it is a string. Database.ts saves it as string.
-    SessionStore.setDraft(session.json_data, true);
-    SessionStore.setTheme(session.theme);
-    router.push('/results');
+  const handlePress = async (session: any) => {
+    // Show loading while fetching full details
+    setLoading(true);
+    try {
+      const fullSession = await getSession(session.id);
+      if (fullSession && fullSession.json_data) {
+         // JSON is stored as string in DB, but SessionStore expects object or string.
+         // Database.ts: saveSession does JSON.stringify.
+         // SessionStore.ts: "if draft is string, parse it".
+         // So passing string is fine.
+         SessionStore.setDraft(fullSession.json_data, true);
+         SessionStore.setTheme(fullSession.theme);
+         router.push('/results');
+      } else {
+        console.error("Session data missing");
+      }
+    } catch (e) {
+      console.error("Failed to open session", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -81,15 +97,9 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView className="flex-1 bg-paper" style={{ backgroundColor: theme.colors.background }}>
       <View className="flex-row items-center justify-between px-2 py-2">
-        <IconButton
-          icon="arrow-left"
-          onPress={() => router.back()}
-          iconColor={theme.colors.onSurface}
-        />
-        <Text variant="headlineSmall" className="font-bold text-ink">
+        <Text variant="headlineSmall" className="font-bold text-ink ml-2">
           Archived Scrolls
         </Text>
-        <View style={{ width: 48 }} />
       </View>
 
       {loading ? (

@@ -45,13 +45,30 @@ export const saveSession = async (theme: string, jsonData: any) => {
     }
 };
 
-export const getSessions = async () => {
+export const getHistory = async (limit: number = 20, offset: number = 0) => {
     if (!db) return [];
     try {
-        const result = await db.getAllAsync('SELECT * FROM sessions ORDER BY date DESC');
+        const result = await db.getAllAsync(
+            'SELECT id, date, theme FROM sessions ORDER BY date DESC LIMIT ? OFFSET ?',
+            [limit, offset]
+        );
         return result;
     } catch (error) {
-        console.error("Error fetching sessions:", error);
+        console.error("Error fetching history:", error);
         return [];
+    }
+};
+
+export const getSession = async (id: number) => {
+    if (!db) return null;
+    try {
+        const result: any = await db.getFirstAsync(
+            'SELECT * FROM sessions WHERE id = ?',
+            [id]
+        );
+        return result;
+    } catch (error) {
+        console.error("Error fetching session:", error);
+        return null;
     }
 };
