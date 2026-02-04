@@ -41,8 +41,8 @@ const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => 
 
         if (entryTags.includes(lowerTag)) {
             // Scoring Strategy
-            if (['present', 'past', 'future', 'aorist'].includes(lowerTag)) {
-                score += 20; // High priority for Tense
+            if (['present', 'past', 'future', 'aorist', 'subjunctive'].includes(lowerTag)) {
+                score += 20; // High priority for Tense/Mood
             } else if (['active', 'passive'].includes(lowerTag)) {
                 score += 5;  // Medium priority for Voice
             } else if (['imperfective', 'perfective'].includes(lowerTag)) {
@@ -93,34 +93,39 @@ const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
     Imperfect: { Active: {}, Passive: {} },
     Aorist: { Active: {}, Passive: {} },
     Future: { Active: {}, Passive: {} },
+    Subjunctive: { Active: {}, Passive: {} },
   };
 
-  const tenses = [
-    { label: 'Present', tags: ['present', 'imperfective'] },
-    { label: 'Imperfect', tags: ['past', 'imperfective'] },
-    { label: 'Aorist', tags: ['past', 'perfective'] },
-    { label: 'Future', tags: ['future'] },
+  const categories = [
+    { label: 'Present', filter: (tags: string[]) => tags.includes('present') && tags.includes('imperfective') },
+    { label: 'Imperfect', filter: (tags: string[]) => tags.includes('past') && tags.includes('imperfective') },
+    { label: 'Aorist', filter: (tags: string[]) => tags.includes('past') && tags.includes('perfective') },
+    { label: 'Future', filter: (tags: string[]) => tags.includes('future') },
+    { label: 'Subjunctive', filter: (tags: string[]) => tags.includes('subjunctive') },
   ];
 
   const voices = ['Active', 'Passive'];
   const persons = ['1', '2', '3'];
   const numbers = ['Singular', 'Plural'];
 
-  tenses.forEach(tense => {
+  categories.forEach(category => {
+    // strict filtering
+    const categoryParadigm = paradigm.filter(entry =>
+      entry.tags && category.filter(entry.tags.map(t => t.toLowerCase()))
+    );
+
     voices.forEach(voice => {
-        // Initialize person objects if not already (it is by default in result structure above but good to be safe if dynamic)
-
         persons.forEach(person => {
-             // Initialize number object
-             result[tense.label][voice][person] = { Singular: '-', Plural: '-' };
+             result[category.label][voice][person] = { Singular: '-', Plural: '-' };
 
-             // Tag mapping
              const personTag = person === '1' ? 'first-person' : person === '2' ? 'second-person' : 'third-person';
              const voiceTag = voice.toLowerCase();
 
              numbers.forEach(number => {
-                 const reqTags = [...tense.tags, voiceTag, personTag, number.toLowerCase()];
-                 result[tense.label][voice][person][number] = findForm(paradigm, reqTags);
+                 // For findForm, we pass the generic tags we want.
+                 // Since we already filtered by Tense/Aspect/Mood, we primarily need Voice/Person/Number.
+                 const reqTags = [voiceTag, personTag, number.toLowerCase()];
+                 result[category.label][voice][person][number] = findForm(categoryParadigm, reqTags);
              });
         });
     });
@@ -134,7 +139,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
   // This ensures words like "ορίζοντας" (participle acting as noun) are treated as Nouns if their POS is NOUN.
   const isVerb = pos === 'VERB' || pos === 'AUX';
 
-  const [activeTense, setActiveTense] = useState<'Present' | 'Imperfect' | 'Aorist' | 'Future'>('Present');
+  const [activeTense, setActiveTense] = useState<'Present' | 'Imperfect' | 'Aorist' | 'Future' | 'Subjunctive'>('Present');
   const [activeVoice, setActiveVoice] = useState<'Active' | 'Passive'>('Active');
 
   // Noir-Velvet Theme: Dark card background, Gold accents, Paper text
@@ -165,15 +170,15 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
         </View>
 
         {/* Tense Tabs */}
-        <View className="flex-row mb-4 bg-gray-900/50 rounded-lg p-1 overflow-hidden">
-          {['Present', 'Imperfect', 'Aorist', 'Future'].map((tense) => (
+        <View className="flex-row mb-4 bg-gray-900/50 rounded-lg p-1 overflow-hidden flex-wrap">
+          {['Present', 'Imperfect', 'Aorist', 'Future', 'Subjunctive'].map((tense) => (
             <TouchableOpacity
               key={tense}
               onPress={() => setActiveTense(tense as any)}
-              className={`flex-1 items-center py-1.5 rounded-md ${activeTense === tense ? 'bg-gray-700' : ''}`}
+              className={`items-center py-1.5 px-2 rounded-md ${activeTense === tense ? 'bg-gray-700' : ''}`}
             >
               <Text className={`text-[9px] uppercase font-bold tracking-wider ${activeTense === tense ? 'text-gold' : 'text-gray-500'}`} numberOfLines={1}>
-                {tense}
+                {tense === 'Subjunctive' ? 'Subj' : tense}
               </Text>
             </TouchableOpacity>
           ))}

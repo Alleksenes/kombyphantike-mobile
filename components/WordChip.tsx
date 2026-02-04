@@ -1,4 +1,4 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 export interface Token {
   text: string;
@@ -11,6 +11,8 @@ export interface Token {
   paradigm?: { form: string; tags: string[] }[];
   ancient_context?: string;
   definition?: string;
+  transliteration?: string;
+  morphology?: string;
 }
 
 interface WordChipProps {
@@ -40,12 +42,19 @@ export default function WordChip({ token, onPress }: WordChipProps) {
         active:bg-yellow-50
       `}
     >
-      <Text className={`
-        text-lg font-medium
-        ${isHeavy ? 'text-gray-900' : 'text-gray-500'}
-      `}>
-        {token.text}
-      </Text>
+      <View className="items-center">
+        <Text className={`
+          text-lg font-medium
+          ${isHeavy ? 'text-gray-900' : 'text-gray-500'}
+        `}>
+          {token.text}
+        </Text>
+        {token.transliteration && (
+          <Text className="text-[10px] italic text-gray-400 -mt-1">
+            {token.transliteration}
+          </Text>
+        )}
+      </View>
     </Pressable>
   );
 }
