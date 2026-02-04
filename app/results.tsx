@@ -9,6 +9,7 @@ import BottomSheet from '@gorhom/bottom-sheet';
 import PhilologyCard from '../components/PhilologyCard';
 import InspectorSheet from '../components/InspectorSheet';
 import { Token } from '../components/WordChip';
+import OmegaLoader from '../components/OmegaLoader';
 // Import the store
 import { SessionStore } from '../services/SessionStore';
 import { saveSession } from '../src/services/Database';
@@ -141,7 +142,11 @@ export default function ResultsScreen() {
           </Button>
           <Text variant="titleMedium" style={styles.headerTitle}>The Scroll</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {isFilling && <ActivityIndicator animating={true} size="small" style={{ marginRight: 8 }} />}
+            {isFilling && (
+              <View style={{ marginRight: 8 }}>
+                <OmegaLoader size={24} color={theme.colors.tertiary} />
+              </View>
+            )}
             <IconButton
               icon={colorScheme === 'dark' ? 'weather-sunny' : 'weather-night'}
               onPress={toggleColorScheme}

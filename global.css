@@ -5,15 +5,15 @@
 @layer base {
   :root {
     --color-paper: #F2F0E9;
-    --color-ink: #332F2C;
+    --color-ink: #2A2A2A;
     --color-ancient: #5D4037;
-    --color-gold: #C0A062;
+    --color-gold: #C5A059;
   }
 
   .dark {
     --color-paper: #232226;
     --color-ink: #E5E5E5;
     --color-ancient: #B39DDB;
-    --color-gold: #C0A062;
+    --color-gold: #C5A059;
   }
 }

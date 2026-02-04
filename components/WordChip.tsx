@@ -38,8 +38,7 @@ export default function WordChip({ token, onPress }: WordChipProps) {
       onPress={() => onPress(token)}
       className={`
         mr-1.5 mb-2 px-2 py-1 rounded-lg border
-        ${isHeavy ? 'bg-white border-gray-300' : 'bg-transparent border-transparent'}
-        active:bg-yellow-50
+        ${isHeavy ? 'bg-[#E6E2D6] border-gray-300' : 'bg-transparent border-transparent'}
       `}
     >
       <View className="items-center">
