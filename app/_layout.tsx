@@ -39,7 +39,7 @@ const lightTheme = {
     primary: '#2A2A2A', // ink
     secondary: '#5D4037', // ancient
     tertiary: '#C5A059', // gold
-    background: '#F8F5F2', // paper
+    background: '#F2F0E9', // paper
     surface: '#FFFFFF',
     onSurface: '#2A2A2A', // ink
     onSurfaceVariant: 'rgba(0,0,0,0.4)',

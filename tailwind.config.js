@@ -7,10 +7,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        paper: 'var(--color-paper)',
-        ink: 'var(--color-ink)',
+        paper: '#F2F0E9',
+        ink: '#2A2A2A',
         ancient: 'var(--color-ancient)',
-        gold: 'var(--color-gold)',
+        gold: '#C5A059',
       },
     },
   },
