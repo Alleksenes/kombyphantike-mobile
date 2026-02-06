@@ -21,7 +21,7 @@ interface OmegaLoaderProps {
 
 export default function OmegaLoader({
   size = 64,
-  color = '#C5A059',
+  color = '#C0A062',
   duration = 2000
 }: OmegaLoaderProps) {
   const progress = useSharedValue(0);

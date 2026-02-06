@@ -8,9 +8,9 @@ module.exports = {
     extend: {
       colors: {
         paper: '#F2F0E9',
-        ink: '#2A2A2A',
+        ink: '#3A352F',
         ancient: 'var(--color-ancient)',
-        gold: '#C5A059',
+        gold: '#C0A062',
       },
     },
   },
