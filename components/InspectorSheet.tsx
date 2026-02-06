@@ -30,9 +30,9 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
       </View>
     );
 
-    const bgPaper = colorScheme === 'dark' ? '#232226' : '#F8F5F2';
-    const indicatorColor = colorScheme === 'dark' ? '#B39DDB' : '#5D4037';
-    const activeTabColor = colorScheme === 'dark' ? '#B39DDB' : '#5D4037';
+    const bgPaper = colorScheme === 'dark' ? '#232226' : '#F2F0E9';
+    const indicatorColor = colorScheme === 'dark' ? '#B39DDB' : '#3A352F';
+    const activeTabColor = colorScheme === 'dark' ? '#B39DDB' : '#3A352F';
     const inactiveTabColor = colorScheme === 'dark' ? '#555' : '#999';
 
     const renderTabHeader = () => (
