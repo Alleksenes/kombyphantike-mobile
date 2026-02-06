@@ -5,7 +5,7 @@ import { Alert, Platform, StyleSheet, View } from 'react-native';
 import { Button, Surface, Text, TextInput, Title, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // Import the store we just created
-import { SessionStore } from '../services/SessionStore';
+import { SessionStore } from '../../services/SessionStore';
 
 export default function WeaverScreen() {
   const [themeInput, setThemeInput] = useState('Cosmos'); // Default for testing
@@ -115,15 +115,6 @@ export default function WeaverScreen() {
             contentStyle={styles.buttonContent}
           >
             {loading ? "Weaving Draft..." : "Weave Curriculum"}
-          </Button>
-
-          <Button
-            mode="text"
-            onPress={() => router.push("/history")}
-            disabled={loading}
-            style={[styles.button, { marginTop: 16 }]}
-          >
-            View History
           </Button>
         </Surface>
       </View>
