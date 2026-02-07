@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { Dimensions, View, Text } from 'react-native';
 import { IconButton, ActivityIndicator } from 'react-native-paper';
 import WordChip, { Token } from './WordChip';
@@ -16,58 +16,8 @@ interface PhilologyCardProps {
   knotContext?: string;
   index: number;
   total: number;
-  onTokenPress?: (token: Token) => void;
-  mode: 'read' | 'analyze' | 'drill';
+  onTokenPress?: (token: Token, greek: string, english: string) => void;
   selectedToken?: Token | null;
-}
-
-function identifyHeroToken(tokens: Token[], knot: string): Token | null {
-  if (!tokens || tokens.length === 0) return null;
-  const lowerKnot = knot.toLowerCase();
-
-  // 1. Try to find a token whose POS matches the knot start
-  if (lowerKnot.includes('verb')) {
-      const verb = tokens.find(t => t.pos === 'VERB');
-      if (verb) return verb;
-  }
-  if (lowerKnot.includes('noun')) {
-      const noun = tokens.find(t => t.pos === 'NOUN');
-      if (noun) return noun;
-  }
-
-  // 2. Try to match morphology keywords
-  const keywords = ['active', 'passive', 'present', 'aorist', 'future', 'imperfect', 'subjunctive', 'optative', 'imperative', 'indicative', 'nominative', 'genitive', 'dative', 'accusative', 'vocative'];
-
-  let bestToken = null;
-  let maxScore = -1;
-
-  for (const token of tokens) {
-      if (!['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(token.pos)) continue;
-
-      let score = 0;
-      const morph = (token.morphology || "").toLowerCase();
-
-      keywords.forEach(kw => {
-          if (lowerKnot.includes(kw) && morph.includes(kw)) {
-              score++;
-          }
-      });
-
-      if (score > maxScore) {
-          maxScore = score;
-          bestToken = token;
-      }
-  }
-
-  if (bestToken) return bestToken;
-
-  // 3. Fallback: Longest heavy word
-  const heavyTokens = tokens.filter(t => ['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(t.pos));
-  if (heavyTokens.length > 0) {
-      return heavyTokens.reduce((a, b) => a.text.length > b.text.length ? a : b);
-  }
-
-  return null;
 }
 
 export default function PhilologyCard({
@@ -80,37 +30,27 @@ export default function PhilologyCard({
   index,
   total,
   onTokenPress,
-  mode,
   selectedToken
 }: PhilologyCardProps) {
-  const [revealed, setRevealed] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
-  useEffect(() => {
-      setRevealed(false);
-  }, [mode, knot]);
-
-  const heroToken = useMemo(() => {
-      if (mode !== 'drill') return null;
-      return identifyHeroToken(targetTokens || [], knot);
-  }, [mode, targetTokens, knot]);
-
+  // Unified Interaction: Tap to Inspect
   const handleWordPress = (token: Token) => {
-    if (mode === 'drill') {
-        if (heroToken && token === heroToken) {
-            setRevealed(true);
-        }
-        return;
-    }
+     if (onTokenPress) {
+        onTokenPress(token, modernGreek, englishTranslation);
+     }
+  };
 
-    if (mode === 'analyze') {
-       if (onTokenPress) {
-          onTokenPress(token);
-       }
+  // Unified Interaction: Long Press to Speak Word
+  const handleLongPress = async (token: Token) => {
+    try {
+        await AudioPlayer.playSentence(token.text);
+    } catch (e) {
+        console.error("Failed to play word audio", e);
     }
   };
 
-  const handleSpeak = async () => {
+  const handleSpeakSentence = async () => {
     if (isLoadingAudio) return;
     setIsLoadingAudio(true);
     try {
@@ -142,18 +82,15 @@ export default function PhilologyCard({
         <View className="flex-row flex-wrap items-end">
           {targetTokens && targetTokens.length > 0 ? (
             targetTokens.map((token, idx) => {
-               const isHero = heroToken === token;
-               // Clozed if it is the hero, we are in drill mode, and it hasn't been revealed yet.
-               const isClozed = mode === 'drill' && isHero && !revealed;
-               // Focused if we are in analyze mode and it matches selectedToken
-               const isFocused = mode === 'analyze' && selectedToken === token;
+               // Focused if it matches selectedToken (regardless of mode, since mode is unified)
+               const isFocused = selectedToken === token;
 
                return (
                   <WordChip
                     key={`${token.text}-${idx}`}
                     token={token}
                     onPress={handleWordPress}
-                    isClozed={isClozed}
+                    onLongPress={handleLongPress}
                     isFocused={isFocused}
                   />
                );
@@ -170,7 +107,7 @@ export default function PhilologyCard({
                 icon="volume-high"
                 size={20}
                 iconColor="#C0A062"
-                onPress={handleSpeak}
+                onPress={handleSpeakSentence}
                 style={{ margin: 0 }}
               />
             )}

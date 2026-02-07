@@ -18,11 +18,11 @@ export interface Token {
 interface WordChipProps {
   token: Token;
   onPress: (token: Token) => void;
-  isClozed?: boolean;
+  onLongPress: (token: Token) => void;
   isFocused?: boolean;
 }
 
-export default function WordChip({ token, onPress, isClozed = false, isFocused = false }: WordChipProps) {
+export default function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipProps) {
   const isHeavy = ['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(token.pos);
   const isPunctuation = token.pos === 'PUNCT';
 
@@ -34,36 +34,24 @@ export default function WordChip({ token, onPress, isClozed = false, isFocused =
     );
   }
 
-  // Clozed State
-  if (isClozed) {
-    return (
-      <Pressable
-        onPress={() => onPress(token)}
-        className="mr-1.5 mb-2 px-2 py-1 rounded-lg border-b border-accent items-center justify-center min-w-[40px]"
-      >
-        <Text className="text-lg font-medium text-accent">
-          ____
-        </Text>
-      </Pressable>
-    );
-  }
-
-  // Focused & Normal State logic
-  let containerStyle = "mr-1.5 mb-2 px-2 py-1 rounded-lg border ";
+  // Interaction State Logic
+  let containerStyle = "mr-1.5 mb-2 px-1 py-1 "; // Reduced horizontal padding to look more like text
   let textStyle = "text-lg font-medium ";
   let subTextStyle = "text-[10px] italic -mt-1 ";
 
   if (isFocused) {
-    containerStyle += "bg-accent border-accent";
+    // Focused: Highlights the word being inspected
+    containerStyle += "bg-accent rounded-lg";
     textStyle += "text-background"; // Dark text on Gold
     subTextStyle += "text-background/60";
   } else {
-    // Normal
-    containerStyle += "bg-transparent border-transparent";
-    // For heavy words, we might want a subtle indicator, but for now we follow the "text in #e3dccb" instruction.
-    // If needed, we can add a subtle border for heavy words to distinguish them as interactive.
+    // Normal: Transparent background with subtle underline for interactivity
+    containerStyle += "bg-transparent border-b ";
+
     if (isHeavy) {
-       containerStyle += "border-text/10"; // Very subtle border using text color
+       containerStyle += "border-text/20"; // Subtle visual cue
+    } else {
+       containerStyle += "border-transparent";
     }
 
     textStyle += "text-text"; // Warm Parchment
@@ -73,6 +61,8 @@ export default function WordChip({ token, onPress, isClozed = false, isFocused =
   return (
     <Pressable
       onPress={() => onPress(token)}
+      onLongPress={() => onLongPress(token)}
+      delayLongPress={500}
       className={containerStyle}
     >
       <View className="items-center">
