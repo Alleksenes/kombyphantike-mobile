@@ -28,7 +28,7 @@ export default function WordChip({ token, onPress, isClozed = false, isFocused =
 
   if (isPunctuation) {
     return (
-      <Text className="text-xl text-ink font-serif self-end mb-1">
+      <Text className="text-xl text-text font-serif self-end mb-1">
         {token.text}
       </Text>
     );
@@ -39,9 +39,9 @@ export default function WordChip({ token, onPress, isClozed = false, isFocused =
     return (
       <Pressable
         onPress={() => onPress(token)}
-        className="mr-1.5 mb-2 px-2 py-1 rounded-lg border-b border-gold items-center justify-center min-w-[40px]"
+        className="mr-1.5 mb-2 px-2 py-1 rounded-lg border-b border-accent items-center justify-center min-w-[40px]"
       >
-        <Text className="text-lg font-medium text-gold">
+        <Text className="text-lg font-medium text-accent">
           ____
         </Text>
       </Pressable>
@@ -54,19 +54,19 @@ export default function WordChip({ token, onPress, isClozed = false, isFocused =
   let subTextStyle = "text-[10px] italic -mt-1 ";
 
   if (isFocused) {
-    containerStyle += "bg-gold border-gold";
-    textStyle += "text-black"; // Black text on Gold
-    subTextStyle += "text-black/60";
+    containerStyle += "bg-accent border-accent";
+    textStyle += "text-background"; // Dark text on Gold
+    subTextStyle += "text-background/60";
   } else {
     // Normal
     containerStyle += "bg-transparent border-transparent";
     // For heavy words, we might want a subtle indicator, but for now we follow the "text in #e3dccb" instruction.
     // If needed, we can add a subtle border for heavy words to distinguish them as interactive.
     if (isHeavy) {
-       containerStyle += "border-white/10"; // Very subtle border
+       containerStyle += "border-text/10"; // Very subtle border using text color
     }
 
-    textStyle += "text-ink"; // Warm Parchment
+    textStyle += "text-text"; // Warm Parchment
     subTextStyle += "text-gray-500";
   }
 

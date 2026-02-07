@@ -1,7 +1,7 @@
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 import { Button, Surface, Text, TextInput, Title, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // Import the store we just created
@@ -87,11 +87,11 @@ export default function WeaverScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.contentContainer}>
-        <Surface style={styles.surface} elevation={2}>
-          <Title style={styles.title}>The Weaver</Title>
-          <Text style={styles.subtitle}>Compose your curriculum</Text>
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-1 p-5 justify-center">
+        <Surface className="p-6 rounded-2xl bg-card" elevation={2}>
+          <Title className="text-3xl font-bold text-center mb-1 text-text">The Weaver</Title>
+          <Text className="text-sm text-center mb-8 opacity-70 text-text">Compose your curriculum</Text>
 
           <TextInput
             label="Theme"
@@ -99,24 +99,26 @@ export default function WeaverScreen() {
             value={themeInput}
             onChangeText={setThemeInput}
             mode="outlined"
-            style={styles.input}
+            className="mb-6 bg-card"
+            textColor={theme.colors.onSurface}
+            activeOutlineColor={theme.colors.primary}
             disabled={loading}
           />
 
-          <View style={styles.sliderContainer}>
-            <View style={styles.sliderLabelRow}>
-              <Text style={styles.label}>Sentence Count</Text>
-              <Text style={styles.countValue}>{count}</Text>
+          <View className="mb-8">
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-base text-text">Sentence Count</Text>
+              <Text className="text-lg font-bold text-accent">{count}</Text>
             </View>
             <Slider
-              style={styles.slider}
+              style={{ width: '100%', height: 40 }}
               minimumValue={5}
               maximumValue={50}
               step={1}
               value={count}
               onValueChange={setCount}
               minimumTrackTintColor={theme.colors.primary}
-              maximumTrackTintColor={theme.colors.surfaceVariant}
+              maximumTrackTintColor={theme.colors.onSurfaceVariant}
               thumbTintColor={theme.colors.primary}
             />
           </View>
@@ -126,8 +128,10 @@ export default function WeaverScreen() {
             onPress={handleWeave}
             loading={loading}
             disabled={loading}
-            style={styles.button}
-            contentStyle={styles.buttonContent}
+            className="rounded-lg"
+            contentStyle={{ paddingVertical: 8 }}
+            buttonColor={theme.colors.primary}
+            textColor={theme.colors.onPrimary}
           >
             {loading ? "Weaving Draft..." : "Weave Curriculum"}
           </Button>
@@ -136,19 +140,3 @@ export default function WeaverScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  contentContainer: { flex: 1, padding: 20, justifyContent: 'center' },
-  surface: { padding: 24, borderRadius: 16 },
-  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 14, textAlign: 'center', marginBottom: 32, opacity: 0.7 },
-  input: { marginBottom: 24 },
-  sliderContainer: { marginBottom: 32 },
-  sliderLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  label: { fontSize: 16 },
-  countValue: { fontSize: 18, fontWeight: 'bold', color: '#6200ee' },
-  slider: { width: '100%', height: 40 },
-  button: { borderRadius: 8 },
-  buttonContent: { paddingVertical: 8 }
-});

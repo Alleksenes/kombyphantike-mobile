@@ -144,8 +144,8 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
 
   // Noir-Velvet Theme: Dark card background, Gold accents, Paper text
   // We enforce a dark theme look for the card even in light mode to act as a "Boutique" element
-  const containerClass = "p-4 rounded-xl bg-ink border border-gray-800 shadow-sm";
-  const titleClass = "text-xs font-bold text-gold uppercase tracking-widest mb-4";
+  const containerClass = "p-4 rounded-xl bg-black/20 border border-gray-800 shadow-sm";
+  const titleClass = "text-xs font-bold text-accent uppercase tracking-widest mb-4";
 
   // Headers
   const headerTextClass = "flex-1 text-center font-bold text-gray-500 text-[10px] uppercase tracking-wider";
@@ -153,8 +153,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
   // Cells
   const rowBorderClass = "border-b border-gray-800/50";
   const labelTextClass = "text-gray-400 font-bold text-xs uppercase";
-  const cellTextClass = "text-paper text-sm";
-  const highlightClass = "text-gold font-bold bg-gold/10 border border-gold/30";
+  const highlightClass = "text-accent font-bold bg-accent/10 border border-accent/30";
 
   if (isVerb) {
     const verbData = parseVerbParadigm(paradigm);
@@ -177,7 +176,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
               onPress={() => setActiveTense(tense as any)}
               className={`items-center py-1.5 px-2 rounded-md ${activeTense === tense ? 'bg-gray-700' : ''}`}
             >
-              <Text className={`text-[9px] uppercase font-bold tracking-wider ${activeTense === tense ? 'text-gold' : 'text-gray-500'}`} numberOfLines={1}>
+              <Text className={`text-[9px] uppercase font-bold tracking-wider ${activeTense === tense ? 'text-accent' : 'text-gray-500'}`} numberOfLines={1}>
                 {tense === 'Subjunctive' ? 'Subj' : tense}
               </Text>
             </TouchableOpacity>
@@ -193,7 +192,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
                         onPress={() => setActiveVoice(voice as any)}
                         className={`px-4 py-1.5 rounded-md ${activeVoice === voice ? 'bg-gray-700' : ''}`}
                     >
-                        <Text className={`text-[10px] uppercase font-bold tracking-wider ${activeVoice === voice ? 'text-gold' : 'text-gray-500'}`}>
+                        <Text className={`text-[10px] uppercase font-bold tracking-wider ${activeVoice === voice ? 'text-accent' : 'text-gray-500'}`}>
                             {voice} Voice
                         </Text>
                     </TouchableOpacity>
@@ -224,7 +223,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
                 {/* Singular */}
                 <View className="flex-1 items-center justify-center px-1">
                   <View className={`px-2 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                    <Text className={isSingularMatch ? 'text-gold font-bold text-center' : 'text-paper text-sm text-center'}>
+                    <Text className={isSingularMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
                       {forms.Singular}
                     </Text>
                   </View>
@@ -233,7 +232,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
                 {/* Plural */}
                 <View className="flex-1 items-center justify-center px-1">
                   <View className={`px-2 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                    <Text className={isPluralMatch ? 'text-gold font-bold text-center' : 'text-paper text-sm text-center'}>
+                    <Text className={isPluralMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
                       {forms.Plural}
                     </Text>
                   </View>
@@ -278,7 +277,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
               {/* Singular */}
               <View className="flex-1 items-center justify-center px-1">
                 <View className={`px-2 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                  <Text className={isSingularMatch ? 'text-gold font-bold text-center' : 'text-paper text-sm text-center'}>
+                  <Text className={isSingularMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
                     {forms.Singular}
                   </Text>
                 </View>
@@ -287,7 +286,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
               {/* Plural */}
               <View className="flex-1 items-center justify-center px-1">
                 <View className={`px-2 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                  <Text className={isPluralMatch ? 'text-gold font-bold text-center' : 'text-paper text-sm text-center'}>
+                  <Text className={isPluralMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
                     {forms.Plural}
                   </Text>
                 </View>

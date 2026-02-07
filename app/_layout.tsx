@@ -32,13 +32,17 @@ const fontConfig = {
 };
 
 const commonColors = {
-  primary: '#e3dccb', // ink - Warm Parchment
+  primary: '#C0A062', // accent - Antique Gold
+  onPrimary: '#1a1918', // background
   secondary: '#B39DDB', // ancient
-  tertiary: '#C0A062', // gold - Antique Gold
-  background: '#1a1918', // paper - Deep Ink
+  onSecondary: '#1a1918',
+  tertiary: '#C0A062', // accent
+  onTertiary: '#1a1918',
+  background: '#1a1918', // background - Deep Ink
+  onBackground: '#e3dccb', // text - Warm Parchment
   surface: '#252422', // card - Slightly lighter Ink
-  onSurface: '#e3dccb', // ink
-  onSurfaceVariant: 'rgba(227, 220, 203, 0.4)',
+  onSurface: '#e3dccb', // text
+  onSurfaceVariant: 'rgba(227, 220, 203, 0.6)',
   elevation: {
     level1: '#252422',
     level2: '#252422',

@@ -1,6 +1,5 @@
 import React, { useMemo, forwardRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useColorScheme } from 'nativewind';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Token } from './WordChip';
 import ParadigmGrid from './ParadigmGrid';
@@ -73,8 +72,8 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                {/* The Knot (Rule Explanation) - Top Priority in Gold */}
                {knotContext ? (
                  <View className="mb-2 p-3 bg-yellow-900/10 border border-yellow-900/30 rounded-xl">
-                   <Text className="text-xs font-bold text-gold uppercase mb-1 tracking-widest">The Knot</Text>
-                   <Text className="text-lg text-gold font-serif italic leading-6">
+                   <Text className="text-xs font-bold text-accent uppercase mb-1 tracking-widest">The Knot</Text>
+                   <Text className="text-lg text-accent font-serif italic leading-6">
                      {knotContext}
                    </Text>
                  </View>
@@ -82,7 +81,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
                {/* Header: The Word */}
                <View>
-                <Text className="text-4xl font-bold text-ink mb-1">
+                <Text className="text-4xl font-bold text-text mb-1">
                   {selectedToken.text}
                 </Text>
               </View>
@@ -124,7 +123,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                     <Text className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">
                       Definition
                     </Text>
-                    <Text className="text-lg text-ink font-serif leading-6">
+                    <Text className="text-lg text-text font-serif leading-6">
                       {selectedToken.definition}
                     </Text>
                  </View>
@@ -132,7 +131,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
               {/* Ancient Context Section */}
               <View className="p-4 bg-yellow-900/20 rounded-xl border border-yellow-700/30">
-                <Text className="text-xs font-bold text-gold uppercase mb-2 tracking-widest">
+                <Text className="text-xs font-bold text-accent uppercase mb-2 tracking-widest">
                   Ancient Context
                 </Text>
                 <Text className="text-lg text-ancient italic font-serif leading-7">
