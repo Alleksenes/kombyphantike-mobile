@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
-import { FlatList, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { ActivityIndicator, Button, IconButton, Text, useTheme, SegmentedButtons } from 'react-native-paper';
+import { FlatList, Platform, useWindowDimensions, View } from 'react-native';
+import { Button, IconButton, Text, useTheme, SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -140,15 +140,15 @@ export default function ResultsScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.header}>
+      <SafeAreaView className="flex-1 bg-background">
+        <View className="flex-row items-center justify-between px-2 py-2">
           <Button mode="text" onPress={() => router.back()} icon="arrow-left" textColor={theme.colors.onSurface}>
             Back
           </Button>
-          <Text variant="titleMedium" style={styles.headerTitle}>The Scroll</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text variant="titleMedium" className="font-bold opacity-70 text-text">The Scroll</Text>
+          <View className="flex-row items-center">
             {isFilling && (
-              <View style={{ marginRight: 8 }}>
+              <View className="mr-2">
                 <OmegaLoader size={24} color={theme.colors.tertiary} />
               </View>
             )}
@@ -160,7 +160,7 @@ export default function ResultsScreen() {
           </View>
         </View>
 
-        <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+        <View className="px-4 mb-2">
             <SegmentedButtons
               value={mode}
               onValueChange={(val) => setMode(val as any)}
@@ -173,9 +173,10 @@ export default function ResultsScreen() {
             />
         </View>
 
-        <View style={styles.listContainer}>
+        <View className="flex-1">
           <FlatList
             data={data}
+            extraData={[mode, selectedToken]}
             renderItem={renderItem}
             keyExtractor={(_, index) => index.toString()}
             horizontal
@@ -197,10 +198,3 @@ export default function ResultsScreen() {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 8 },
-  headerTitle: { fontWeight: 'bold', opacity: 0.7 },
-  listContainer: { flex: 1 },
-});

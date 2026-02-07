@@ -69,7 +69,7 @@ export default function HistoryScreen() {
   const renderItem = ({ item }: { item: any }) => (
     <Pressable
       onPress={() => handlePress(item)}
-      className="mb-4 mx-4 p-4 rounded-lg bg-paper border border-gold/30 active:opacity-70"
+      className="mb-4 mx-4 p-4 rounded-lg bg-background border border-accent/30 active:opacity-70"
       style={{
          shadowColor: '#000',
          shadowOffset: { width: 0, height: 2 },
@@ -80,7 +80,7 @@ export default function HistoryScreen() {
     >
       <View className="flex-row justify-between items-center">
           <View className="flex-1 mr-4">
-            <Text className="text-xl font-bold text-ink mb-1" numberOfLines={1}>
+            <Text className="text-xl font-bold text-text mb-1" numberOfLines={1}>
                 {item.theme || "Untitled Scroll"}
             </Text>
             <Text className="text-sm text-ancient">
@@ -95,9 +95,9 @@ export default function HistoryScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-paper" style={{ backgroundColor: theme.colors.background }}>
+    <SafeAreaView className="flex-1 bg-background" style={{ backgroundColor: theme.colors.background }}>
       <View className="flex-row items-center justify-between px-2 py-2">
-        <Text variant="headlineSmall" className="font-bold text-ink ml-2">
+        <Text variant="headlineSmall" className="font-bold text-text ml-2">
           Archived Scrolls
         </Text>
       </View>

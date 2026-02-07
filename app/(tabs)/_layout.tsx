@@ -10,11 +10,11 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: theme.colors.background,
-          borderTopColor: theme.colors.tertiary,
+          backgroundColor: theme.colors.background, // Deep Ink
+          borderTopColor: theme.colors.tertiary, // Antique Gold
           borderTopWidth: 1,
         },
-        tabBarActiveTintColor: theme.colors.primary, // Ink
+        tabBarActiveTintColor: theme.colors.primary, // Antique Gold
         tabBarInactiveTintColor: theme.colors.secondary, // Ancient
       }}
     >

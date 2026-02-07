@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, View, Text } from 'react-native';
 import { IconButton, ActivityIndicator } from 'react-native-paper';
 import WordChip, { Token } from './WordChip';
 import { AudioPlayer } from '../src/services/AudioPlayer';
-import { Text } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
@@ -134,7 +133,7 @@ export default function PhilologyCard({
       </View>
 
       <View className="mb-8">
-        <Text className="text-xl font-bold text-ink leading-7 text-center italic">
+        <Text className="text-xl font-bold text-text leading-7 text-center italic">
           {knotContext || knot}
         </Text>
       </View>
@@ -160,7 +159,7 @@ export default function PhilologyCard({
                );
             })
           ) : (
-            <Text className="text-2xl font-bold text-ink leading-9">{modernGreek}</Text>
+            <Text className="text-2xl font-bold text-text leading-9">{modernGreek}</Text>
           )}
 
           <View className="ml-2 mb-1 h-8 w-8 justify-center items-center">
@@ -180,7 +179,7 @@ export default function PhilologyCard({
       </View>
 
       <View className="mt-8 pt-4 border-t border-gray-800">
-        <Text className="text-base text-ink">{englishTranslation}</Text>
+        <Text className="text-base text-text">{englishTranslation}</Text>
       </View>
     </View>
   );
