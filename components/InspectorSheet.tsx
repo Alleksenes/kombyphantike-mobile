@@ -8,12 +8,14 @@ interface InspectorSheetProps {
   selectedToken: Token | null;
   ancientContext: string;
   knotContext?: string;
+  greekSentence?: string;
+  englishTranslation?: string;
 }
 
 type TabType = 'grammar' | 'context' | 'family';
 
 const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
-  ({ selectedToken, ancientContext, knotContext }, ref) => {
+  ({ selectedToken, ancientContext, knotContext, greekSentence, englishTranslation }, ref) => {
     // We assume dark mode is forced
     const [activeTab, setActiveTab] = useState<TabType>('grammar');
 
@@ -119,7 +121,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
             <View className="mt-4 gap-4">
                {/* Definition Section */}
                {selectedToken.definition && (
-                 <View className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
+                 <View className="p-4 bg-gray-800/30 rounded-xl border border-gray-700 mb-2">
                     <Text className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">
                       Definition
                     </Text>
@@ -129,15 +131,35 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                  </View>
                )}
 
-              {/* Ancient Context Section */}
-              <View className="p-4 bg-yellow-900/20 rounded-xl border border-yellow-700/30">
-                <Text className="text-xs font-bold text-accent uppercase mb-2 tracking-widest">
-                  Ancient Context
+              {/* Ancient Context "Eureka" Card (Museum Placard Style) */}
+              <View className="p-6 bg-[#f4f1ea] rounded-xl border border-gray-300 shadow-sm">
+                {/* Author / Citation */}
+                <Text className="text-xs font-bold text-[#C0A062] uppercase mb-4 tracking-widest text-center">
+                  {ancientContext || "Unknown Source"}
                 </Text>
-                <Text className="text-lg text-ancient italic font-serif leading-7">
-                  {selectedToken.ancient_context || ancientContext || "No citation available."}
+
+                {/* Greek Text */}
+                <Text className="text-2xl font-serif text-[#5D4037] text-center leading-8 mb-4">
+                  {greekSentence || "Greek text unavailable"}
+                </Text>
+
+                {/* Separator */}
+                <View className="h-[1px] bg-gray-300 w-1/3 self-center mb-4" />
+
+                {/* Translation */}
+                <Text className="text-lg italic text-gray-500 font-serif text-center leading-6">
+                  {englishTranslation || "Translation unavailable"}
                 </Text>
               </View>
+
+              {/* Optional: Token specific context/note if different from main citation */}
+              {selectedToken.ancient_context && selectedToken.ancient_context !== ancientContext && (
+                 <View className="mt-2 px-4">
+                    <Text className="text-xs text-gray-600 italic">
+                       Note: {selectedToken.ancient_context}
+                    </Text>
+                 </View>
+              )}
             </View>
           );
         case 'family':

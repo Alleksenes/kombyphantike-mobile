@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
 import { FlatList, Platform, useWindowDimensions, View } from 'react-native';
-import { Button, IconButton, Text, useTheme, SegmentedButtons } from 'react-native-paper';
+import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -25,13 +25,12 @@ export default function ResultsScreen() {
   const [data, setData] = useState<any[]>([]);
   const [isFilling, setIsFilling] = useState(false);
 
-  // State for Interaction Mode
-  const [mode, setMode] = useState<'read' | 'analyze' | 'drill'>('read');
-
   // State for Inspector
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
-  const [selectedContext, setSelectedContext] = useState<string>('');
+  const [selectedContext, setSelectedContext] = useState<string>(''); // Stores citation
   const [selectedKnotContext, setSelectedKnotContext] = useState<string>('');
+  const [selectedGreek, setSelectedGreek] = useState<string>('');
+  const [selectedEnglish, setSelectedEnglish] = useState<string>('');
 
   useEffect(() => {
     // 1. Load Draft from Store immediately
@@ -102,10 +101,12 @@ export default function ResultsScreen() {
     }
   };
 
-  const handleTokenPress = (token: Token, context: string, knotContext: string) => {
+  const handleTokenPress = (token: Token, context: string, knotContext: string, greek: string, english: string) => {
     setSelectedToken(token);
     setSelectedContext(context);
     setSelectedKnotContext(knotContext);
+    setSelectedGreek(greek);
+    setSelectedEnglish(english);
     // Snap to the first open point (index 0, which is 45%)
     bottomSheetRef.current?.snapToIndex(0);
   };
@@ -130,8 +131,7 @@ export default function ResultsScreen() {
           knotContext={knotContext}
           index={index}
           total={data.length}
-          onTokenPress={(token) => handleTokenPress(token, ancient, knotContext)}
-          mode={mode}
+          onTokenPress={(token, greek, eng) => handleTokenPress(token, ancient, knotContext, greek, eng)}
           selectedToken={selectedToken}
         />
       </View>
@@ -160,23 +160,10 @@ export default function ResultsScreen() {
           </View>
         </View>
 
-        <View className="px-4 mb-2">
-            <SegmentedButtons
-              value={mode}
-              onValueChange={(val) => setMode(val as any)}
-              buttons={[
-                { value: 'read', label: 'Read', icon: 'book-open-variant' },
-                { value: 'analyze', label: 'Analyze', icon: 'magnify' },
-                { value: 'drill', label: 'Drill', icon: 'school' },
-              ]}
-              theme={{ colors: { secondaryContainer: theme.colors.tertiary, onSecondaryContainer: 'black' } }}
-            />
-        </View>
-
         <View className="flex-1">
           <FlatList
             data={data}
-            extraData={[mode, selectedToken]}
+            extraData={[selectedToken]}
             renderItem={renderItem}
             keyExtractor={(_, index) => index.toString()}
             horizontal
@@ -193,6 +180,8 @@ export default function ResultsScreen() {
           selectedToken={selectedToken}
           ancientContext={selectedContext}
           knotContext={selectedKnotContext}
+          greekSentence={selectedGreek}
+          englishTranslation={selectedEnglish}
         />
       </SafeAreaView>
     </GestureHandlerRootView>
