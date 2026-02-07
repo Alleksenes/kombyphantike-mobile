@@ -12,32 +12,15 @@ Your project may not work correctly until you install the expected versions of t
 Waiting on http://localhost:8081
 Logs for your project will appear below.
 Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-λ Bundled 3483ms node_modules/expo-router/node/render.js (1517 modules)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.5% (1584/1596)
-λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.2% (1488/1517)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 82.7% (1456/1637)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.6% (1236/1403)
+λ Bundled 4229ms node_modules/expo-router/node/render.js (1870 modules)
 [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
 λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
 "shadow*" style props are deprecated. Use "boxShadow".
-Web Bundled 6397ms node_modules/expo-router/entry.js (1607 modules)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 62.5% ( 849/1074)
-Web Bundled 1213ms node_modules/expo-router/entry.js (1552 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1980/1980)
+Web Bundled 8094ms node_modules/expo-router/entry.js (1980 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1980/1980)
+Web Bundled 1484ms node_modules/expo-router/entry.js (1922 modules)
  LOG  [web] Logs will appear in the browser console
-Web Bundled 51ms node_modules/expo-sqlite/web/worker.ts (1 module)
-Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-λ Bundled 80ms node_modules/expo-router/node/render.js (1 module)
-[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
-λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
-"shadow*" style props are deprecated. Use "boxShadow".
-Web Bundled 682ms node_modules/expo-router/entry.js (1 module)
-Web Bundled 83ms node_modules/expo-router/entry.js (1 module)
- LOG  [web] Logs will appear in the browser console
-Web Bundled 10ms node_modules/expo-sqlite/web/worker.ts (1 module)
-Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-λ Bundled 105ms node_modules/expo-router/node/render.js (1 module)
-[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
-λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
-"shadow*" style props are deprecated. Use "boxShadow".
-Web Bundled 812ms node_modules/expo-router/entry.js (1 module)
-Web Bundled 75ms node_modules/expo-router/entry.js (1 module)
- LOG  [web] Logs will appear in the browser console
-Web Bundled 6ms node_modules/expo-sqlite/web/worker.ts (1 module)
+Web Bundled 34ms node_modules/expo-sqlite/web/worker.ts (1 module)
