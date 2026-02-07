@@ -1,18 +1,13 @@
-import { Audio } from 'expo-av';
+import { createVideoPlayer, VideoPlayer } from 'expo-video';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
-let currentSound: Audio.Sound | null = null;
+let player: VideoPlayer | null = null;
 
 export const AudioPlayer = {
   async playSentence(text: string) {
-    // 1. Unload previous sound if exists
-    if (currentSound) {
-      await currentSound.unloadAsync();
-      currentSound = null;
-    }
-
     try {
+      // 1. Fetch Audio
       const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
       console.log(`[Audio] Requesting speech for: "${text.substring(0, 20)}..."`);
 
@@ -33,44 +28,46 @@ export const AudioPlayer = {
         throw new Error("No audio data received");
       }
 
-      // 3. Log payload length
       console.log("Audio Payload Length:", audioData.length);
 
-      // Clean the Base64 string (remove data:audio/mp3;base64, prefix if present)
+      // 2. Write to file
       const cleanBase64 = audioData.replace(/^data:audio\/.*?;base64,/, '');
-
-      // Define a path
       const uri = FileSystem.cacheDirectory + 'speech.mp3';
 
-      // Write to disk
+      // If player exists, pause it before writing to file to avoid locks
+      if (player) {
+          player.pause();
+          // Release the file handle by setting source to null
+          player.replace(null);
+      }
+
       await FileSystem.writeAsStringAsync(uri, cleanBase64, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      // Configure audio mode (important for iOS to play even if switch is silent, etc)
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-      });
+      console.log(`[Audio] File written to: ${uri}`);
 
-      // Play from file
-      const { sound } = await Audio.Sound.createAsync(
-        { uri },
-        { shouldPlay: true }
-      );
+      // 3. Play
+      if (!player) {
+        player = createVideoPlayer(uri);
 
-      currentSound = sound;
+        // Add event listener for logging
+        player.addListener('playToEnd', () => {
+             console.log('[Audio] Playback finished');
+        });
 
-      // Unload sound after playback finishes to prevent memory leaks
-      sound.setOnPlaybackStatusUpdate(async (status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          await sound.unloadAsync();
-          if (currentSound === sound) {
-            currentSound = null;
-          }
-        }
-      });
+        player.addListener('statusChange', (event) => {
+            if (event.status === 'error') {
+                console.error('[Audio] Player Error:', event.error?.message);
+            }
+        });
+      } else {
+        player.replace(uri);
+      }
+
+      // Configure player
+      player.loop = false;
+      player.play();
 
     } catch (error) {
       console.error("[Audio] Playback failed", error);
