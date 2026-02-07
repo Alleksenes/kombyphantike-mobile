@@ -1,12 +1,15 @@
 import React, { useMemo, forwardRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Token } from './WordChip';
 import ParadigmGrid from './ParadigmGrid';
+import { AudioPlayer } from '../src/services/AudioPlayer';
 
 interface InspectorSheetProps {
   selectedToken: Token | null;
   ancientContext: string;
+  knotDefinition?: string;
   knotContext?: string;
   greekSentence?: string;
   englishTranslation?: string;
@@ -15,7 +18,7 @@ interface InspectorSheetProps {
 type TabType = 'grammar' | 'context' | 'family';
 
 const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
-  ({ selectedToken, ancientContext, knotContext, greekSentence, englishTranslation }, ref) => {
+  ({ selectedToken, ancientContext, knotDefinition, knotContext, greekSentence, englishTranslation }, ref) => {
     // We assume dark mode is forced
     const [activeTab, setActiveTab] = useState<TabType>('grammar');
 
@@ -71,21 +74,37 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
         case 'grammar':
           return (
             <View className="flex-1 gap-4">
-               {/* The Knot (Rule Explanation) - Top Priority in Gold */}
+               {/* Section 1: The Law */}
+               {knotDefinition ? (
+                 <View className="mb-1">
+                   <Text className="text-xs font-bold text-gray-500 uppercase mb-1 tracking-widest">The Law</Text>
+                   <Text className="text-base text-gray-400 font-serif italic leading-6">
+                     {knotDefinition}
+                   </Text>
+                 </View>
+               ) : null}
+
+               {/* Section 2: The Application */}
                {knotContext ? (
-                 <View className="mb-2 p-3 bg-yellow-900/10 border border-yellow-900/30 rounded-xl">
-                   <Text className="text-xs font-bold text-accent uppercase mb-1 tracking-widest">The Knot</Text>
-                   <Text className="text-lg text-accent font-serif italic leading-6">
+                 <View className="mb-2">
+                   <Text className="text-xs font-bold text-accent uppercase mb-1 tracking-widest">The Application</Text>
+                   <Text className="text-lg text-accent font-sans leading-6">
                      {knotContext}
                    </Text>
                  </View>
                ) : null}
 
-               {/* Header: The Word */}
-               <View>
-                <Text className="text-4xl font-bold text-text mb-1">
+               {/* Header: The Word + Audio */}
+               <View className="flex-row items-center justify-between">
+                <Text className="text-4xl font-bold text-text mb-1 flex-1">
                   {selectedToken.text}
                 </Text>
+                <IconButton
+                   icon="volume-high"
+                   iconColor="#C0A062"
+                   size={28}
+                   onPress={() => AudioPlayer.playSentence(selectedToken.lemma || selectedToken.text)}
+                />
               </View>
 
               {/* Row 1: Badges */}
