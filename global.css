@@ -4,16 +4,18 @@
 
 @layer base {
   :root {
-    --color-paper: #F2F0E9;
-    --color-ink: #2A2A2A;
-    --color-ancient: #5D4037;
-    --color-gold: #C5A059;
+    --color-paper: #1a1918;
+    --color-ink: #e3dccb;
+    --color-ancient: #B39DDB;
+    --color-gold: #C0A062;
+    --color-card: #252422;
   }
 
   .dark {
-    --color-paper: #232226;
-    --color-ink: #E5E5E5;
+    --color-paper: #1a1918;
+    --color-ink: #e3dccb;
     --color-ancient: #B39DDB;
-    --color-gold: #C5A059;
+    --color-gold: #C0A062;
+    --color-card: #252422;
   }
 }

@@ -18,10 +18,11 @@ export interface Token {
 interface WordChipProps {
   token: Token;
   onPress: (token: Token) => void;
+  isClozed?: boolean;
+  isFocused?: boolean;
 }
 
-export default function WordChip({ token, onPress }: WordChipProps) {
-  // Logic: Is this a "heavy" word?
+export default function WordChip({ token, onPress, isClozed = false, isFocused = false }: WordChipProps) {
   const isHeavy = ['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(token.pos);
   const isPunctuation = token.pos === 'PUNCT';
 
@@ -33,23 +34,53 @@ export default function WordChip({ token, onPress }: WordChipProps) {
     );
   }
 
+  // Clozed State
+  if (isClozed) {
+    return (
+      <Pressable
+        onPress={() => onPress(token)}
+        className="mr-1.5 mb-2 px-2 py-1 rounded-lg border-b border-gold items-center justify-center min-w-[40px]"
+      >
+        <Text className="text-lg font-medium text-gold">
+          ____
+        </Text>
+      </Pressable>
+    );
+  }
+
+  // Focused & Normal State logic
+  let containerStyle = "mr-1.5 mb-2 px-2 py-1 rounded-lg border ";
+  let textStyle = "text-lg font-medium ";
+  let subTextStyle = "text-[10px] italic -mt-1 ";
+
+  if (isFocused) {
+    containerStyle += "bg-gold border-gold";
+    textStyle += "text-black"; // Black text on Gold
+    subTextStyle += "text-black/60";
+  } else {
+    // Normal
+    containerStyle += "bg-transparent border-transparent";
+    // For heavy words, we might want a subtle indicator, but for now we follow the "text in #e3dccb" instruction.
+    // If needed, we can add a subtle border for heavy words to distinguish them as interactive.
+    if (isHeavy) {
+       containerStyle += "border-white/10"; // Very subtle border
+    }
+
+    textStyle += "text-ink"; // Warm Parchment
+    subTextStyle += "text-gray-500";
+  }
+
   return (
     <Pressable
       onPress={() => onPress(token)}
-      className={`
-        mr-1.5 mb-2 px-2 py-1 rounded-lg border
-        ${isHeavy ? 'bg-[#E6E2D6] border-gray-300' : 'bg-transparent border-transparent'}
-      `}
+      className={containerStyle}
     >
       <View className="items-center">
-        <Text className={`
-          text-lg font-medium
-          ${isHeavy ? 'text-gray-900' : 'text-gray-500'}
-        `}>
+        <Text className={textStyle}>
           {token.text}
         </Text>
         {token.transliteration && (
-          <Text className="text-[10px] italic text-gray-400 -mt-1">
+          <Text className={subTextStyle}>
             {token.transliteration}
           </Text>
         )}

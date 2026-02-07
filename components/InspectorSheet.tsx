@@ -15,7 +15,7 @@ type TabType = 'grammar' | 'context' | 'family';
 
 const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
   ({ selectedToken, ancientContext, knotContext }, ref) => {
-    const { colorScheme } = useColorScheme();
+    // We assume dark mode is forced
     const [activeTab, setActiveTab] = useState<TabType>('grammar');
 
     // Snap points for the bottom sheet
@@ -23,20 +23,20 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
     // Helper to render a badge
     const renderBadge = (label: string, isMorph: boolean = false) => (
-      <View className={`px-2 py-1 rounded mr-2 ${isMorph ? 'bg-orange-100 dark:bg-orange-900' : 'bg-gray-200 dark:bg-gray-700'}`}>
-        <Text className={`text-xs uppercase font-bold ${isMorph ? 'text-orange-800 dark:text-orange-200' : 'text-gray-600 dark:text-gray-300'}`}>
+      <View className={`px-2 py-1 rounded mr-2 ${isMorph ? 'bg-orange-900/40 border border-orange-800' : 'bg-gray-800 border border-gray-700'}`}>
+        <Text className={`text-xs uppercase font-bold ${isMorph ? 'text-orange-300' : 'text-gray-400'}`}>
           {label}
         </Text>
       </View>
     );
 
-    const bgPaper = colorScheme === 'dark' ? '#232226' : '#F2F0E9';
-    const indicatorColor = colorScheme === 'dark' ? '#B39DDB' : '#3A352F';
-    const activeTabColor = colorScheme === 'dark' ? '#B39DDB' : '#3A352F';
-    const inactiveTabColor = colorScheme === 'dark' ? '#555' : '#999';
+    const bgPaper = '#252422'; // Card Background
+    const indicatorColor = '#C0A062'; // Gold
+    const activeTabColor = '#C0A062'; // Gold
+    const inactiveTabColor = '#666';
 
     const renderTabHeader = () => (
-      <View className="flex-row border-b border-gray-200 dark:border-gray-700 mb-4">
+      <View className="flex-row border-b border-gray-800 mb-4">
         {(['grammar', 'context', 'family'] as TabType[]).map((tab) => (
           <TouchableOpacity
             key={tab}
@@ -70,6 +70,16 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
         case 'grammar':
           return (
             <View className="flex-1 gap-4">
+               {/* The Knot (Rule Explanation) - Top Priority in Gold */}
+               {knotContext ? (
+                 <View className="mb-2 p-3 bg-yellow-900/10 border border-yellow-900/30 rounded-xl">
+                   <Text className="text-xs font-bold text-gold uppercase mb-1 tracking-widest">The Knot</Text>
+                   <Text className="text-lg text-gold font-serif italic leading-6">
+                     {knotContext}
+                   </Text>
+                 </View>
+               ) : null}
+
                {/* Header: The Word */}
                <View>
                 <Text className="text-4xl font-bold text-ink mb-1">
@@ -86,24 +96,16 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                 ))}
               </View>
 
-              {/* The Knot (Rule Explanation) */}
-              {knotContext ? (
-                 <View className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg mt-2">
-                   <Text className="text-xs font-bold text-gray-500 uppercase mb-1">The Knot</Text>
-                   <Text className="text-sm text-ink leading-5">{knotContext}</Text>
-                 </View>
-               ) : null}
-
               {/* The Morphology */}
               {selectedToken.morphology ? (
-                 <View className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg mt-2 border border-orange-100 dark:border-orange-800">
-                   <Text className="text-xs font-bold text-orange-700 dark:text-orange-300 uppercase mb-1">Morphology</Text>
-                   <Text className="text-sm text-ink leading-5">{selectedToken.morphology}</Text>
+                 <View className="p-3 bg-gray-800/50 rounded-lg mt-2 border border-gray-700">
+                   <Text className="text-xs font-bold text-gray-400 uppercase mb-1">Morphology</Text>
+                   <Text className="text-sm text-gray-300 leading-5">{selectedToken.morphology}</Text>
                  </View>
                ) : null}
 
               {/* The Lemma */}
-              <View className="flex-row items-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+              <View className="flex-row items-center border-t border-gray-800 pt-4 mt-2">
                 <Text className="text-sm font-bold text-gray-500 uppercase mr-2 tracking-wider">
                   From:
                 </Text>
@@ -118,7 +120,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
             <View className="mt-4 gap-4">
                {/* Definition Section */}
                {selectedToken.definition && (
-                 <View className="p-4 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-700">
+                 <View className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
                     <Text className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">
                       Definition
                     </Text>
@@ -129,7 +131,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                )}
 
               {/* Ancient Context Section */}
-              <View className="p-4 bg-yellow-50/50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100/50 dark:border-yellow-700/30">
+              <View className="p-4 bg-yellow-900/20 rounded-xl border border-yellow-700/30">
                 <Text className="text-xs font-bold text-gold uppercase mb-2 tracking-widest">
                   Ancient Context
                 </Text>

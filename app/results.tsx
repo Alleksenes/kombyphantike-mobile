@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
 import { FlatList, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { ActivityIndicator, Button, IconButton, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Button, IconButton, Text, useTheme, SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -24,6 +24,9 @@ export default function ResultsScreen() {
   // State for the data
   const [data, setData] = useState<any[]>([]);
   const [isFilling, setIsFilling] = useState(false);
+
+  // State for Interaction Mode
+  const [mode, setMode] = useState<'read' | 'analyze' | 'drill'>('read');
 
   // State for Inspector
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
@@ -128,6 +131,8 @@ export default function ResultsScreen() {
           index={index}
           total={data.length}
           onTokenPress={(token) => handleTokenPress(token, ancient, knotContext)}
+          mode={mode}
+          selectedToken={selectedToken}
         />
       </View>
     );
@@ -153,6 +158,19 @@ export default function ResultsScreen() {
               iconColor={theme.colors.onSurface}
             />
           </View>
+        </View>
+
+        <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+            <SegmentedButtons
+              value={mode}
+              onValueChange={(val) => setMode(val as any)}
+              buttons={[
+                { value: 'read', label: 'Read', icon: 'book-open-variant' },
+                { value: 'analyze', label: 'Analyze', icon: 'magnify' },
+                { value: 'drill', label: 'Drill', icon: 'school' },
+              ]}
+              theme={{ colors: { secondaryContainer: theme.colors.tertiary, onSecondaryContainer: 'black' } }}
+            />
         </View>
 
         <View style={styles.listContainer}>
