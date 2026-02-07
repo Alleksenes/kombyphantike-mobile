@@ -1,32 +1,28 @@
-import '../global.css';
-import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { PaperProvider } from 'react-native-paper';
 import { useColorScheme } from 'nativewind';
-import { initDatabase } from '../src/services/Database';
-import { useFonts } from 'expo-font';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { View, StyleSheet } from 'react-native';
-
-import { ScriptoriumTheme } from '../src/theme';
-import Atmosphere from '../src/components/Atmosphere';
+import { PaperProvider } from 'react-native-paper';
 import OmegaLoader from '../components/OmegaLoader';
+import '../global.css';
+import Atmosphere from '../src/components/Atmosphere';
+import { initDatabase } from '../src/services/Database';
+import { ScriptoriumTheme } from '../src/theme';
 
 export default function RootLayout() {
   const { colorScheme, setColorScheme } = useColorScheme();
 
+
   const [fontsLoaded] = useFonts({
-    'GFSDidot': require('../assets/fonts/GFSDidot.ttf'),
-    'NeueHaasGrotesk': require('../assets/fonts/NeueHaasGrotesk.ttf'),
+    'GFSDidot': require('../assets/fonts/GFSDidot.otf'),
+    'NeueHaasGrotesk': require('../assets/fonts/NeueHaasGrotesk.otf'),
   });
 
   useEffect(() => {
     initDatabase();
-  }, []);
-
-  useEffect(() => {
     // Force NativeWind to dark mode
     if (colorScheme !== 'dark') {
       setColorScheme('dark');

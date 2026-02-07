@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 interface ParadigmEntry {
   form: string;
@@ -27,37 +27,37 @@ const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => 
     const numberTag = requiredTags.find(t => ['singular', 'plural'].includes(t.toLowerCase()));
 
     if (personTag) {
-        if (!entryTags.includes(personTag.toLowerCase())) return;
+      if (!entryTags.includes(personTag.toLowerCase())) return;
     }
     if (numberTag) {
-        if (!entryTags.includes(numberTag.toLowerCase())) return;
+      if (!entryTags.includes(numberTag.toLowerCase())) return;
     }
 
     let score = 0;
     requiredTags.forEach(tag => {
-        if (tag === personTag || tag === numberTag) return; // Already checked strict
+      if (tag === personTag || tag === numberTag) return; // Already checked strict
 
-        const lowerTag = tag.toLowerCase();
+      const lowerTag = tag.toLowerCase();
 
-        if (entryTags.includes(lowerTag)) {
-            // Scoring Strategy
-            if (['present', 'past', 'future', 'aorist', 'subjunctive'].includes(lowerTag)) {
-                score += 20; // High priority for Tense/Mood
-            } else if (['active', 'passive'].includes(lowerTag)) {
-                score += 5;  // Medium priority for Voice
-            } else if (['imperfective', 'perfective'].includes(lowerTag)) {
-                score += 2;  // Low priority for Aspect (often implied or inconsistent)
-            } else {
-                score += 1;
-            }
+      if (entryTags.includes(lowerTag)) {
+        // Scoring Strategy
+        if (['present', 'past', 'future', 'aorist', 'subjunctive'].includes(lowerTag)) {
+          score += 20; // High priority for Tense/Mood
+        } else if (['active', 'passive'].includes(lowerTag)) {
+          score += 5;  // Medium priority for Voice
+        } else if (['imperfective', 'perfective'].includes(lowerTag)) {
+          score += 2;  // Low priority for Aspect (often implied or inconsistent)
+        } else {
+          score += 1;
         }
+      }
     });
 
     if (score > bestScore) {
-        bestScore = score;
-        bestMatches = [entry.form];
+      bestScore = score;
+      bestMatches = [entry.form];
     } else if (score === bestScore) {
-        bestMatches.push(entry.form);
+      bestMatches.push(entry.form);
     }
   });
 
@@ -115,19 +115,19 @@ const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
     );
 
     voices.forEach(voice => {
-        persons.forEach(person => {
-             result[category.label][voice][person] = { Singular: '-', Plural: '-' };
+      persons.forEach(person => {
+        result[category.label][voice][person] = { Singular: '-', Plural: '-' };
 
-             const personTag = person === '1' ? 'first-person' : person === '2' ? 'second-person' : 'third-person';
-             const voiceTag = voice.toLowerCase();
+        const personTag = person === '1' ? 'first-person' : person === '2' ? 'second-person' : 'third-person';
+        const voiceTag = voice.toLowerCase();
 
-             numbers.forEach(number => {
-                 // For findForm, we pass the generic tags we want.
-                 // Since we already filtered by Tense/Aspect/Mood, we primarily need Voice/Person/Number.
-                 const reqTags = [voiceTag, personTag, number.toLowerCase()];
-                 result[category.label][voice][person][number] = findForm(categoryParadigm, reqTags);
-             });
+        numbers.forEach(number => {
+          // For findForm, we pass the generic tags we want.
+          // Since we already filtered by Tense/Aspect/Mood, we primarily need Voice/Person/Number.
+          const reqTags = [voiceTag, personTag, number.toLowerCase()];
+          result[category.label][voice][person][number] = findForm(categoryParadigm, reqTags);
         });
+      });
     });
   });
 
@@ -185,19 +185,19 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
 
         {/* Voice Toggle */}
         <View className="flex-row justify-center mb-4">
-            <View className="flex-row bg-gray-900/50 rounded-lg p-1">
-                {['Active', 'Passive'].map((voice) => (
-                    <TouchableOpacity
-                        key={voice}
-                        onPress={() => setActiveVoice(voice as any)}
-                        className={`px-4 py-1.5 rounded-md ${activeVoice === voice ? 'bg-gray-700' : ''}`}
-                    >
-                        <Text className={`text-[10px] uppercase font-bold tracking-wider ${activeVoice === voice ? 'text-accent' : 'text-gray-500'}`}>
-                            {voice} Voice
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+          <View className="flex-row bg-gray-900/50 rounded-lg p-1">
+            {['Active', 'Passive'].map((voice) => (
+              <TouchableOpacity
+                key={voice}
+                onPress={() => setActiveVoice(voice as any)}
+                className={`px-4 py-1.5 rounded-md ${activeVoice === voice ? 'bg-gray-700' : ''}`}
+              >
+                <Text className={`text-[10px] uppercase font-bold tracking-wider ${activeVoice === voice ? 'text-accent' : 'text-gray-500'}`}>
+                  {voice} Voice
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Grid Header */}
