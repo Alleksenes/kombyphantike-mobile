@@ -51,7 +51,7 @@ export default function PhilologyCard({
   };
 
   const handleSpeakSentence = async () => {
-    if (isLoadingAudio) return;
+    if (isLoadingAudio || modernGreek === "Generating..." || !modernGreek) return;
     setIsLoadingAudio(true);
     try {
       await AudioPlayer.playSentence(modernGreek);
@@ -109,6 +109,7 @@ export default function PhilologyCard({
                 iconColor="#C0A062"
                 onPress={handleSpeakSentence}
                 style={{ margin: 0 }}
+                disabled={modernGreek === "Generating..." || !modernGreek}
               />
             )}
           </View>

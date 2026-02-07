@@ -1,11 +1,14 @@
 import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 
 let db: SQLite.SQLiteDatabase;
 
-try {
-  db = SQLite.openDatabaseSync('philology.db');
-} catch (error) {
-  console.error("Failed to open database", error);
+if (Platform.OS !== 'web') {
+  try {
+    db = SQLite.openDatabaseSync('philology.db');
+  } catch (error) {
+    console.error("Failed to open database", error);
+  }
 }
 
 export const initDatabase = async () => {
