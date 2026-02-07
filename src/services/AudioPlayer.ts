@@ -25,7 +25,10 @@ export const AudioPlayer = {
       // data.audio is a base64 string
       // Assuming the backend returns raw base64 without prefix, or we need to handle it.
       // Usually simple base64 strings need a data URI prefix.
-      const audioUri = `data:audio/mp3;base64,${data.audio}`;
+      let audioUri = data.audio;
+      if (!audioUri.startsWith('data:')) {
+        audioUri = `data:audio/mp3;base64,${data.audio}`;
+      }
 
       // Configure audio mode (important for iOS to play even if switch is silent, etc)
       await Audio.setAudioModeAsync({
