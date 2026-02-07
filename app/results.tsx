@@ -28,8 +28,6 @@ export default function ResultsScreen() {
   // State for Inspector
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [selectedContext, setSelectedContext] = useState<string>(''); // Stores citation
-  const [selectedKnotContext, setSelectedKnotContext] = useState<string>('');
-  const [selectedKnotDefinition, setSelectedKnotDefinition] = useState<string>('');
   const [selectedGreek, setSelectedGreek] = useState<string>('');
   const [selectedEnglish, setSelectedEnglish] = useState<string>('');
 
@@ -102,11 +100,9 @@ export default function ResultsScreen() {
     }
   };
 
-  const handleTokenPress = (token: Token, context: string, knotDefinition: string, knotContext: string, greek: string, english: string) => {
+  const handleTokenPress = (token: Token, context: string, greek: string, english: string) => {
     setSelectedToken(token);
     setSelectedContext(context);
-    setSelectedKnotDefinition(knotDefinition);
-    setSelectedKnotContext(knotContext);
     setSelectedGreek(greek);
     setSelectedEnglish(english);
     // Snap to the first open point (index 0, which is 45%)
@@ -133,7 +129,7 @@ export default function ResultsScreen() {
           knotContext={knotContext}
           index={index}
           total={data.length}
-          onTokenPress={(token, greek, eng) => handleTokenPress(token, ancient, knot, knotContext, greek, eng)}
+          onTokenPress={(token, greek, eng) => handleTokenPress(token, ancient, greek, eng)}
           selectedToken={selectedToken}
         />
       </View>
@@ -181,8 +177,6 @@ export default function ResultsScreen() {
           ref={bottomSheetRef}
           selectedToken={selectedToken}
           ancientContext={selectedContext}
-          knotDefinition={selectedKnotDefinition}
-          knotContext={selectedKnotContext}
           greekSentence={selectedGreek}
           englishTranslation={selectedEnglish}
         />

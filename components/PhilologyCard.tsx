@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dimensions, View, Text } from 'react-native';
 import { IconButton, ActivityIndicator } from 'react-native-paper';
 import WordChip, { Token } from './WordChip';
@@ -33,6 +33,15 @@ export default function PhilologyCard({
   selectedToken
 }: PhilologyCardProps) {
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+
+  // Enrich tokens with knot information if missing
+  const enrichedTokens = useMemo(() => {
+    return targetTokens?.map(t => ({
+      ...t,
+      knot_definition: t.knot_definition || knot,
+      knot_context: t.knot_context || knotContext
+    })) || [];
+  }, [targetTokens, knot, knotContext]);
 
   // Unified Interaction: Tap to Inspect
   const handleWordPress = (token: Token) => {
@@ -80,9 +89,15 @@ export default function PhilologyCard({
 
       <View className="flex-1 justify-center">
         <View className="flex-row flex-wrap items-end">
-          {targetTokens && targetTokens.length > 0 ? (
-            targetTokens.map((token, idx) => {
+          {enrichedTokens.length > 0 ? (
+            enrichedTokens.map((token, idx) => {
                // Focused if it matches selectedToken (regardless of mode, since mode is unified)
+               // Note: Comparison might fail if selectedToken is the ORIGINAL token object.
+               // We should check by unique properties (like text + index maybe?)
+               // But usually strict equality is used.
+               // If selectedToken comes from a previous click on an enriched token, it will match.
+               // If selectedToken comes from somewhere else, it might not.
+               // Assuming handleWordPress passes the enriched token back up, then selectedToken WILL be one of these enriched tokens.
                const isFocused = selectedToken === token;
 
                return (
