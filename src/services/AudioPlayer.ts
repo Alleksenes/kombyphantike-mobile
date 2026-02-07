@@ -1,4 +1,5 @@
 import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
 let currentSound: Audio.Sound | null = null;
@@ -35,11 +36,16 @@ export const AudioPlayer = {
       // 3. Log payload length
       console.log("Audio Payload Length:", audioData.length);
 
-      // 2. Prefix check
-      let audioUri = audioData;
-      if (!audioUri.startsWith('data:audio')) {
-        audioUri = `data:audio/mp3;base64,${audioData}`;
-      }
+      // Clean the Base64 string (remove data:audio/mp3;base64, prefix if present)
+      const cleanBase64 = audioData.replace(/^data:audio\/.*?;base64,/, '');
+
+      // Define a path
+      const uri = FileSystem.cacheDirectory + 'speech.mp3';
+
+      // Write to disk
+      await FileSystem.writeAsStringAsync(uri, cleanBase64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
       // Configure audio mode (important for iOS to play even if switch is silent, etc)
       await Audio.setAudioModeAsync({
@@ -48,8 +54,9 @@ export const AudioPlayer = {
         shouldDuckAndroid: true,
       });
 
+      // Play from file
       const { sound } = await Audio.Sound.createAsync(
-        { uri: audioUri },
+        { uri },
         { shouldPlay: true }
       );
 
