@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, Platform, View } from 'react-native';
 import { Button, Surface, Text, TextInput, Title, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import OmegaLoader from '../../components/OmegaLoader';
 // Import the store we just created
 import { SessionStore } from '../../services/SessionStore';
 import { MockScroll } from '../../src/dev/mockData';
@@ -123,18 +124,27 @@ export default function WeaverScreen() {
             />
           </View>
 
-          <Button
-            mode="contained"
-            onPress={handleWeave}
-            loading={loading}
-            disabled={loading}
-            className="rounded-lg"
-            contentStyle={{ paddingVertical: 8 }}
-            buttonColor={theme.colors.primary}
-            textColor={theme.colors.onPrimary}
-          >
-            {loading ? "Weaving Draft..." : "Weave Curriculum"}
-          </Button>
+          {loading ? (
+            <View className="items-center justify-center py-4">
+              <OmegaLoader size={48} />
+              <Text className="text-xs text-accent mt-4 font-bold uppercase tracking-widest">
+                Weaving Draft...
+              </Text>
+            </View>
+          ) : (
+            <Button
+              mode="contained"
+              onPress={handleWeave}
+              loading={false}
+              disabled={loading}
+              className="rounded-lg"
+              contentStyle={{ paddingVertical: 8 }}
+              buttonColor={theme.colors.primary}
+              textColor={theme.colors.onPrimary}
+            >
+              Weave Curriculum
+            </Button>
+          )}
         </Surface>
       </View>
     </SafeAreaView>

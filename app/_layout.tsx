@@ -38,24 +38,26 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <PaperProvider theme={ScriptoriumTheme}>
-        <StatusBar style="light" />
-        {/* Atmosphere Background */}
-        <Atmosphere />
+    <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <PaperProvider theme={ScriptoriumTheme}>
+          <StatusBar style="light" />
+          {/* Atmosphere Background */}
+          <Atmosphere />
 
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: 'transparent' },
-            animation: 'fade',
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="results" />
-        </Stack>
-      </PaperProvider>
-    </GestureHandlerRootView>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: 'transparent' },
+              animation: 'fade',
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="results" />
+          </Stack>
+        </PaperProvider>
+      </GestureHandlerRootView>
+    </View>
   );
 }
 
