@@ -31,18 +31,29 @@ const fontConfig = {
   bodySmall: { fontFamily: baseFont },
 };
 
+const commonColors = {
+  primary: '#e3dccb', // ink - Warm Parchment
+  secondary: '#B39DDB', // ancient
+  tertiary: '#C0A062', // gold - Antique Gold
+  background: '#1a1918', // paper - Deep Ink
+  surface: '#252422', // card - Slightly lighter Ink
+  onSurface: '#e3dccb', // ink
+  onSurfaceVariant: 'rgba(227, 220, 203, 0.4)',
+  elevation: {
+    level1: '#252422',
+    level2: '#252422',
+    level3: '#252422',
+    level4: '#252422',
+    level5: '#252422',
+  }
+};
+
 const lightTheme = {
   ...DefaultTheme,
   fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...DefaultTheme.colors,
-    primary: '#2A2A2A', // ink
-    secondary: '#5D4037', // ancient
-    tertiary: '#C5A059', // gold
-    background: '#F2F0E9', // paper
-    surface: '#FFFFFF',
-    onSurface: '#2A2A2A', // ink
-    onSurfaceVariant: 'rgba(0,0,0,0.4)',
+    ...commonColors,
   },
 };
 
@@ -51,27 +62,27 @@ const darkTheme = {
   fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...MD3DarkTheme.colors,
-    primary: '#E5E5E5', // ink (Dark)
-    secondary: '#B39DDB', // ancient (Dark)
-    tertiary: '#C5A059', // gold
-    background: '#232226', // paper (Dark)
-    surface: '#2C2C2C', // slightly lighter than background
-    onSurface: '#E5E5E5', // ink (Dark)
-    onSurfaceVariant: 'rgba(255,255,255,0.4)',
+    ...commonColors,
   },
 };
 
 export default function RootLayout() {
-  const { colorScheme } = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const { colorScheme, setColorScheme } = useColorScheme();
+
+  // Force dark theme logic
+  const theme = darkTheme;
 
   useEffect(() => {
     initDatabase();
-  }, []);
+    // Force NativeWind to dark mode
+    if (colorScheme !== 'dark') {
+      setColorScheme('dark');
+    }
+  }, [colorScheme]);
 
   return (
     <PaperProvider theme={theme}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerShown: false,

@@ -7,10 +7,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        paper: '#F2F0E9',
-        ink: '#3A352F',
+        paper: '#1a1918', // Deep Ink - Global App Background
+        ink: '#e3dccb',   // Warm Parchment - Primary Text
+        card: '#252422',  // Slightly lighter Ink - Card Background
         ancient: 'var(--color-ancient)',
-        gold: '#C0A062',
+        gold: '#C0A062',  // Antique Gold - Highlights/Buttons
       },
     },
   },
