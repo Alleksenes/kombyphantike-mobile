@@ -13,6 +13,8 @@ export interface Token {
   definition?: string;
   transliteration?: string;
   morphology?: string;
+  knot_definition?: string;
+  knot_context?: string;
 }
 
 interface WordChipProps {

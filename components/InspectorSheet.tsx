@@ -9,8 +9,6 @@ import { AudioPlayer } from '../src/services/AudioPlayer';
 interface InspectorSheetProps {
   selectedToken: Token | null;
   ancientContext: string;
-  knotDefinition?: string;
-  knotContext?: string;
   greekSentence?: string;
   englishTranslation?: string;
 }
@@ -18,7 +16,7 @@ interface InspectorSheetProps {
 type TabType = 'grammar' | 'context' | 'family';
 
 const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
-  ({ selectedToken, ancientContext, knotDefinition, knotContext, greekSentence, englishTranslation }, ref) => {
+  ({ selectedToken, ancientContext, greekSentence, englishTranslation }, ref) => {
     // We assume dark mode is forced
     const [activeTab, setActiveTab] = useState<TabType>('grammar');
 
@@ -74,28 +72,33 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
         case 'grammar':
           return (
             <View className="flex-1 gap-4">
-               {/* Section 1: The Law */}
-               {knotDefinition ? (
-                 <View className="mb-1">
-                   <Text className="text-xs font-bold text-gray-500 uppercase mb-1 tracking-widest">The Law</Text>
-                   <Text className="text-base text-gray-400 font-serif italic leading-6">
-                     {knotDefinition}
+               {/* Section A: The Rule (Static) */}
+               {selectedToken.knot_definition ? (
+                 <View className="mb-2">
+                   <Text className="text-xs font-bold text-gray-500 uppercase mb-1 tracking-widest">The Rule</Text>
+                   <Text className="text-base text-[#9CA3AE] font-serif italic leading-6">
+                     {selectedToken.knot_definition}
                    </Text>
                  </View>
                ) : null}
 
-               {/* Section 2: The Application */}
-               {knotContext ? (
+               {/* Divider */}
+               {selectedToken.knot_definition && selectedToken.knot_context ? (
+                   <View className="h-[1px] bg-gray-800 my-2" />
+               ) : null}
+
+               {/* Section B: The Logic (Dynamic) */}
+               {selectedToken.knot_context ? (
                  <View className="mb-2">
-                   <Text className="text-xs font-bold text-accent uppercase mb-1 tracking-widest">The Application</Text>
-                   <Text className="text-lg text-accent font-sans leading-6">
-                     {knotContext}
+                   <Text className="text-xs font-bold text-accent uppercase mb-1 tracking-widest">The Logic</Text>
+                   <Text className="text-lg text-[#C5A059] font-sans leading-6">
+                     {selectedToken.knot_context}
                    </Text>
                  </View>
                ) : null}
 
                {/* Header: The Word + Audio */}
-               <View className="flex-row items-center justify-between">
+               <View className="flex-row items-center justify-between mt-4 border-t border-gray-800 pt-4">
                 <Text className="text-4xl font-bold text-text mb-1 flex-1">
                   {selectedToken.text}
                 </Text>
@@ -125,7 +128,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                ) : null}
 
               {/* The Lemma */}
-              <View className="flex-row items-center border-t border-gray-800 pt-4 mt-2">
+              <View className="flex-row items-center pt-2">
                 <Text className="text-sm font-bold text-gray-500 uppercase mr-2 tracking-wider">
                   From:
                 </Text>
