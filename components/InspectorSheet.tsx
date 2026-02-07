@@ -106,7 +106,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                    icon="volume-high"
                    iconColor="#C0A062"
                    size={28}
-                   onPress={() => AudioPlayer.playSentence(selectedToken.lemma || selectedToken.text)}
+                   onPress={() => AudioPlayer.playSentence(selectedToken.text)}
                 />
               </View>
 
