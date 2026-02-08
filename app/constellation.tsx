@@ -1,36 +1,13 @@
 import React, { useMemo } from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import ConstellationMap, { ConstellationNode, ConstellationLink } from '../screens/ConstellationMap';
 import CosmicBackground from '../components/CosmicBackground';
 
-const NODES: ConstellationNode[] = [
-  { id: '1', label: 'Genesis', status: 'mastered' },
-  { id: '2', label: 'Logic', status: 'mastered' },
-  { id: '3', label: 'Rhetoric', status: 'unlocked' },
-  { id: '4', label: 'Grammar', status: 'unlocked' },
-  { id: '5', label: 'Music', status: 'locked' },
-  { id: '6', label: 'Astronomy', status: 'locked' },
-  { id: '7', label: 'Arithmetic', status: 'locked' },
-  { id: '8', label: 'Geometry', status: 'locked' },
-];
-
-const LINKS: ConstellationLink[] = [
-  { source: '1', target: '2' },
-  { source: '1', target: '3' },
-  { source: '2', target: '4' },
-  { source: '3', target: '5' },
-  { source: '4', target: '6' },
-  { source: '5', target: '7' },
-  { source: '6', target: '8' },
-  { source: '2', target: '8' },
-  { source: '3', target: '7' },
-];
-
 export default function ConstellationScreen() {
   const { graph } = useLocalSearchParams();
 
-  const { nodes, links } = useMemo(() => {
+  const { nodes, links } = useMemo<{ nodes: ConstellationNode[]; links: ConstellationLink[] }>(() => {
     if (typeof graph === 'string') {
       try {
         const parsed = JSON.parse(graph);
@@ -42,15 +19,39 @@ export default function ConstellationScreen() {
         console.error("Failed to parse graph parameter:", e);
       }
     }
-    // Fallback to hardcoded constellation if no graph or invalid
-    return { nodes: NODES, links: LINKS };
+    // Return empty arrays if no graph or invalid (REMOVE MOCKS)
+    return { nodes: [], links: [] };
   }, [graph]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
       <Stack.Screen options={{ headerShown: false }} />
       <CosmicBackground />
-      <ConstellationMap nodes={nodes} links={links} />
+      {nodes.length > 0 ? (
+        <ConstellationMap nodes={nodes} links={links} />
+      ) : (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Text style={{
+            color: '#E3DCCB',
+            fontSize: 24,
+            textAlign: 'center',
+            marginBottom: 16,
+            fontWeight: 'bold',
+            opacity: 0.9
+          }}>
+            No Constellation Data
+          </Text>
+          <Text style={{
+            color: '#E3DCCB',
+            fontSize: 16,
+            textAlign: 'center',
+            opacity: 0.7,
+            lineHeight: 24
+          }}>
+            Please weave a curriculum to view your path.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
