@@ -1,5 +1,5 @@
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { API_BASE_URL } from './apiConfig';
 
 let soundObject: Audio.Sound | null = null;
@@ -31,7 +31,7 @@ export const AudioPlayer = {
 
       // 2. Write to file
       const cleanBase64 = audioData.replace(/^data:audio\/.*?;base64,/, '');
-      const uri = FileSystem.cacheDirectory + 'temp.mp3';
+      const file = new FileSystem.File(FileSystem.Paths.cache, 'temp.mp3');
 
       // Unload previous sound if exists to release resources and file locks
       if (soundObject) {
@@ -43,22 +43,22 @@ export const AudioPlayer = {
         soundObject = null;
       }
 
-      await FileSystem.writeAsStringAsync(uri, cleanBase64, {
-        encoding: FileSystem.EncodingType.Base64,
+      file.write(cleanBase64, {
+        encoding: 'base64',
       });
 
-      console.log(`[Audio] File written to: ${uri}`);
+      console.log(`[Audio] File written to: ${file.uri}`);
 
       // 3. Play using expo-av
       // Ensure audio mode is configured for playback
       await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
-          stayActiveInBackground: false,
+          staysActiveInBackground: false,
           shouldDuckAndroid: true,
       });
 
       const { sound } = await Audio.Sound.createAsync(
-          { uri },
+          { uri: file.uri },
           { shouldPlay: true }
       );
 
