@@ -1,8 +1,8 @@
-import { createVideoPlayer, VideoPlayer } from 'expo-video';
+import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
-let player: VideoPlayer | null = null;
+let soundObject: Audio.Sound | null = null;
 
 export const AudioPlayer = {
   async playSentence(text: string) {
@@ -32,13 +32,16 @@ export const AudioPlayer = {
 
       // 2. Write to file
       const cleanBase64 = audioData.replace(/^data:audio\/.*?;base64,/, '');
-      const uri = FileSystem.cacheDirectory + 'speech.mp3';
+      const uri = FileSystem.cacheDirectory + 'temp.mp3';
 
-      // If player exists, pause it before writing to file to avoid locks
-      if (player) {
-          player.pause();
-          // Release the file handle by setting source to null
-          player.replace(null);
+      // Unload previous sound if exists to release resources and file locks
+      if (soundObject) {
+        try {
+            await soundObject.unloadAsync();
+        } catch (e) {
+            console.warn("Failed to unload previous sound", e);
+        }
+        soundObject = null;
       }
 
       await FileSystem.writeAsStringAsync(uri, cleanBase64, {
@@ -47,27 +50,32 @@ export const AudioPlayer = {
 
       console.log(`[Audio] File written to: ${uri}`);
 
-      // 3. Play
-      if (!player) {
-        player = createVideoPlayer(uri);
+      // 3. Play using expo-av
+      // Ensure audio mode is configured for playback
+      await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          stayActiveInBackground: false,
+          shouldDuckAndroid: true,
+      });
 
-        // Add event listener for logging
-        player.addListener('playToEnd', () => {
-             console.log('[Audio] Playback finished');
-        });
+      const { sound } = await Audio.Sound.createAsync(
+          { uri },
+          { shouldPlay: true }
+      );
 
-        player.addListener('statusChange', (event) => {
-            if (event.status === 'error') {
-                console.error('[Audio] Player Error:', event.error?.message);
-            }
-        });
-      } else {
-        player.replace(uri);
-      }
+      soundObject = sound;
 
-      // Configure player
-      player.loop = false;
-      player.play();
+      sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded) {
+              if (status.didJustFinish) {
+                  console.log('[Audio] Playback finished');
+                  // Optionally unload immediately or wait for next play
+                  // sound.unloadAsync();
+              }
+          } else if (status.error) {
+              console.error(`[Audio] Player Error: ${status.error}`);
+          }
+      });
 
     } catch (error) {
       console.error("[Audio] Playback failed", error);

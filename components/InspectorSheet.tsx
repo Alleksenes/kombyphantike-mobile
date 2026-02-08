@@ -72,7 +72,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
         case 'grammar':
           return (
             <View className="flex-1 gap-4">
-               {/* Section A: The Rule (Static) */}
+               {/* Section A: The Rule (Static - Knot Definition) */}
                {selectedToken.knot_definition ? (
                  <View className="mb-2">
                    <Text className="text-xs font-bold text-gray-500 uppercase mb-1 tracking-widest">The Rule</Text>
@@ -87,7 +87,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                    <View className="h-[1px] bg-gray-800 my-2" />
                ) : null}
 
-               {/* Section B: The Logic (Dynamic) */}
+               {/* Section B: The Logic (Dynamic - Knot Context) */}
                {selectedToken.knot_context ? (
                  <View className="mb-2">
                    <Text className="text-xs font-bold text-accent uppercase mb-1 tracking-widest">The Logic</Text>
@@ -128,13 +128,21 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                ) : null}
 
               {/* The Lemma */}
-              <View className="flex-row items-center pt-2">
-                <Text className="text-sm font-bold text-gray-500 uppercase mr-2 tracking-wider">
-                  From:
-                </Text>
-                <Text className="text-xl font-medium text-ancient font-serif italic">
-                  {selectedToken.lemma}
-                </Text>
+              <View className="flex-row items-center pt-2 justify-between">
+                <View className="flex-row items-center">
+                  <Text className="text-sm font-bold text-gray-500 uppercase mr-2 tracking-wider">
+                    From:
+                  </Text>
+                  <Text className="text-xl font-medium text-ancient font-serif italic">
+                    {selectedToken.lemma}
+                  </Text>
+                </View>
+                <IconButton
+                   icon="volume-high"
+                   iconColor="#C0A062"
+                   size={24}
+                   onPress={() => AudioPlayer.playSentence(selectedToken.lemma)}
+                />
               </View>
             </View>
           );
