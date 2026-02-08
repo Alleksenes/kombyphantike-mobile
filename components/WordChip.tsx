@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 export interface AncientContext {
@@ -30,7 +31,7 @@ interface WordChipProps {
   isFocused?: boolean;
 }
 
-export default function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipProps) {
+function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipProps) {
   const isHeavy = ['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(token.pos);
   const isPunctuation = token.pos === 'PUNCT';
 
@@ -86,3 +87,5 @@ export default function WordChip({ token, onPress, onLongPress, isFocused = fals
     </Pressable>
   );
 }
+
+export default memo(WordChip);
