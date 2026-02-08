@@ -101,8 +101,10 @@ describe('matchTags', () => {
     expect(matchTags(['1', 'singular', 'present', 'active', 'indicative'], ['1', 'singular', 'present'])).toBe(true);
   });
 
-  test('fails if a required tag is missing', () => {
-    expect(matchTags(['1', 'singular', 'present'], ['1', 'plural', 'present'])).toBe(false);
+  test('fails if too many required tags are missing', () => {
+    // 3 required tags. 1 match (1st). 2 misses (plural, future).
+    // Threshold is 2. Hits 1 < 2. Should fail.
+    expect(matchTags(['1', 'singular', 'present'], ['1', 'plural', 'future'])).toBe(false);
   });
 
   test('exclusion logic: aorist cannot match imperfective', () => {
@@ -117,8 +119,13 @@ describe('matchTags', () => {
     expect(matchTags(['imperfect', 'imperfective'], ['imperfect'])).toBe(true);
   });
 
-  test('handles short queries strictly', () => {
-    // Threshold is currently normReq.length, so it's always strict.
-    expect(matchTags(['1', 'present'], ['1', 'singular', 'present'])).toBe(false);
+  test('allows 1 miss for long queries (>=3 tags)', () => {
+    // 3 required tags. 2 match. 1 miss. Should pass.
+    expect(matchTags(['1', 'present'], ['1', 'singular', 'present'])).toBe(true);
+  });
+
+  test('handles short queries strictly (<3 tags)', () => {
+    // 2 required tags. 1 match. 1 miss. Should fail (0 misses allowed).
+    expect(matchTags(['1'], ['1', 'singular'])).toBe(false);
   });
 });
