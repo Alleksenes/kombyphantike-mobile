@@ -14,57 +14,22 @@ interface ParadigmGridProps {
 
 // Helper function to find a form with specific tags using a relaxed "best match" scoring
 const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => {
-  let bestScore = -1;
-  let bestMatches: string[] = [];
-
-  paradigm.forEach(entry => {
-    if (!Array.isArray(entry.tags)) return;
+  const matchingForms = paradigm.filter(entry => {
+    if (!Array.isArray(entry.tags)) return false;
     const entryTags = entry.tags.map(t => t.toLowerCase());
 
-    // Strict requirements: Person and Number
-    // We infer these from requiredTags if they exist there
-    const personTag = requiredTags.find(t => t.includes('person') || ['1', '2', '3'].includes(t));
-    const numberTag = requiredTags.find(t => ['singular', 'plural'].includes(t.toLowerCase()));
-
-    if (personTag) {
-      if (!entryTags.includes(personTag.toLowerCase())) return;
-    }
-    if (numberTag) {
-      if (!entryTags.includes(numberTag.toLowerCase())) return;
-    }
-
-    let score = 0;
-    requiredTags.forEach(tag => {
-      if (tag === personTag || tag === numberTag) return; // Already checked strict
-
-      const lowerTag = tag.toLowerCase();
-
-      if (entryTags.includes(lowerTag)) {
-        // Scoring Strategy
-        if (['present', 'past', 'future', 'aorist', 'subjunctive'].includes(lowerTag)) {
-          score += 20; // High priority for Tense/Mood
-        } else if (['active', 'passive'].includes(lowerTag)) {
-          score += 5;  // Medium priority for Voice
-        } else if (['imperfective', 'perfective'].includes(lowerTag)) {
-          score += 2;  // Low priority for Aspect (often implied or inconsistent)
-        } else {
-          score += 1;
-        }
-      }
+    // Check if entryTags contains ALL requiredTags
+    return requiredTags.every(reqTag => {
+      const lowerReq = reqTag.toLowerCase();
+      // handle potential aliases if necessary, but for now strict inclusion of keyword
+      return entryTags.includes(lowerReq);
     });
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestMatches = [entry.form];
-    } else if (score === bestScore) {
-      bestMatches.push(entry.form);
-    }
   });
 
-  if (bestMatches.length === 0) return '-';
+  if (matchingForms.length === 0) return '-';
 
   // Deduplicate forms and join
-  const uniqueForms = Array.from(new Set(bestMatches));
+  const uniqueForms = Array.from(new Set(matchingForms.map(e => e.form)));
   return uniqueForms.join(', ');
 };
 
@@ -87,6 +52,8 @@ const parseNounParadigm = (paradigm: ParadigmEntry[]) => {
 };
 
 const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
+  console.log("Raw Paradigm:", JSON.stringify(paradigm, null, 2));
+
   // Structure: Tense -> Voice -> Person (1,2,3) -> { Singular: string, Plural: string }
   const result: Record<string, Record<string, Record<string, { Singular: string; Plural: string }>>> = {
     Present: { Active: {}, Passive: {} },
@@ -96,12 +63,16 @@ const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
     Subjunctive: { Active: {}, Passive: {} },
   };
 
+  // Define categories with their specific required tags.
+  // Note: We remove 'imperfective' from Present to be more lenient,
+  // as Present is the default aspect often.
+  // For Imperfect and Aorist, we keep aspect to distinguish them (both are past).
   const categories = [
-    { label: 'Present', filter: (tags: string[]) => tags.includes('present') && tags.includes('imperfective') },
-    { label: 'Imperfect', filter: (tags: string[]) => tags.includes('past') && tags.includes('imperfective') },
-    { label: 'Aorist', filter: (tags: string[]) => tags.includes('past') && tags.includes('perfective') },
-    { label: 'Future', filter: (tags: string[]) => tags.includes('future') },
-    { label: 'Subjunctive', filter: (tags: string[]) => tags.includes('subjunctive') },
+    { label: 'Present', tags: ['present'] },
+    { label: 'Imperfect', tags: ['past', 'imperfective'] },
+    { label: 'Aorist', tags: ['past', 'perfective'] },
+    { label: 'Future', tags: ['future'] },
+    { label: 'Subjunctive', tags: ['subjunctive'] },
   ];
 
   const voices = ['Active', 'Passive'];
@@ -109,10 +80,8 @@ const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
   const numbers = ['Singular', 'Plural'];
 
   categories.forEach(category => {
-    // strict filtering
-    const categoryParadigm = paradigm.filter(entry =>
-      entry.tags && category.filter(entry.tags.map(t => t.toLowerCase()))
-    );
+    // We do NOT pre-filter the paradigm here. We pass the full paradigm to findForm
+    // but with more specific tags.
 
     voices.forEach(voice => {
       persons.forEach(person => {
@@ -122,10 +91,9 @@ const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
         const voiceTag = voice.toLowerCase();
 
         numbers.forEach(number => {
-          // For findForm, we pass the generic tags we want.
-          // Since we already filtered by Tense/Aspect/Mood, we primarily need Voice/Person/Number.
-          const reqTags = [voiceTag, personTag, number.toLowerCase()];
-          result[category.label][voice][person][number] = findForm(categoryParadigm, reqTags);
+          // Combine category tags (Tense/Mood/Aspect) with Voice/Person/Number
+          const reqTags = [...category.tags, voiceTag, personTag, number.toLowerCase()];
+          result[category.label][voice][person][number] = findForm(paradigm, reqTags);
         });
       });
     });
