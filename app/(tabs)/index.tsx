@@ -23,7 +23,7 @@ export default function WeaverScreen() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ theme }),
+        body: JSON.stringify({ theme: theme.trim() }),
       });
 
       if (!response.ok) {
