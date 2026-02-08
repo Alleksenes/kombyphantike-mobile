@@ -31,25 +31,34 @@ export default function WeaverScreen() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create curriculum');
+        const errorText = await response.text();
+        throw new Error(`Server Error: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
+      console.log("API Response:", JSON.stringify(data, null, 2)); // DEBUG LOG
 
-      if (data && data.draft_data) {
+      // DATA MAPPING (DEFENSIVE CODING)
+      // Ensure we map 'edges' to 'links' if the backend missed the memo
+      const cleanData = {
+        nodes: data.nodes || data.graph?.nodes || [],
+        links: data.links || data.edges || data.graph?.links || data.graph?.edges || []
+      };
+
+      if (data.draft_data) {
         SessionStore.setDraft(data.draft_data, false);
-        SessionStore.setTheme(theme);
-        SessionStore.setInstructions(theme);
-        router.push({
-          pathname: '/constellation',
-          params: { graph: JSON.stringify(data.graph ?? {}) },
-        });
-      } else {
-        throw new Error('Invalid response from server');
       }
+      SessionStore.setTheme(theme);
+      SessionStore.setInstructions(theme);
+
+      // Navigate passing the stringified CLEAN data
+      router.push({
+        pathname: '/constellation',
+        params: { graph: JSON.stringify(cleanData) }
+      });
 
     } catch (err) {
-      console.error(err);
+      console.error("Weave Error:", err);
       setError('Failed to weave curriculum. Please try again.');
     } finally {
       setIsLoading(false);
