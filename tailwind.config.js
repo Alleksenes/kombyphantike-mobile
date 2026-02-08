@@ -15,8 +15,9 @@ module.exports = {
       },
       fontFamily: {
         'greek': ['GFSDidot', 'serif'],
-        'ui': ['NeueHaasGrotesk', 'sans-serif'],
-        'sans': ['NeueHaasGrotesk', 'sans-serif'],
+        'ui': ['NeueHaasGrotesk-Text', 'sans-serif'],
+        'sans': ['NeueHaasGrotesk-Text', 'sans-serif'],
+        'display': ['NeueHaasGrotesk-Display', 'sans-serif'],
       },
     },
   },

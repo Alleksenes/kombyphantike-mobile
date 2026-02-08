@@ -18,7 +18,8 @@ export default function RootLayout() {
 
   const [fontsLoaded] = useFonts({
     'GFSDidot': require('../assets/fonts/GFSDidot.ttf'),
-    'NeueHaasGrotesk': require('../assets/fonts/NeueHaasGrotesk.ttf'),
+    'NeueHaasGrotesk-Display': require('../assets/fonts/NeueHaasGrotesk.ttf'),
+    'NeueHaasGrotesk-Text': require('../assets/fonts/NeueHaasGroteskLight.otf'),
   });
 
   useEffect(() => {
