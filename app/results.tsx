@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { FlatList, Platform, useWindowDimensions, View } from 'react-native';
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -100,14 +100,14 @@ export default function ResultsScreen() {
     }
   };
 
-  const handleTokenPress = (token: Token, context: string | AncientContext, greek: string, english: string) => {
+  const handleTokenPress = useCallback((token: Token, context: string | AncientContext, greek: string, english: string) => {
     setSelectedToken(token);
     setSelectedContext(context);
     setSelectedGreek(greek);
     setSelectedEnglish(english);
     // Snap to the first open point (index 0, which is 45%)
     bottomSheetRef.current?.snapToIndex(0);
-  };
+  }, []);
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     // Map Snake_Case to UI Props
@@ -129,7 +129,7 @@ export default function ResultsScreen() {
           knotContext={knotContext}
           index={index}
           total={data.length}
-          onTokenPress={(token, greek, eng) => handleTokenPress(token, ancient, greek, eng)}
+          onTokenPress={handleTokenPress}
           selectedToken={selectedToken}
         />
       </View>
