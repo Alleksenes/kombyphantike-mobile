@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { Dimensions, View, Text } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import WordChip, { Token, AncientContext } from './WordChip';
@@ -21,7 +21,7 @@ interface PhilologyCardProps {
   selectedToken?: Token | null;
 }
 
-export default function PhilologyCard({
+function PhilologyCard({
   modernGreek,
   targetTokens,
   ancientContext,
@@ -45,20 +45,20 @@ export default function PhilologyCard({
   }, [targetTokens, knot, knotContext]);
 
   // Unified Interaction: Tap to Inspect
-  const handleWordPress = (token: Token) => {
+  const handleWordPress = useCallback((token: Token) => {
      if (onTokenPress) {
         onTokenPress(token, ancientContext, modernGreek, englishTranslation);
      }
-  };
+  }, [onTokenPress, ancientContext, modernGreek, englishTranslation]);
 
   // Unified Interaction: Long Press to Speak Word
-  const handleLongPress = async (token: Token) => {
+  const handleLongPress = useCallback(async (token: Token) => {
     try {
         await AudioPlayer.playSentence(token.text);
     } catch (e) {
         console.error("Failed to play word audio", e);
     }
-  };
+  }, []);
 
   const handleSpeakSentence = async () => {
     if (isLoadingAudio || modernGreek === "Generating..." || !modernGreek) return;
@@ -138,3 +138,5 @@ export default function PhilologyCard({
     </View>
   );
 }
+
+export default memo(PhilologyCard);
