@@ -30,7 +30,7 @@ export default function WordChip({ token, onPress, onLongPress, isFocused = fals
 
   if (isPunctuation) {
     return (
-      <Text className="text-xl text-text font-serif self-end mb-1">
+      <Text className="text-xl text-text font-greek self-end mb-1">
         {token.text}
       </Text>
     );
@@ -38,8 +38,8 @@ export default function WordChip({ token, onPress, onLongPress, isFocused = fals
 
   // Interaction State Logic
   let containerStyle = "mr-1.5 mb-2 px-1 py-1 "; // Reduced horizontal padding to look more like text
-  let textStyle = "text-lg font-medium ";
-  let subTextStyle = "text-[10px] italic -mt-1 ";
+  let textStyle = "text-xl font-greek ";
+  let subTextStyle = "text-[10px] font-ui italic -mt-1 ";
 
   if (isFocused) {
     // Focused: Highlights the word being inspected
