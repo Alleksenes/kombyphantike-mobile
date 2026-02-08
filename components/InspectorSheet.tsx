@@ -2,13 +2,13 @@ import React, { useMemo, forwardRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Token } from './WordChip';
+import { Token, AncientContext } from './WordChip';
 import ParadigmGrid from './ParadigmGrid';
 import { AudioPlayer } from '../src/services/AudioPlayer';
 
 interface InspectorSheetProps {
   selectedToken: Token | null;
-  ancientContext: string;
+  ancientContext: string | AncientContext;
   greekSentence?: string;
   englishTranslation?: string;
 }
@@ -64,6 +64,42 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
         ))}
       </View>
     );
+
+    const renderMuseumPlacard = (context: string | AncientContext, fallbackGreek?: string, fallbackTranslation?: string) => {
+        let author = "Unknown Source";
+        let greek = fallbackGreek || "Greek text unavailable";
+        let translation = fallbackTranslation || "Translation unavailable";
+
+        if (typeof context === 'object' && context !== null) {
+            author = context.author || author;
+            greek = context.greek || greek;
+            translation = context.translation || translation;
+        } else if (context) {
+            author = context;
+        }
+
+        return (
+            <View className="p-6 bg-[#f4f1ea] rounded-xl border border-gray-300 shadow-sm">
+                {/* Author / Citation */}
+                <Text className="text-xs font-bold text-[#C0A062] uppercase mb-4 tracking-widest text-center">
+                  {author}
+                </Text>
+
+                {/* Greek Text */}
+                <Text className="text-2xl font-serif text-[#5D4037] text-center leading-8 mb-4">
+                  {greek}
+                </Text>
+
+                {/* Separator */}
+                <View className="h-[1px] bg-gray-300 w-1/3 self-center mb-4" />
+
+                {/* Translation */}
+                <Text className="text-lg italic text-gray-500 font-serif text-center leading-6">
+                  {translation}
+                </Text>
+              </View>
+        );
+    };
 
     const renderContent = () => {
       if (!selectedToken) return null;
@@ -162,32 +198,17 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                )}
 
               {/* Ancient Context "Eureka" Card (Museum Placard Style) */}
-              <View className="p-6 bg-[#f4f1ea] rounded-xl border border-gray-300 shadow-sm">
-                {/* Author / Citation */}
-                <Text className="text-xs font-bold text-[#C0A062] uppercase mb-4 tracking-widest text-center">
-                  {ancientContext || "Unknown Source"}
-                </Text>
-
-                {/* Greek Text */}
-                <Text className="text-2xl font-serif text-[#5D4037] text-center leading-8 mb-4">
-                  {greekSentence || "Greek text unavailable"}
-                </Text>
-
-                {/* Separator */}
-                <View className="h-[1px] bg-gray-300 w-1/3 self-center mb-4" />
-
-                {/* Translation */}
-                <Text className="text-lg italic text-gray-500 font-serif text-center leading-6">
-                  {englishTranslation || "Translation unavailable"}
-                </Text>
-              </View>
+              {renderMuseumPlacard(ancientContext, greekSentence, englishTranslation)}
 
               {/* Optional: Token specific context/note if different from main citation */}
               {selectedToken.ancient_context && selectedToken.ancient_context !== ancientContext && (
-                 <View className="mt-2 px-4">
-                    <Text className="text-xs text-gray-600 italic">
-                       Note: {selectedToken.ancient_context}
-                    </Text>
+                 <View className="mt-2">
+                     <Text className="text-xs text-gray-600 italic px-4 mb-2">Specific Note:</Text>
+                     {/* Reuse the placard style if it's an object, or just text if string */}
+                     {typeof selectedToken.ancient_context === 'object' ?
+                        renderMuseumPlacard(selectedToken.ancient_context) :
+                        <View className="px-4"><Text className="text-xs text-gray-600 italic">Note: {selectedToken.ancient_context}</Text></View>
+                     }
                  </View>
               )}
             </View>

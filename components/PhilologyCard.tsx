@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Dimensions, View, Text } from 'react-native';
 import { IconButton } from 'react-native-paper';
-import WordChip, { Token } from './WordChip';
+import WordChip, { Token, AncientContext } from './WordChip';
 import OmegaLoader from './OmegaLoader';
 import { AudioPlayer } from '../src/services/AudioPlayer';
 
@@ -11,7 +11,7 @@ const CARD_WIDTH = width * 0.85;
 interface PhilologyCardProps {
   modernGreek: string;
   targetTokens?: Token[];
-  ancientContext: string;
+  ancientContext: string | AncientContext;
   englishTranslation: string;
   knot: string;
   knotContext?: string;

@@ -1,5 +1,11 @@
 import { Pressable, Text, View } from 'react-native';
 
+export interface AncientContext {
+  author: string;
+  greek: string;
+  translation: string;
+}
+
 export interface Token {
   text: string;
   lemma: string;
@@ -9,7 +15,7 @@ export interface Token {
   is_alpha?: boolean;
   has_paradigm?: boolean;
   paradigm?: { form: string; tags: string[] }[];
-  ancient_context?: string;
+  ancient_context?: string | AncientContext;
   definition?: string;
   transliteration?: string;
   morphology?: string;

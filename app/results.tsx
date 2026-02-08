@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
 import PhilologyCard from '../components/PhilologyCard';
 import InspectorSheet from '../components/InspectorSheet';
-import { Token } from '../components/WordChip';
+import { Token, AncientContext } from '../components/WordChip';
 import OmegaLoader from '../components/OmegaLoader';
 // Import the store
 import { SessionStore } from '../services/SessionStore';
@@ -27,7 +27,7 @@ export default function ResultsScreen() {
 
   // State for Inspector
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
-  const [selectedContext, setSelectedContext] = useState<string>(''); // Stores citation
+  const [selectedContext, setSelectedContext] = useState<string | AncientContext>(''); // Stores citation or context object
   const [selectedGreek, setSelectedGreek] = useState<string>('');
   const [selectedEnglish, setSelectedEnglish] = useState<string>('');
 
@@ -100,7 +100,7 @@ export default function ResultsScreen() {
     }
   };
 
-  const handleTokenPress = (token: Token, context: string, greek: string, english: string) => {
+  const handleTokenPress = (token: Token, context: string | AncientContext, greek: string, english: string) => {
     setSelectedToken(token);
     setSelectedContext(context);
     setSelectedGreek(greek);
