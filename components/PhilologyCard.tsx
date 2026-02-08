@@ -17,7 +17,7 @@ interface PhilologyCardProps {
   knotContext?: string;
   index: number;
   total: number;
-  onTokenPress?: (token: Token, greek: string, english: string) => void;
+  onTokenPress?: (token: Token, context: string | AncientContext, greek: string, english: string) => void;
   selectedToken?: Token | null;
 }
 
@@ -47,7 +47,7 @@ export default function PhilologyCard({
   // Unified Interaction: Tap to Inspect
   const handleWordPress = (token: Token) => {
      if (onTokenPress) {
-        onTokenPress(token, modernGreek, englishTranslation);
+        onTokenPress(token, ancientContext, modernGreek, englishTranslation);
      }
   };
 
