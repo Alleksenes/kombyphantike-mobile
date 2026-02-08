@@ -40,7 +40,10 @@ export default function WeaverScreen() {
         SessionStore.setDraft(data.draft_data, false);
         SessionStore.setTheme(theme);
         SessionStore.setInstructions(theme);
-        router.push('/results');
+        router.push({
+          pathname: '/constellation',
+          params: { graph: JSON.stringify(data.graph ?? {}) },
+        });
       } else {
         throw new Error('Invalid response from server');
       }
@@ -65,7 +68,7 @@ export default function WeaverScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+        style={{ flex: 1, zIndex: 10, elevation: 10 }}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="flex-1 justify-center items-center px-6">

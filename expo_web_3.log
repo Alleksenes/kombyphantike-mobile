@@ -1,11 +1,59 @@
 
-> app@1.0.0 web
-> expo start --web
+> app@1.0.0 start
+> expo start --web --port 8081
 
 Starting project at /app
-› Port 8081 is running this app in another window
-  /app (pid 2552)
-Input is required, but 'npx expo' is in non-interactive mode.
-Required input:
-> Use port 8082 instead?
-› Skipping dev server
+React Compiler enabled
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.31 - expected version: ~54.0.33
+  expo-router@6.0.22 - expected version: ~6.0.23
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 52.9% ( 33/136)
+λ node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 17.0% (120/291)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 52.9% (190/264)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 55.0% (398/618)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 52.9% (274/408)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 55.0% (630/932)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.9% (384/535)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 62.3% ( 879/1125)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.9% (547/750)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.8% (1180/1455)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.9% ( 747/1076)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.1% (1347/1609)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.7% ( 957/1209)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 80.4% (1539/1716)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.3% (1243/1483)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.6% (1721/1818)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.3% (1403/1697)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.3% (1806/1860)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.9% (1657/1831)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.3% (1842/1877)
+λ Bundled 38602ms node_modules/expo-router/node/render.js (1963 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.0% (1968/1988)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1963/1963)
+[Config] API_BASE_URL is set to: http://localhost:8000
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.0% (1983/1993)
+Web Bundled 44648ms node_modules/expo-router/entry.js (2008 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 41.1% (376/638)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.7% ( 774/1121)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.1% (1246/1533)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 74.8% (1528/1773)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.7% (1877/1950)
+Web Bundled 17700ms node_modules/expo-router/entry.js (2010 modules)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 138ms node_modules/expo-router/node/render.js (1 module)
+[Config] API_BASE_URL is set to: http://localhost:8000
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 859ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 170ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
