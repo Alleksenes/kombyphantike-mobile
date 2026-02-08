@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Keyboard, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { BackdropBlur, Canvas, Fill, RoundedRect } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
-import { Canvas, BackdropBlur, Fill, RoundedRect } from '@shopify/react-native-skia';
+import { useState } from 'react';
+import { Keyboard, KeyboardAvoidingView, LayoutChangeEvent, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import OmegaLoader from '../../components/OmegaLoader';
 import CosmicBackground from '../../components/ui/CosmicBackground';
 import MoltenButton from '../../components/ui/MoltenButton';
@@ -27,7 +27,7 @@ export default function WeaverScreen() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ theme: theme.trim() }),
+        body: JSON.stringify({ theme: theme, sentence_count: 10 }),
       });
 
       if (!response.ok) {
