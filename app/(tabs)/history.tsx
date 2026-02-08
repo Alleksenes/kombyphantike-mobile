@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { FlatList, View, Pressable } from 'react-native';
-import { Text, ActivityIndicator, IconButton, useTheme } from 'react-native-paper';
+import { Text, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import OmegaLoader from '../../components/OmegaLoader';
 import { getHistory, getSession } from '../../src/services/Database';
 import { SessionStore } from '../../services/SessionStore';
 
@@ -104,7 +105,7 @@ export default function HistoryScreen() {
 
       {loading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <OmegaLoader />
         </View>
       ) : (
         <FlatList

@@ -13,6 +13,11 @@ module.exports = {
         accent: '#C0A062',  // Antique Gold - Highlights/Buttons
         ancient: 'var(--color-ancient)', // Keep existing ancient color variable
       },
+      fontFamily: {
+        'greek': ['GFSDidot', 'serif'],
+        'ui': ['NeueHaasGrotesk', 'sans-serif'],
+        'sans': ['NeueHaasGrotesk', 'sans-serif'],
+      },
     },
   },
   plugins: [],

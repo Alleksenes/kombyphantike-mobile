@@ -24,22 +24,22 @@ export const ScriptoriumTheme = {
   colors: {
     ...MD3DarkTheme.colors,
     primary: '#C0A062', // Antique Gold
-    onPrimary: '#1a0b2e',
+    onPrimary: '#1a1918',
     secondary: '#B39DDB', // Ancient Purple
-    onSecondary: '#1a0b2e',
+    onSecondary: '#1a1918',
     tertiary: '#C0A062',
-    onTertiary: '#1a0b2e',
-    background: '#1a0b2e', // Deep Purple (Fallback)
+    onTertiary: '#1a1918',
+    background: '#1a1918', // Deep Ink - Global App Background
     onBackground: '#e3dccb', // Warm Parchment
-    surface: '#0f0518', // Dark Ink
+    surface: '#252422', // Slightly lighter Ink - Card Background
     onSurface: '#e3dccb',
     onSurfaceVariant: 'rgba(227, 220, 203, 0.6)',
     elevation: {
-      level1: '#0f0518',
-      level2: '#0f0518',
-      level3: '#0f0518',
-      level4: '#0f0518',
-      level5: '#0f0518',
+      level1: '#252422',
+      level2: '#252422',
+      level3: '#252422',
+      level4: '#252422',
+      level5: '#252422',
     },
   },
 };

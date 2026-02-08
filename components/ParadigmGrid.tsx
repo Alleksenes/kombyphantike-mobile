@@ -191,7 +191,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
                 {/* Singular */}
                 <View className="flex-1 items-center justify-center px-1">
                   <View className={`px-2 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                    <Text className={isSingularMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
+                    <Text className={isSingularMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
                       {forms.Singular}
                     </Text>
                   </View>
@@ -200,7 +200,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
                 {/* Plural */}
                 <View className="flex-1 items-center justify-center px-1">
                   <View className={`px-2 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                    <Text className={isPluralMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
+                    <Text className={isPluralMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
                       {forms.Plural}
                     </Text>
                   </View>
@@ -245,7 +245,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
               {/* Singular */}
               <View className="flex-1 items-center justify-center px-1">
                 <View className={`px-2 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                  <Text className={isSingularMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
+                  <Text className={isSingularMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
                     {forms.Singular}
                   </Text>
                 </View>
@@ -254,7 +254,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
               {/* Plural */}
               <View className="flex-1 items-center justify-center px-1">
                 <View className={`px-2 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                  <Text className={isPluralMatch ? 'text-accent font-bold text-center' : 'text-text text-sm text-center'}>
+                  <Text className={isPluralMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
                     {forms.Plural}
                   </Text>
                 </View>

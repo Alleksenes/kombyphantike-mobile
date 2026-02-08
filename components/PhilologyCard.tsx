@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Dimensions, View, Text } from 'react-native';
-import { IconButton, ActivityIndicator } from 'react-native-paper';
+import { IconButton } from 'react-native-paper';
 import WordChip, { Token } from './WordChip';
+import OmegaLoader from './OmegaLoader';
 import { AudioPlayer } from '../src/services/AudioPlayer';
 
 const { width } = Dimensions.get('window');
@@ -116,7 +117,7 @@ export default function PhilologyCard({
 
           <View className="ml-2 mb-1 h-8 w-8 justify-center items-center">
             {isLoadingAudio ? (
-              <ActivityIndicator size={20} color="#C0A062" />
+              <OmegaLoader size={24} color="#C0A062" />
             ) : (
               <IconButton
                 icon="volume-high"
