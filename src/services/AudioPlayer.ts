@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Platform } from 'react-native';
+import { API_BASE_URL } from './apiConfig';
 
 let soundObject: Audio.Sound | null = null;
 
@@ -8,10 +8,9 @@ export const AudioPlayer = {
   async playSentence(text: string) {
     try {
       // 1. Fetch Audio
-      const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
       console.log(`[Audio] Requesting speech for: "${text.substring(0, 20)}..."`);
 
-      const response = await fetch(`${baseUrl}/speak`, {
+      const response = await fetch(`${API_BASE_URL}/speak`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),

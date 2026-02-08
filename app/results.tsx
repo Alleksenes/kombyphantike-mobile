@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
-import { FlatList, Platform, useWindowDimensions, View } from 'react-native';
+import { FlatList, useWindowDimensions, View } from 'react-native';
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
@@ -13,6 +13,7 @@ import OmegaLoader from '../components/OmegaLoader';
 // Import the store
 import { SessionStore } from '../services/SessionStore';
 import { saveSession } from '../src/services/Database';
+import { API_BASE_URL } from '../src/services/apiConfig';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -68,10 +69,8 @@ export default function ResultsScreen() {
     setIsFilling(true);
     console.log("Igniting AI Generation...");
 
-    const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
-
     try {
-      const response = await fetch(`${baseUrl}/fill_curriculum`, {
+      const response = await fetch(`${API_BASE_URL}/fill_curriculum`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
