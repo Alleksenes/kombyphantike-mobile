@@ -129,7 +129,7 @@ export default function ResultsScreen() {
           knotContext={knotContext}
           index={index}
           total={data.length}
-          onTokenPress={(token, greek, eng) => handleTokenPress(token, ancient, greek, eng)}
+          onTokenPress={handleTokenPress}
           selectedToken={selectedToken}
         />
       </View>
