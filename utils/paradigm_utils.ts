@@ -83,6 +83,6 @@ export function matchTags(formTags: any[], requiredTags: string[]): boolean {
 
   // If we are looking for specific coordinates (e.g. 1st, Sg, Present), we want high accuracy.
   // Allow 0 misses for short queries (<3 tags), 1 miss for long queries.
-  const threshold = normReq.length; 
+  const threshold = normReq.length < 3 ? normReq.length : normReq.length - 1;
   return hits >= threshold;
 }
