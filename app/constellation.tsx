@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import ConstellationMap, { ConstellationNode, ConstellationLink } from '../screens/ConstellationMap';
 import CosmicBackground from '../components/CosmicBackground';
 
@@ -28,11 +28,29 @@ const LINKS: ConstellationLink[] = [
 ];
 
 export default function ConstellationScreen() {
+  const { graph } = useLocalSearchParams();
+
+  const { nodes, links } = useMemo(() => {
+    if (typeof graph === 'string') {
+      try {
+        const parsed = JSON.parse(graph);
+        // Basic validation to ensure we have nodes and links arrays
+        if (Array.isArray(parsed.nodes) && Array.isArray(parsed.links)) {
+          return { nodes: parsed.nodes, links: parsed.links };
+        }
+      } catch (e) {
+        console.error("Failed to parse graph parameter:", e);
+      }
+    }
+    // Fallback to hardcoded constellation if no graph or invalid
+    return { nodes: NODES, links: LINKS };
+  }, [graph]);
+
   return (
     <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
       <Stack.Screen options={{ headerShown: false }} />
       <CosmicBackground />
-      <ConstellationMap nodes={NODES} links={LINKS} />
+      <ConstellationMap nodes={nodes} links={links} />
     </View>
   );
 }

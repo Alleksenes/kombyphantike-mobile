@@ -19,7 +19,13 @@ const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => 
     return matchTags(entry.tags, requiredTags);
   });
 
-  if (matchingForms.length === 0) return '-';
+  if (matchingForms.length === 0) {
+    // Log potential mismatches to help debug tag alignment (e.g., '1st' vs '1')
+    if (paradigm.length > 0) {
+      console.log(`[ParadigmGrid] No match for tags: [${requiredTags.join(', ')}]`);
+    }
+    return '-';
+  }
 
   // Deduplicate forms and join
   const uniqueForms = Array.from(new Set(matchingForms.map(e => e.form)));
