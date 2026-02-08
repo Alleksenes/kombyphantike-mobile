@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import OmegaLoader from '../../components/OmegaLoader';
 // Import the store we just created
 import { SessionStore } from '../../services/SessionStore';
-import { MockScroll } from '../../src/dev/mockData';
 
 export default function WeaverScreen() {
   const [themeInput, setThemeInput] = useState('Cosmos'); // Default for testing
@@ -22,20 +21,21 @@ export default function WeaverScreen() {
       return;
     }
     setLoading(true);
-
-    if (__DEV__) {
-      console.log("[Weaver] DEV MODE: Loading Mock Data...");
-      setTimeout(() => {
-        SessionStore.setDraft(MockScroll.worksheet_data, true);
-        SessionStore.setInstructions(MockScroll.instruction_text);
-        SessionStore.setTheme(themeInput);
-
-        console.log("Mock data loaded. Navigating...");
-        setLoading(false);
-        router.push("/results");
-      }, 800);
-      return;
-    }
+    /*
+        if (__DEV__) {
+          console.log("[Weaver] DEV MODE: Loading Mock Data...");
+          setTimeout(() => {
+            SessionStore.setDraft(MockScroll.worksheet_data, true);
+            SessionStore.setInstructions(MockScroll.instruction_text);
+            SessionStore.setTheme(themeInput);
+    
+            console.log("Mock data loaded. Navigating...");
+            setLoading(false);
+            router.push("/results");
+          }, 800);
+          return;
+        }
+    */
 
     // 1. Determine API URL
     const baseUrl = Platform.OS === 'android'
