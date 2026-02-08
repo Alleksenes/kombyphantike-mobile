@@ -28,7 +28,10 @@ export function normalize(tag: string): string {
   // Tense
   if (t === "pres" || t === "present") return "present";
   if (t === "fut" || t === "future") return "future";
-  if (t === "aor" || t === "aorist" || t === "past") return "aorist"; // Kaikki often groups Aorist under Past
+  // if (t === "aor" || t === "aorist" || t === "past") return "aorist"; // OLD logic conflated past/aorist
+  if (t === "aor" || t === "aorist") return "aorist";
+  if (t === "past") return "past";
+
   if (t === "perf" || t === "perfect") return "perfect";
   if (t === "impf" || t === "imperfect") return "imperfect";
 
