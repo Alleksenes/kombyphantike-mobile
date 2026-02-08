@@ -105,7 +105,8 @@ export default function WeaverScreen() {
                   value={theme}
                   onChangeText={setTheme}
                   className="flex-1 px-4 text-text text-lg font-ui"
-                  style={{ fontFamily: 'NeueHaasGrotesk-Text', zIndex: 10 }}
+                  style={{ fontFamily: 'NeueHaasGrotesk-Text', zIndex: 50 }}
+                  pointerEvents="auto"
                   autoCapitalize="sentences"
                   returnKeyType="done"
                   onSubmitEditing={handleWeave}
