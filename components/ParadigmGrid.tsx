@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { matchTags } from '../utils/paradigm_utils';
 
 interface ParadigmEntry {
   form: string;
@@ -15,15 +16,7 @@ interface ParadigmGridProps {
 // Helper function to find a form with specific tags using a relaxed "best match" scoring
 const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => {
   const matchingForms = paradigm.filter(entry => {
-    if (!Array.isArray(entry.tags)) return false;
-    const entryTags = entry.tags.map(t => t.toLowerCase());
-
-    // Check if entryTags contains ALL requiredTags
-    return requiredTags.every(reqTag => {
-      const lowerReq = reqTag.toLowerCase();
-      // handle potential aliases if necessary, but for now strict inclusion of keyword
-      return entryTags.includes(lowerReq);
-    });
+    return matchTags(entry.tags, requiredTags);
   });
 
   if (matchingForms.length === 0) return '-';
