@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, Keyboard, KeyboardAvoidingView, Platform, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TextInput, Keyboard, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Canvas, BackdropBlur, Fill, RoundedRect } from '@shopify/react-native-skia';
 import OmegaLoader from '../../components/OmegaLoader';
+import CosmicBackground from '../../components/ui/CosmicBackground';
+import MoltenButton from '../../components/ui/MoltenButton';
 import { SessionStore } from '../../services/SessionStore';
 import { API_BASE_URL } from '../../src/services/apiConfig';
 
@@ -10,6 +13,7 @@ export default function WeaverScreen() {
   const [theme, setTheme] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inputLayout, setInputLayout] = useState({ width: 0, height: 0 });
 
   const handleWeave = async () => {
     if (!theme.trim()) return;
@@ -32,12 +36,10 @@ export default function WeaverScreen() {
 
       const data = await response.json();
 
-      // Assuming the response structure based on requirements:
-      // { curriculum_id: string, draft_data: any[] }
       if (data && data.draft_data) {
         SessionStore.setDraft(data.draft_data, false);
         SessionStore.setTheme(theme);
-        SessionStore.setInstructions(theme); // Use theme as instructions for now
+        SessionStore.setInstructions(theme);
         router.push('/results');
       } else {
         throw new Error('Invalid response from server');
@@ -51,60 +53,91 @@ export default function WeaverScreen() {
     }
   };
 
+  const onInputLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setInputLayout({ width, height });
+  };
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-background"
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View className="flex-1 justify-center items-center px-6">
+    <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
+      {/* 1. Cosmic Background */}
+      <CosmicBackground />
 
-          <Text className="text-3xl font-greek text-text mb-8 text-center">
-            Create a Curriculum
-          </Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View className="flex-1 justify-center items-center px-6">
 
-          <View className="w-full max-w-md">
-            <TextInput
-              placeholder="Enter a Theme (e.g., 'Justice', 'The Sea')..."
-              placeholderTextColor="#7d7d7d"
-              value={theme}
-              onChangeText={setTheme}
-              className="w-full p-4 rounded-lg bg-card text-text border-2 border-transparent focus:border-accent text-lg font-ui mb-6"
-              autoCapitalize="sentences"
-              returnKeyType="done"
-              onSubmitEditing={handleWeave}
-            />
+            {/* Title */}
+            <Text className="text-4xl font-display text-text mb-8 text-center font-bold tracking-tight">
+              Create a Curriculum
+            </Text>
 
-            <Pressable
-              onPress={handleWeave}
-              disabled={isLoading || !theme.trim()}
-              className={`w-full bg-accent py-4 rounded-full items-center active:opacity-80 ${
-                isLoading || !theme.trim() ? 'opacity-50' : ''
-              }`}
-            >
-              <Text className="text-background font-bold text-lg font-ui">
-                Weave Curriculum
-              </Text>
-            </Pressable>
-
-            {isLoading && (
-              <View className="mt-8 items-center">
-                <OmegaLoader size={48} color="#C0A062" />
-                <Text className="text-accent mt-4 font-ui italic">
-                  Weaving the threads of knowledge...
-                </Text>
+            <View className="w-full max-w-md">
+              {/* Glass Input */}
+              <View
+                className="w-full mb-8 h-[64px] rounded-xl overflow-hidden relative"
+                style={Platform.OS === 'web' ? { borderWidth: 1, borderColor: '#C5A059', backgroundColor: 'rgba(255,255,255,0.05)' } : undefined}
+                onLayout={onInputLayout}
+              >
+                {Platform.OS !== 'web' && inputLayout.width > 0 && (
+                  <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
+                    <BackdropBlur blur={10} clip={{ x: 0, y: 0, width: inputLayout.width, height: inputLayout.height, rx: 12, ry: 12 }}>
+                      <Fill color="rgba(255,255,255,0.05)" />
+                    </BackdropBlur>
+                    <RoundedRect
+                      x={0.5}
+                      y={0.5}
+                      width={inputLayout.width - 1}
+                      height={inputLayout.height - 1}
+                      r={12}
+                      color="#C5A059"
+                      style="stroke"
+                      strokeWidth={1}
+                    />
+                  </Canvas>
+                )}
+                <TextInput
+                  placeholder="Enter a Theme (e.g., 'Justice', 'The Sea')..."
+                  placeholderTextColor="rgba(227, 220, 203, 0.5)"
+                  value={theme}
+                  onChangeText={setTheme}
+                  className="flex-1 px-4 text-text text-lg font-ui"
+                  style={{ fontFamily: 'NeueHaasGrotesk-Text', zIndex: 10 }}
+                  autoCapitalize="sentences"
+                  returnKeyType="done"
+                  onSubmitEditing={handleWeave}
+                />
               </View>
-            )}
 
-            {error && (
-              <Text className="text-red-500 mt-4 text-center font-ui">
-                {error}
-              </Text>
-            )}
+              {/* Molten Gold Button */}
+              <MoltenButton
+                label="Weave Curriculum"
+                onPress={handleWeave}
+                disabled={isLoading || !theme.trim()}
+              />
+
+              {isLoading && (
+                <View className="mt-8 items-center">
+                  <OmegaLoader size={48} color="#C0A062" />
+                  <Text className="text-accent mt-4 font-ui italic">
+                    Weaving the threads of knowledge...
+                  </Text>
+                </View>
+              )}
+
+              {error && (
+                <Text className="text-red-500 mt-4 text-center font-ui">
+                  {error}
+                </Text>
+              )}
+            </View>
+
           </View>
-
-        </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
