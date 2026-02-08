@@ -7,8 +7,8 @@ import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import OmegaLoader from '../components/OmegaLoader';
+import CosmicBackground from '../components/ui/CosmicBackground';
 import '../global.css';
-import Atmosphere from '../src/components/Atmosphere';
 import { initDatabase } from '../src/services/Database';
 import { ScriptoriumTheme } from '../src/theme';
 
@@ -40,11 +40,10 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
+      <CosmicBackground />
       <GestureHandlerRootView style={{ flex: 1 }}>
         <PaperProvider theme={ScriptoriumTheme}>
           <StatusBar style="light" />
-          {/* Atmosphere Background */}
-          <Atmosphere />
 
           <Stack
             screenOptions={{

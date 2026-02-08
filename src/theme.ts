@@ -10,12 +10,12 @@ const fontConfig = {
   titleLarge: { fontFamily: 'GFSDidot' },
   titleMedium: { fontFamily: 'GFSDidot' },
   titleSmall: { fontFamily: 'GFSDidot' },
-  labelLarge: { fontFamily: 'NeueHaasGrotesk' },
-  labelMedium: { fontFamily: 'NeueHaasGrotesk' },
-  labelSmall: { fontFamily: 'NeueHaasGrotesk' },
-  bodyLarge: { fontFamily: 'NeueHaasGrotesk' },
-  bodyMedium: { fontFamily: 'NeueHaasGrotesk' },
-  bodySmall: { fontFamily: 'NeueHaasGrotesk' },
+  labelLarge: { fontFamily: 'NeueHaasGrotesk-Text' },
+  labelMedium: { fontFamily: 'NeueHaasGrotesk-Text' },
+  labelSmall: { fontFamily: 'NeueHaasGrotesk-Text' },
+  bodyLarge: { fontFamily: 'NeueHaasGrotesk-Text' },
+  bodyMedium: { fontFamily: 'NeueHaasGrotesk-Text' },
+  bodySmall: { fontFamily: 'NeueHaasGrotesk-Text' },
 };
 
 export const ScriptoriumTheme = {

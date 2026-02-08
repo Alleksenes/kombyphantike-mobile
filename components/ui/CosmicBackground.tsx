@@ -36,8 +36,6 @@ float noise (in vec2 _st) {
             (d - b) * u.x * u.y;
 }
 
-#define NUM_OCTAVES 5
-
 float fbm ( in vec2 _st) {
     float v = 0.0;
     float a = 0.5;
@@ -45,7 +43,7 @@ float fbm ( in vec2 _st) {
     // Rotate to reduce axial bias
     mat2 rot = mat2(cos(0.5), sin(0.5),
                     -sin(0.5), cos(0.50));
-    for (int i = 0; i < NUM_OCTAVES; ++i) {
+    for (int i = 0; i < 5; ++i) {
         v += a * noise(_st);
         _st = rot * _st * 2.0 + shift;
         a *= 0.5;
@@ -134,7 +132,7 @@ const CosmicBackground = () => {
   }
 
   return (
-    <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Canvas style={[StyleSheet.absoluteFill, { zIndex: -1 }]} pointerEvents="none">
       <Rect x={0} y={0} width={width} height={height}>
         <Shader source={shader} uniforms={uniforms} />
       </Rect>
