@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
-import { View } from 'react-native';
-import CosmicBackground from '../components/CosmicBackground';
+import CosmicBackground from '../components/ui/CosmicBackground';
 import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 
 export default function ConstellationScreen() {
