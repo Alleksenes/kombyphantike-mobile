@@ -23,7 +23,7 @@ export default function WeaverControls({
     return (
         <View className="w-full mb-6">
             {/* Container: Obsidian Card with Gold Border */}
-            <View className="bg-card border border-accent rounded-xl p-5 shadow-lg">
+            <View className="border border-accent rounded-xl p-5 shadow-lg" style={{ backgroundColor: 'rgba(30, 25, 24, 0.8)' }}>
 
                 {/* Header */}
                 <Text className="text-accent font-display text-lg mb-4 tracking-wider text-center uppercase">

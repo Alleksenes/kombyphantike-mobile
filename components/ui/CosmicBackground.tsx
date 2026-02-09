@@ -68,24 +68,26 @@ half4 main(vec2 xy) {
 
     float f = fbm( st + 4.0*r );
 
+    // Base dark nebula
     vec3 color = mix(u_color1, u_color2, clamp((f*f)*4.0,0.0,1.0));
+
+    // Mid-tones (Purple/Violet)
     color = mix(color, u_color3, clamp(length(q),0.0,1.0));
     color = mix(color, u_color4, clamp(length(r.x),0.0,1.0));
 
-    // Chaotic intertwining of crimson (u_color5) - adding "warmth"
+    // Deep Red/Crimson accents (Ink)
     color = mix(color, u_color5, clamp(length(r.y),0.0,1.0));
 
-    // Bronze (u_color6) - changing audience
+    // Earthy/Bronze tones
     color = mix(color, u_color6, clamp(length(q.x)*0.5, 0.0, 1.0));
 
-    // Byzantine Gold (u_color7) - Leveling up sublimely
-    // Applied to high values of noise for highlights
-    color = mix(color, u_color7, clamp(pow(f, 3.0), 0.0, 1.0) * 0.5);
+    // Gold highlights - reduced intensity for "pigment" feel rather than metallic
+    color = mix(color, u_color7, clamp(pow(f, 3.0), 0.0, 1.0) * 0.4);
 
-    // Womb Purple (u_color8) - "Unholy Mother"
-    // Mixing into the shadows/base
-    color = mix(color, u_color8, 1.0 - smoothstep(0.0, 0.8, f));
+    // Deep Shadow/Void
+    color = mix(color, u_color8, 1.0 - smoothstep(0.0, 0.9, f));
 
+    // Vignette/Pigment density
     return half4((f*f*f+0.6*f*f+0.5*f)*color, 1.0);
 }
 `;
@@ -106,12 +108,12 @@ const CosmicBackground = () => {
       resolution: [width, height],
       time: time.value,
       u_color1: [0.059, 0.020, 0.094], // #0f0518
-      u_color2: [0.290, 0.102, 0.369], // #4a1a5e
-      u_color3: [0.420, 0.173, 0.569], // #6b2c91
-      u_color4: [0.541, 0.169, 0.886], // #8a2be2
+      u_color2: [0.227, 0.078, 0.294], // #3a144b
+      u_color3: [0.384, 0.157, 0.525], // #622886
+      u_color4: [0.404, 0.298, 0.502], // #674c80
       u_color5: [0.243, 0.039, 0.082], // #3e0a15
-      u_color6: [0.369, 0.294, 0.082], // #5e4b15
-      u_color7: [0.831, 0.686, 0.216], // #d4af37
+      u_color6: [0.314, 0.188, 0.071], // #503012
+      u_color7: [0.494, 0.439, 0.263], // #7e7043
       u_color8: [0.102, 0.043, 0.180], // #1a0b2e
     };
   }, [width, height]);
