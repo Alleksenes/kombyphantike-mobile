@@ -241,75 +241,73 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, golde
     <GestureDetector gesture={gesture}>
       <View style={{ flex: 1, backgroundColor: 'transparent' }}>
         <Canvas style={{ flex: 1 }}>
-          <Group matrix={transform}>
-            {/* Edges */}
-            {simulationLinks.map((link, i) => {
-              const source = link.source as ConstellationNode;
-              const target = link.target as ConstellationNode;
-              if (typeof source === 'object' && typeof target === 'object' && source.x && source.y && target.x && target.y) {
-                const path = Skia.Path.Make();
-                path.moveTo(source.x, source.y);
+            <Group matrix={transform}>
+                {/* Edges */}
+                {simulationLinks.map((link, i) => {
+                    const source = link.source as ConstellationNode;
+                    const target = link.target as ConstellationNode;
+                    if (typeof source === 'object' && typeof target === 'object' && source.x && source.y && target.x && target.y) {
+                         const path = Skia.Path.Make();
+                         path.moveTo(source.x, source.y);
 
-                const midX = (source.x + target.x) / 2;
-                const midY = (source.y + target.y) / 2;
-                const dx = target.x - source.x;
-                const dy = target.y - source.y;
+                         const midX = (source.x + target.x) / 2;
+                         const midY = (source.y + target.y) / 2;
+                         const dx = target.x - source.x;
+                         const dy = target.y - source.y;
 
-                const controlX = midX - dy * 0.2;
-                const controlY = midY + dx * 0.2;
+                         const controlX = midX - dy * 0.2;
+                         const controlY = midY + dx * 0.2;
 
-                path.quadTo(controlX, controlY, target.x, target.y);
+                         path.quadTo(controlX, controlY, target.x, target.y);
 
-                return (
-                  <Path
-                    key={`link-${i}`}
-                    path={path}
-                    color="#E3DCCB"
-                    style="stroke"
-                    strokeWidth={1}
-                    opacity={0.2}
-                  />
-                );
-              }
-              return null;
-            })}
+                         return (
+                             <Path
+                                key={`link-${i}`}
+                                path={path}
+                                color="#E3DCCB"
+                                style="stroke"
+                                strokeWidth={1}
+                                opacity={0.2}
+                             />
+                         );
+                    }
+                    return null;
+                })}
 
-            {/* Golden Thread */}
-            {goldenThreadPath && (
-              <Path
-                path={goldenThreadPath}
-                color="#C5A059"
-                style="stroke"
-                strokeWidth={3}
-                strokeCap="round"
-                strokeJoin="round"
-              >
-                <BlurMask blur={4} style="solid" />
-              </Path>
-            )}
+                {/* Golden Thread */}
+                {goldenThreadPath && (
+                    <Path
+                        path={goldenThreadPath}
+                        color="#C5A059"
+                        style="stroke"
+                        strokeWidth={3}
+                        strokeCap="round"
+                        strokeJoin="round"
+                    >
+                        <BlurMask blur={4} style="solid" />
+                    </Path>
+                )}
 
-            {/* Nodes */}
-            {simulationNodes.map((node, i) => {
-              if (!node.x || !node.y) return null;
-              const r = 20;
-              return (
-                <Group key={`node-${node.id}`}>
-                  <Circle cx={node.x} cy={node.y} r={r}>
-                    {/* DEBUG PAINT: Bright Cyan to verify visibility as requested */}
-                    <Fill color="transparent" />
-                  </Circle>
-                  {/* Label */}
-                  <Text
-                    x={node.x - 10}
-                    y={node.y + r + 15}
-                    text={node.label}
-                    font={font}
-                    color="#E3DCCB"
-                  />
-                </Group>
-              );
-            })}
-          </Group>
+                {/* Nodes */}
+                {simulationNodes.map((node, i) => {
+                    if (!node.x || !node.y) return null;
+                    const r = 20;
+                    const nodeColor = node.status === 'mastered' ? '#FFD700' : '#E3DCCB';
+                    return (
+                        <Group key={`node-${node.id}`}>
+                            <Circle cx={node.x} cy={node.y} r={r} color={nodeColor} style="fill" />
+                            {/* Label */}
+                            <Text
+                                x={node.x - 10}
+                                y={node.y + r + 15}
+                                text={node.label}
+                                font={font}
+                                color="#E3DCCB"
+                            />
+                        </Group>
+                    );
+                })}
+            </Group>
         </Canvas>
       </View>
     </GestureDetector>
