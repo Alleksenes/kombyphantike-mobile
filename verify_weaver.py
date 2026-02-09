@@ -25,11 +25,19 @@ def run(playwright):
         print("Waiting for 'Create a Curriculum'...")
         expect(page.get_by_text("Create a Curriculum")).to_be_visible(timeout=30000)
 
+        # Take initial screenshot
+        page.screenshot(path="weaver_initial.png")
+
         # 2. Verify Input Interaction (The Layering)
         print("Interacting with input...")
         input_field = page.get_by_placeholder("Enter a Theme")
         input_field.click()
         input_field.fill("Test Theme")
+
+        # Verify input value
+        print("Verifying input value...")
+        expect(input_field).to_have_value("Test Theme")
+        page.screenshot(path="weaver_filled.png")
 
         # 3. Trigger Weave
         print("Clicking Weave button...")
