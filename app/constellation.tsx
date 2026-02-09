@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import CosmicBackground from '../components/ui/CosmicBackground';
 import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 import { API_BASE_URL } from '../src/services/apiConfig';
@@ -36,7 +36,7 @@ export default function ConstellationScreen() {
   }, [graph]);
 
   const handleWeave = async () => {
-    if (isWeaving) return;
+    if (isWeaving || nodes.length === 0) return;
     setIsWeaving(true);
 
     try {
@@ -54,21 +54,32 @@ export default function ConstellationScreen() {
         throw new Error(`Server Error: ${response.status} ${errorText}`);
       }
 
-      const updatedNodes: ConstellationNode[] = await response.json();
+      /* const updatedNodes: ConstellationNode[] = await response.json(); */
+      const { worksheet_data: updatedNodes } = await response.json();
+
+      if (!Array.isArray(updatedNodes)) {
+        throw new Error("Invalid response structure from server: worksheet_data is not an array.");
+      }
+
       console.log("Received updated nodes:", updatedNodes.length);
 
       setNodes(prevNodes => {
+        // efficient lookup map
+        const updateMap = new Map(updatedNodes.map(n => [n.id, n]));
         return prevNodes.map(node => {
-          const match = updatedNodes.find(n => n.id === node.id);
+          const match = updateMap.get(node.id);
           if (match) {
-            const hasTarget = !!match.target_sentence;
+            // *** FIX 2: LOOK FOR THE SENTENCE IN THE CORRECT PLACE (node.data) ***
+            const hasTarget = !!match.data?.target_sentence;
             return {
-              ...node,
-              ...match,
-              status: hasTarget ? 'mastered' : node.status,
-              // Preserve simulation coordinates if they exist
+              ...node, // Keep the original node
+              data: match.data, // Overwrite with the updated data from the server
+              status: hasTarget ? 'mastered' : node.status, // Update status
+              // Preserve simulation coordinates - THIS IS BRILLIANT
               x: node.x,
-              y: node.y
+              y: node.y,
+              vx: node.vx, // Also preserve velocity to stop jittering
+              vy: node.vy,
             };
           }
           return node;
