@@ -223,8 +223,8 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, golde
         setSimulationLinks([...simLinks]);
       });
 
-    // Force an initial tick to ensure coordinates are populated immediately
-    simulation.tick();
+    // Run simulation tick to pre-calculate positions
+    simulation.tick(300);
     setSimulationNodes([...simNodes]);
     setSimulationLinks([...simLinks]);
 
