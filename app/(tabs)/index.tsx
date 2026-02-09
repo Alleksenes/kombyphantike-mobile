@@ -81,7 +81,7 @@ export default function WeaverScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       {/* 1. Cosmic Background */}
       <CosmicBackground />
 

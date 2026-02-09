@@ -37,7 +37,7 @@ function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipPr
 
   if (isPunctuation) {
     return (
-      <Text className="text-xl text-text font-greek self-end mb-1">
+      <Text className="text-xl text-text font-greek self-end mb-1" style={{ fontFamily: 'GFSDidot' }}>
         {token.text}
       </Text>
     );
@@ -75,11 +75,11 @@ function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipPr
       className={containerStyle}
     >
       <View className="items-center">
-        <Text className={textStyle}>
+        <Text className={textStyle} style={{ fontFamily: 'GFSDidot' }}>
           {token.text}
         </Text>
         {token.transliteration && (
-          <Text className={subTextStyle}>
+          <Text className={subTextStyle} style={{ fontFamily: 'NeueHaasGrotesk-Text' }}>
             {token.transliteration}
           </Text>
         )}
