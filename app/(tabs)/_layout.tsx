@@ -1,21 +1,31 @@
 import { Tabs } from 'expo-router';
-import { useTheme } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React from 'react';
+import { Platform } from 'react-native';
+import { IconButton } from 'react-native-paper';
 
 export default function TabLayout() {
-  const theme = useTheme();
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        // Fixed: sceneContainerStyle is not a valid prop on Tabs.
+        // Using sceneStyle in screenOptions for transparent background.
+        sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
-          backgroundColor: theme.colors.background, // Deep Ink
-          borderTopColor: theme.colors.tertiary, // Antique Gold
+          backgroundColor: '#1a1918', // Fallback for Android
+          borderTopColor: '#3e0a15',
           borderTopWidth: 1,
+          elevation: 0,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
-        tabBarActiveTintColor: theme.colors.primary, // Antique Gold
-        tabBarInactiveTintColor: theme.colors.secondary, // Ancient
+        tabBarActiveTintColor: '#C5A059', // Gold
+        tabBarInactiveTintColor: 'rgba(227, 220, 203, 0.5)', // Dim Parchment
+        tabBarLabelStyle: {
+          fontFamily: 'NeueHaasGrotesk-Display',
+          fontSize: 12,
+        },
       }}
     >
       <Tabs.Screen
@@ -23,7 +33,7 @@ export default function TabLayout() {
         options={{
           title: 'Weaver',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="feather" size={size} color={color} />
+            <IconButton icon="feather" iconColor={color} size={24} />
           ),
         }}
       />
@@ -32,7 +42,7 @@ export default function TabLayout() {
         options={{
           title: 'Archives',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="history" size={size} color={color} />
+            <IconButton icon="history" iconColor={color} size={24} />
           ),
         }}
       />

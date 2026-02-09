@@ -1,21 +1,18 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OmegaLoader from '../components/OmegaLoader';
 import CosmicBackground from '../components/ui/CosmicBackground';
-import '../global.css';
 import { initDatabase } from '../src/services/Database';
 import { ScriptoriumTheme } from '../src/theme';
+import '../global.css';
 
 export default function RootLayout() {
-  const { colorScheme, setColorScheme } = useColorScheme();
-
-
   const [fontsLoaded] = useFonts({
     'GFSDidot': require('../assets/fonts/GFSDidot.otf'),
     'NeueHaasGrotesk-Display': require('../assets/fonts/NeueHaasGrotesk.otf'),
@@ -24,11 +21,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initDatabase();
-    // Force NativeWind to dark mode
-    if (colorScheme !== 'dark') {
-      setColorScheme('dark');
-    }
-  }, [colorScheme, setColorScheme]);
+  }, []);
 
   if (!fontsLoaded) {
     return (
@@ -39,25 +32,31 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
-      <CosmicBackground />
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <PaperProvider theme={ScriptoriumTheme}>
-          <StatusBar style="light" />
+    <SafeAreaProvider>
+      <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
+        {/* 1. The Universe (Global Background) */}
+        <CosmicBackground />
 
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: 'transparent' },
-              animation: 'fade',
-            }}
-          >
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="results" />
-          </Stack>
-        </PaperProvider>
-      </GestureHandlerRootView>
-    </View>
+        {/* 2. The Interaction Layer */}
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <PaperProvider theme={ScriptoriumTheme}>
+            <StatusBar style="light" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                // CRITICAL: Make the stack transparent so we see the stars
+                contentStyle: { backgroundColor: 'transparent' },
+                animation: 'fade',
+              }}
+            >
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="results" />
+              <Stack.Screen name="constellation" />
+            </Stack>
+          </PaperProvider>
+        </GestureHandlerRootView>
+      </View>
+    </SafeAreaProvider>
   );
 }
 
