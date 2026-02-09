@@ -1,6 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import InspectorSheet from '../components/InspectorSheet';
 import PhilologyCard from '../components/PhilologyCard';
