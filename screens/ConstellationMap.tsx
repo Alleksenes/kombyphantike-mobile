@@ -10,6 +10,8 @@ export interface ConstellationNode extends SimulationNodeDatum {
   id: string;
   label: string;
   status: 'locked' | 'unlocked' | 'mastered';
+  target_sentence?: string;
+  source_sentence?: string;
   x?: number;
   y?: number;
 }
