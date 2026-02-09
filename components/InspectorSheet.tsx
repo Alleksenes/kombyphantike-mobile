@@ -51,6 +51,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
           >
             <Text
               style={{
+                fontFamily: 'NeueHaasGrotesk-Display',
                 color: activeTab === tab ? activeTabColor : inactiveTabColor,
                 fontWeight: activeTab === tab ? 'bold' : 'normal',
                 textTransform: 'uppercase',
@@ -81,12 +82,12 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
         return (
             <View className="p-6 bg-[#f4f1ea] rounded-xl border border-gray-300 shadow-sm mt-2">
                 {/* Author / Citation */}
-                <Text className="text-xs font-bold text-[#C0A062] uppercase mb-4 tracking-widest text-center">
+                <Text className="text-xs font-bold text-[#C0A062] uppercase mb-4 tracking-widest text-center" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
                   {author}
                 </Text>
 
                 {/* Greek Text */}
-                <Text className="text-2xl font-serif text-[#5D4037] text-center leading-8 mb-4 font-greek">
+                <Text className="text-2xl font-serif text-[#5D4037] text-center leading-8 mb-4 font-greek" style={{ fontFamily: 'GFSDidot' }}>
                   {greek}
                 </Text>
 
@@ -132,7 +133,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                {/* Section A: The Rule (Static - Knot Definition) */}
                {selectedToken.knot_definition ? (
                  <View className="mb-2 bg-gray-900/30 p-3 rounded-lg border border-gray-800">
-                   <Text className="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-widest">The Rule</Text>
+                   <Text className="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>The Rule</Text>
                    <Text className="text-sm text-[#9CA3AE] font-serif italic leading-5">
                      {selectedToken.knot_definition}
                    </Text>
@@ -142,7 +143,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                {/* Section B: The Logic (Dynamic - Knot Context) */}
                {selectedToken.knot_context ? (
                  <View className="mb-2 bg-gray-900/30 p-3 rounded-lg border border-gray-800">
-                   <Text className="text-[10px] font-bold text-accent uppercase mb-1 tracking-widest">The Logic</Text>
+                   <Text className="text-[10px] font-bold text-accent uppercase mb-1 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>The Logic</Text>
                    <Text className="text-sm text-[#C5A059] font-sans leading-5">
                      {selectedToken.knot_context}
                    </Text>
@@ -152,18 +153,18 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
               {/* The Morphology */}
               {selectedToken.morphology ? (
                  <View className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                   <Text className="text-[10px] font-bold text-gray-400 uppercase mb-1">Morphology</Text>
+                   <Text className="text-[10px] font-bold text-gray-400 uppercase mb-1" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>Morphology</Text>
                    <Text className="text-sm text-gray-300 leading-5">{selectedToken.morphology}</Text>
                  </View>
                ) : null}
 
               {/* The Lemma */}
               <View className="flex-row items-center justify-between bg-gray-800/30 p-3 rounded-lg border border-gray-800">
-                  <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
                     Lemma
                   </Text>
                   <View className="flex-row items-center">
-                    <Text className="text-lg font-medium text-ancient font-serif italic mr-2 font-greek">
+                    <Text className="text-lg font-medium text-ancient font-serif italic mr-2 font-greek" style={{ fontFamily: 'GFSDidot' }}>
                       {selectedToken.lemma}
                     </Text>
                     <IconButton
@@ -178,7 +179,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
 
               {/* Paradigm Grid */}
               <View className="mt-2">
-                <Text className="text-xs font-bold text-accent uppercase mb-2 tracking-widest">Paradigm</Text>
+                <Text className="text-xs font-bold text-accent uppercase mb-2 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>Paradigm</Text>
                 {selectedToken.has_paradigm && selectedToken.paradigm ? (
                   <ParadigmGrid
                     paradigm={selectedToken.paradigm}
@@ -200,7 +201,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
                {/* Definition Section */}
                {selectedToken.definition && (
                  <View className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
-                    <Text className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">
+                    <Text className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
                       Definition
                     </Text>
                     <Text className="text-lg text-text font-serif leading-6">
@@ -229,7 +230,7 @@ const InspectorSheet = forwardRef<BottomSheet, InspectorSheetProps>(
           return (
             <View className="mt-2 pb-10">
                <View className="p-6 bg-gray-800/30 rounded-xl border border-gray-700 items-center">
-                 <Text className="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">
+                 <Text className="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
                     Related Forms
                  </Text>
                  <Text className="text-gray-400 italic text-center mb-2">
