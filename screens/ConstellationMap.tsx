@@ -292,12 +292,10 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, golde
                 {simulationNodes.map((node, i) => {
                     if (!node.x || !node.y) return null;
                     const r = 20;
+                    const nodeColor = node.status === 'mastered' ? '#FFD700' : '#E3DCCB';
                     return (
                         <Group key={`node-${node.id}`}>
-                            <Circle cx={node.x} cy={node.y} r={r}>
-                                {/* DEBUG PAINT: Bright Cyan to verify visibility as requested */}
-                                <Fill color="#00FFFF" />
-                            </Circle>
+                            <Circle cx={node.x} cy={node.y} r={r} color={nodeColor} style="fill" />
                             {/* Label */}
                             <Text
                                 x={node.x - 10}
