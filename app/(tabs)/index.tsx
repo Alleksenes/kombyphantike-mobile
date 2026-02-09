@@ -5,6 +5,7 @@ import { Keyboard, KeyboardAvoidingView, LayoutChangeEvent, Platform, StyleSheet
 import OmegaLoader from '../../components/OmegaLoader';
 import CosmicBackground from '../../components/ui/CosmicBackground';
 import MoltenButton from '../../components/ui/MoltenButton';
+import WeaverControls from '../../components/ui/WeaverControls';
 import { SessionStore } from '../../services/SessionStore';
 import { API_BASE_URL } from '../../src/services/apiConfig';
 
@@ -14,6 +15,11 @@ export default function WeaverScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inputLayout, setInputLayout] = useState({ width: 0, height: 0 });
+
+  // Weaver Controls State
+  const [sentenceCount, setSentenceCount] = useState(10);
+  const [cefLevel, setCefLevel] = useState('Any');
+  const [complexity, setComplexity] = useState(false);
 
   const handleWeave = async () => {
     if (!theme.trim()) return;
@@ -27,7 +33,12 @@ export default function WeaverScreen() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ theme: theme, sentence_count: 10 }),
+        body: JSON.stringify({
+          theme: theme,
+          sentence_count: sentenceCount,
+          cef_level: cefLevel,
+          complexity: complexity,
+        }),
       });
 
       if (!response.ok) {
@@ -59,7 +70,7 @@ export default function WeaverScreen() {
 
     } catch (err) {
       console.error("Weave Error:", err);
-      setError('Failed to weave curriculum. Please try again.');
+      setError('The Threads are Tangled. Check your Conduit.');
     } finally {
       setIsLoading(false);
     }
@@ -124,6 +135,16 @@ export default function WeaverScreen() {
                   onSubmitEditing={handleWeave}
                 />
               </View>
+
+              {/* Stele of Command (Weaver Controls) */}
+              <WeaverControls
+                sentenceCount={sentenceCount}
+                setSentenceCount={setSentenceCount}
+                cefLevel={cefLevel}
+                setCefLevel={setCefLevel}
+                complexity={complexity}
+                setComplexity={setComplexity}
+              />
 
               {/* Molten Gold Button */}
               <MoltenButton
