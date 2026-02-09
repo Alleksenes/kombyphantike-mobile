@@ -270,6 +270,8 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, golde
                         color="#C5A059"
                         style="stroke"
                         strokeWidth={3}
+                        strokeCap="round"
+                        strokeJoin="round"
                     >
                         <BlurMask blur={4} style="solid" />
                     </Path>
