@@ -7,29 +7,11 @@ import { Platform } from 'react-native';
  * Centralizing this configuration prevents hardcoded URLs across the codebase
  * and allows for easy switching between development (HTTP) and production (HTTPS).
  */
-const getApiBaseUrl = (): string => {
-  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+const API_PORT = '8000';
 
-  // In production, we must prioritize secure connections and explicit configuration.
-  if (!__DEV__) {
-    if (!envUrl) {
-      // In production, missing API URL is a critical configuration error.
-      // We use a safe placeholder that will fail safely rather than falling back to localhost.
-      console.error('[Config] Security Alert: EXPO_PUBLIC_API_URL is NOT set in production!');
-      return 'https://api.missing-env-var.error';
-    }
+// THE MAGIC TUNNEL
+// 10.0.2.2 is the special IP Android Emulators use to see "Localhost" on your PC.
+const LOCAL_IP = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 
-    if (envUrl.startsWith('http:')) {
-      console.warn('[Config] Security Warning: Insecure API URL (HTTP) detected in production. HTTPS is strongly recommended.');
-    }
-
-    return envUrl;
-  }
-
-  // In development, we allow falling back to local addresses for developer convenience.
-  return envUrl || (Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000');
-};
-
-export const API_BASE_URL = getApiBaseUrl();
-
+export const API_BASE_URL = `http://${LOCAL_IP}:${API_PORT}`;
 console.log(`[Config] API_BASE_URL is set to: ${API_BASE_URL}`);

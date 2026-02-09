@@ -1,6 +1,7 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import InspectorSheet from '../components/InspectorSheet';
 import PhilologyCard from '../components/PhilologyCard';
@@ -119,7 +120,7 @@ export default function ConstellationScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Stack.Screen options={{ headerShown: false }} />
       <CosmicBackground />
       {nodes.length > 0 ? (
