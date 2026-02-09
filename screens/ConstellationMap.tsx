@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View, Platform, Text as RNText } from 'react-native';
-import { Canvas, Circle, Group, Path, Skia, Text, useFont, Fill, Shader, vec } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Path, Skia, Text, useFont, Fill, Shader, vec, BlurMask } from '@shopify/react-native-skia';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useSharedValue, useDerivedValue, runOnJS, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { forceSimulation, forceManyBody, forceLink, forceCenter, SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
@@ -27,6 +27,7 @@ export interface ConstellationLink extends SimulationLinkDatum<ConstellationNode
 interface ConstellationMapProps {
   nodes: ConstellationNode[];
   links: ConstellationLink[];
+  goldenPath?: string[];
   onNodePress?: (node: ConstellationNode) => void;
 }
 
@@ -73,7 +74,7 @@ half4 main(vec2 xy) {
 }
 `;
 
-const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, onNodePress }) => {
+const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, goldenPath, onNodePress }) => {
   const { width, height } = useWindowDimensions();
 
   // Web Fallback
@@ -175,6 +176,32 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, onNod
     return m;
   }, [translateX, translateY, scale]);
 
+  // Golden Thread Path Calculation
+  let goldenThreadPath: ReturnType<typeof Skia.Path.Make> | null = null;
+  if (goldenPath && goldenPath.length >= 2 && simulationNodes.length > 0) {
+    const nodeMap = new Map<string, ConstellationNode>();
+    simulationNodes.forEach(node => nodeMap.set(node.id, node));
+
+    const path = Skia.Path.Make();
+    let started = false;
+
+    for (const id of goldenPath) {
+        const node = nodeMap.get(id);
+        if (node && node.x !== undefined && node.y !== undefined) {
+            if (!started) {
+                path.moveTo(node.x, node.y);
+                started = true;
+            } else {
+                path.lineTo(node.x, node.y);
+            }
+        }
+    }
+
+    if (started) {
+      goldenThreadPath = path;
+    }
+  }
+
   useEffect(() => {
     if (!nodes.length) return;
 
@@ -235,6 +262,18 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, onNod
                     }
                     return null;
                 })}
+
+                {/* Golden Thread */}
+                {goldenThreadPath && (
+                    <Path
+                        path={goldenThreadPath}
+                        color="#C5A059"
+                        style="stroke"
+                        strokeWidth={3}
+                    >
+                        <BlurMask blur={4} style="solid" />
+                    </Path>
+                )}
 
                 {/* Nodes */}
                 {simulationNodes.map((node, i) => {

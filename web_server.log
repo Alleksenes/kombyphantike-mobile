@@ -1,0 +1,44 @@
+Starting project at /app
+React Compiler enabled
+Metro is running in CI mode, reloads are disabled. Remove CI=true to enable watch mode.
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.31 - expected version: ~54.0.33
+  expo-router@6.0.22 - expected version: ~6.0.23
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8082
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% ( 78/183)
+λ node_modules/expo-router/node/render.js ░░░░░░░░░░░░░░░░  2.7% ( 18/129)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.1% (218/327)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓░░░░░░░░░░ 39.2% (296/473)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 52.9% (320/440)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 59.9% (486/661)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.0% (527/703)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 62.4% (674/956)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.9% (647/831)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.7% ( 954/1233)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.9% ( 734/1032)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.1% (1213/1481)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 68.3% (1024/1303)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.8% (1304/1561)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 68.8% (1183/1435)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.4% (1523/1699)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.8% (1388/1661)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 88.7% (1666/1769)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 87.8% (1730/1846)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.1% (1783/1828)
+λ Bundled 37359ms node_modules/expo-router/node/render.js (1909 modules)
+[Config] API_BASE_URL is set to: http://localhost:8000
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.1% (1959/1971)
+Web Bundled 43481ms node_modules/expo-router/entry.js (1972 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 37.6% (211/407)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 39.8% (445/716)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.2% ( 933/1234)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.0% (1419/1672)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 88.1% (1726/1839)
+Web Bundled 18174ms node_modules/expo-router/entry.js (1973 modules)
