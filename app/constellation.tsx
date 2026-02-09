@@ -1,7 +1,11 @@
+import BottomSheet from '@gorhom/bottom-sheet';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import InspectorSheet from '../components/InspectorSheet';
+import PhilologyCard from '../components/PhilologyCard';
 import CosmicBackground from '../components/ui/CosmicBackground';
+import { Token } from '../components/WordChip';
 import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 import { API_BASE_URL } from '../src/services/apiConfig';
 
@@ -10,6 +14,11 @@ export default function ConstellationScreen() {
   const [nodes, setNodes] = useState<ConstellationNode[]>([]);
   const [links, setLinks] = useState<ConstellationLink[]>([]);
   const [isWeaving, setIsWeaving] = useState(false);
+
+  // Interaction State
+  const [activeNode, setActiveNode] = useState<ConstellationNode | null>(null);
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   useEffect(() => {
     if (typeof graph === 'string') {
@@ -94,13 +103,33 @@ export default function ConstellationScreen() {
     }
   };
 
+  const handleNodePress = (node: ConstellationNode) => {
+    console.log("Node Pressed:", node.label);
+    setActiveNode(node);
+    setSelectedToken(null);
+    // Close the sheet when switching nodes to focus on the new sentence
+    bottomSheetRef.current?.close();
+  };
+
+  const handleTokenPress = (token: Token) => {
+    console.log("Token Pressed:", token.text);
+    setSelectedToken(token);
+    // Open sheet to inspect
+    bottomSheetRef.current?.snapToIndex(0);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
       <Stack.Screen options={{ headerShown: false }} />
       <CosmicBackground />
       {nodes.length > 0 ? (
         <>
-          <ConstellationMap nodes={nodes} links={links} />
+          <ConstellationMap
+            nodes={nodes}
+            links={links}
+            onNodePress={handleNodePress}
+          />
+
           {/* Actuator FAB */}
           <Pressable
             onPress={handleWeave}
@@ -138,6 +167,26 @@ export default function ConstellationScreen() {
               </Text>
             )}
           </Pressable>
+
+          {/* Philology Card (Conditional) */}
+          {activeNode && (activeNode.target_sentence || activeNode.source_sentence) && (
+            <PhilologyCard
+              sentence={activeNode.target_sentence || activeNode.source_sentence || ""}
+              tokens={activeNode.target_tokens}
+              translation={activeNode.source_sentence || activeNode.target_sentence || ""}
+              onTokenPress={handleTokenPress}
+              selectedToken={selectedToken}
+            />
+          )}
+
+          {/* Inspector Sheet */}
+          <InspectorSheet
+            ref={bottomSheetRef}
+            selectedToken={selectedToken}
+            ancientContext={activeNode?.ancient_context || "Unknown Context"}
+            greekSentence={activeNode?.target_sentence}
+            englishTranslation={activeNode?.source_sentence}
+          />
         </>
       ) : (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
