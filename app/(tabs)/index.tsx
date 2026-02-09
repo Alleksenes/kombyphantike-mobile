@@ -36,7 +36,7 @@ export default function WeaverScreen() {
           theme: theme,
           sentence_count: sentenceCount,
           cef_level: cefLevel,
-          complexity: complexity,
+          complexity: complexity ? "complex" : "lucid",
         }),
       });
 
