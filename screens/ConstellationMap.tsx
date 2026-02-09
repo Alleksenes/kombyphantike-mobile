@@ -4,6 +4,7 @@ import { Canvas, Circle, Group, Path, Skia, Text, useFont, Fill, Shader, vec } f
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useSharedValue, useDerivedValue, runOnJS, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { forceSimulation, forceManyBody, forceLink, forceCenter, SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
+import { Token, AncientContext } from '../components/WordChip';
 
 // --- Types ---
 export interface ConstellationNode extends SimulationNodeDatum {
@@ -12,6 +13,8 @@ export interface ConstellationNode extends SimulationNodeDatum {
   status: 'locked' | 'unlocked' | 'mastered';
   target_sentence?: string;
   source_sentence?: string;
+  target_tokens?: Token[];
+  ancient_context?: string | AncientContext;
   x?: number;
   y?: number;
 }
@@ -24,6 +27,7 @@ export interface ConstellationLink extends SimulationLinkDatum<ConstellationNode
 interface ConstellationMapProps {
   nodes: ConstellationNode[];
   links: ConstellationLink[];
+  onNodePress?: (node: ConstellationNode) => void;
 }
 
 // --- Shaders ---
@@ -69,7 +73,7 @@ half4 main(vec2 xy) {
 }
 `;
 
-const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links }) => {
+const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, onNodePress }) => {
   const { width, height } = useWindowDimensions();
 
   // Web Fallback
@@ -121,6 +125,29 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links }) => 
   const scale = useSharedValue(1);
   const context = useSharedValue({ x: 0, y: 0, scale: 1 });
 
+  const handleTap = (x: number, y: number) => {
+    // Invert transform to get simulation coordinates
+    const simX = (x - translateX.value) / scale.value;
+    const simY = (y - translateY.value) / scale.value;
+
+    // Find node
+    const clickedNode = simulationNodes.find(node => {
+        if (!node.x || !node.y) return false;
+        const dx = node.x - simX;
+        const dy = node.y - simY;
+        return dx * dx + dy * dy < 1600; // r=40 squared (generous hit area)
+    });
+
+    if (clickedNode && onNodePress) {
+        onNodePress(clickedNode);
+    }
+  };
+
+  const tap = Gesture.Tap()
+    .onStart((event) => {
+      runOnJS(handleTap)(event.x, event.y);
+    });
+
   const pan = Gesture.Pan()
     .onStart(() => {
       context.value = { x: translateX.value, y: translateY.value, scale: scale.value };
@@ -139,7 +166,7 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links }) => 
         scale.value = Math.max(0.5, Math.min(newScale, 4));
     });
 
-  const gesture = Gesture.Simultaneous(pan, pinch);
+  const gesture = Gesture.Simultaneous(pan, pinch, tap);
 
   const transform = useDerivedValue(() => {
     const m = Skia.Matrix();
