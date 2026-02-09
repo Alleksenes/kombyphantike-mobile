@@ -119,7 +119,7 @@ export default function ConstellationScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
       <Stack.Screen options={{ headerShown: false }} />
       <CosmicBackground />
       {nodes.length > 0 ? (
