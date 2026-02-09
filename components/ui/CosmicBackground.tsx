@@ -1,94 +1,101 @@
-import React, { useMemo, useEffect } from 'react';
-import { StyleSheet, useWindowDimensions, Platform, View } from 'react-native';
 import { Canvas, Rect, Shader, Skia } from '@shopify/react-native-skia';
-import { useSharedValue, withRepeat, withTiming, Easing, useDerivedValue } from 'react-native-reanimated';
+import { useEffect, useMemo } from 'react';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 const COSMIC_SHADER = `
-uniform vec2 resolution;
-uniform float time;
-uniform vec3 u_color1;
-uniform vec3 u_color2;
-uniform vec3 u_color3;
-uniform vec3 u_color4;
-uniform vec3 u_color5;
-uniform vec3 u_color6;
-uniform vec3 u_color7;
-uniform vec3 u_color8;
+uniform float2 u_resolution;
+uniform float u_time;
 
-float random (in vec2 _st) {
-    return fract(sin(dot(_st.xy, vec2(12.9898,78.233)))*43758.5453123);
+// -- PALETTE (THEME: COSMIC PIGMENT) --
+// Deep Void (Background)
+const vec3 C_VOID     = vec3(0.06, 0.02, 0.10); 
+// Oxblood / Crimson (The "Bruise")
+const vec3 C_CRIMSON  = vec3(0.35, 0.04, 0.08); 
+// Deep Violet / Ink
+const vec3 C_INK      = vec3(0.18, 0.05, 0.28); 
+// Faint Gold (Starlight/Dust)
+const vec3 C_GOLD     = vec3(0.85, 0.70, 0.40); 
+
+// -- UTILS --
+float random(vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898,78.233)))*43758.5453123);
 }
 
-float noise (in vec2 _st) {
-    vec2 i = floor(_st);
-    vec2 f = fract(_st);
-
-    // Four corners in 2D of a tile
+// 2D Noise based on Morgan McGuire @morgan3d
+float noise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
     float a = random(i);
     float b = random(i + vec2(1.0, 0.0));
     float c = random(i + vec2(0.0, 1.0));
     float d = random(i + vec2(1.0, 1.0));
-
     vec2 u = f * f * (3.0 - 2.0 * f);
-
-    return mix(a, b, u.x) +
-            (c - a)* u.y * (1.0 - u.x) +
-            (d - b) * u.x * u.y;
+    return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
-float fbm ( in vec2 _st) {
+// Fractal Brownian Motion
+#define OCTAVES 5
+float fbm(vec2 st) {
     float v = 0.0;
     float a = 0.5;
     vec2 shift = vec2(100.0);
-    // Rotate to reduce axial bias
-    mat2 rot = mat2(cos(0.5), sin(0.5),
-                    -sin(0.5), cos(0.50));
-    for (int i = 0; i < 5; ++i) {
-        v += a * noise(_st);
-        _st = rot * _st * 2.0 + shift;
+    // Rotation matrix to reduce grid artifacts
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+    for (int i = 0; i < OCTAVES; ++i) {
+        v += a * noise(st);
+        st = rot * st * 2.0 + shift;
         a *= 0.5;
     }
     return v;
 }
 
-half4 main(vec2 xy) {
-    vec2 st = xy / resolution.xy;
-    st.x *= resolution.x/resolution.y;
+vec4 main(vec2 pos) {
+    // Normalize coordinates
+    vec2 st = pos / u_resolution.xy;
+    st.x *= u_resolution.x / u_resolution.y;
 
-    // Slow down time - "Geological speed"
-    float t = time * 0.05;
+    // Slow, geological time
+    float t = u_time * 0.15;
 
-    vec2 q = vec2(0.);
-    q.x = fbm( st + vec2(0.0) );
-    q.y = fbm( st + vec2(5.2, 1.3) );
+    // -- DOMAIN WARPING (THE LIQUID EFFECT) --
+    // We distort the coordinate space 'st' recursively.
+    
+    vec2 q = vec2(0.0);
+    q.x = fbm(st + 0.00 * t);
+    q.y = fbm(st + vec2(1.0));
 
-    vec2 r = vec2(0.);
-    r.x = fbm( st + 4.0*q + vec2(1.7,9.2) + 0.15*t );
-    r.y = fbm( st + 4.0*q + vec2(8.3,2.8) + 0.126*t );
+    vec2 r = vec2(0.0);
+    r.x = fbm(st + 1.0 * q + vec2(1.7, 9.2) + 0.15 * t);
+    r.y = fbm(st + 1.0 * q + vec2(8.3, 2.8) + 0.126 * t);
 
-    float f = fbm( st + 4.0*r );
+    float f = fbm(st + r);
 
-    // Base dark nebula
-    vec3 color = mix(u_color1, u_color2, clamp((f*f)*4.0,0.0,1.0));
+    // -- COLOR MIXING (THE PIGMENT) --
+    // Base: Void mixed with Ink
+    vec3 color = mix(C_VOID, C_INK, clamp((f*f)*4.0, 0.0, 1.0));
 
-    // Mid-tones (Purple/Violet)
-    color = mix(color, u_color3, clamp(length(q),0.0,1.0));
-    color = mix(color, u_color4, clamp(length(r.x),0.0,1.0));
+    // Mid: Crimson bleeds in based on the warped value 'q'
+    color = mix(color, C_CRIMSON, clamp(length(q), 0.0, 1.0));
 
-    // Deep Red/Crimson accents (Ink)
-    color = mix(color, u_color5, clamp(length(r.y),0.0,1.0));
+    // High: Gold dust at the peaks of the noise
+    color = mix(color, C_GOLD, clamp(length(r.x), 0.0, 1.0) * 0.15); // Low opacity gold
 
-    // Earthy/Bronze tones
-    color = mix(color, u_color6, clamp(length(q.x)*0.5, 0.0, 1.0));
+    // -- POST-PROCESSING --
+    // 1. Vignette (Darken corners)
+    vec2 uv = pos / u_resolution.xy;
+    float vig = uv.x * uv.y * 15.0 * (1.0 - uv.x) * (1.0 - uv.y);
+    color *= pow(vig, 0.15); // Soft vignette
 
-    // Gold highlights - reduced intensity for "pigment" feel rather than metallic
-    color = mix(color, u_color7, clamp(pow(f, 3.0), 0.0, 1.0) * 0.4);
+    // 2. Grain (The "Paper" Texture)
+    // High frequency noise to simulate vellum/paper grain
+    float grain = random(uv * t) * 0.05; 
+    color += grain;
 
-    // Deep Shadow/Void
-    color = mix(color, u_color8, 1.0 - smoothstep(0.0, 0.9, f));
+    // 3. Contrast Boost (Deepen the blacks)
+    color = pow(color, vec3(1.1)); 
 
-    // Vignette/Pigment density
-    return half4((f*f*f+0.6*f*f+0.5*f)*color, 1.0);
+    return vec4(color, 1.0);
 }
 `;
 
@@ -120,7 +127,7 @@ const CosmicBackground = () => {
 
   const shader = useMemo(() => {
     if (Platform.OS === 'web') {
-       return null;
+      return null;
     }
     return Skia.RuntimeEffect.Make(COSMIC_SHADER);
   }, []);
