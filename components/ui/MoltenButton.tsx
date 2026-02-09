@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 28,
+    borderRadius: 50,
     backgroundColor: '#C0A062', // Fallback color
     overflow: 'hidden',
   },

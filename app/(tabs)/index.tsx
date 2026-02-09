@@ -14,7 +14,7 @@ export default function WeaverScreen() {
   const [theme, setTheme] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [inputLayout, setInputLayout] = useState({ width: 0, height: 0 });
+  const [containerLayout, setContainerLayout] = useState({ width: 0, height: 0 });
 
   const [sentenceCount, setSentenceCount] = useState(10);
   const [complexity, setComplexity] = useState(false);
@@ -75,9 +75,9 @@ export default function WeaverScreen() {
     }
   };
 
-  const onInputLayout = (event: LayoutChangeEvent) => {
+  const onContainerLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
-    setInputLayout({ width, height });
+    setContainerLayout({ width, height });
   };
 
   return (
@@ -98,55 +98,67 @@ export default function WeaverScreen() {
             </Text>
 
             <View className="w-full max-w-md">
-              {/* Glass Input */}
+
+              {/* Obsidian Glass Container */}
               <View
-                className="w-full mb-8 h-[64px] rounded-xl overflow-hidden relative"
-                style={Platform.OS === 'web' ? { borderWidth: 1, borderColor: '#C5A059', backgroundColor: 'rgba(255,255,255,0.05)' } : undefined}
-                onLayout={onInputLayout}
+                className="w-full mb-8 rounded-[20px] overflow-hidden relative p-6"
+                style={Platform.OS === 'web'
+                  ? { borderWidth: 1, borderColor: 'rgba(197, 160, 89, 0.3)', backgroundColor: 'rgba(10, 5, 15, 0.85)' }
+                  : undefined}
+                onLayout={onContainerLayout}
               >
-                {Platform.OS !== 'web' && inputLayout.width > 0 && (
+                {Platform.OS !== 'web' && containerLayout.width > 0 && (
                   <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-                    <BackdropBlur blur={10} clip={{ x: 0, y: 0, width: inputLayout.width, height: inputLayout.height, rx: 12, ry: 12 }}>
-                      <Fill color="rgba(255,255,255,0.05)" />
+                    <BackdropBlur blur={20} clip={{ x: 0, y: 0, width: containerLayout.width, height: containerLayout.height, rx: 20, ry: 20 }}>
+                      <Fill color="rgba(10, 5, 15, 0.85)" />
                     </BackdropBlur>
                     <RoundedRect
                       x={0.5}
                       y={0.5}
-                      width={inputLayout.width - 1}
-                      height={inputLayout.height - 1}
-                      r={12}
-                      color="#C5A059"
+                      width={containerLayout.width - 1}
+                      height={containerLayout.height - 1}
+                      r={20}
+                      color="rgba(197, 160, 89, 0.3)"
                       style="stroke"
                       strokeWidth={1}
                     />
                   </Canvas>
                 )}
+
+                {/* Input Field (Underline Only) */}
                 <TextInput
                   placeholder="Enter a Theme (e.g., 'Justice', 'The Sea')..."
                   placeholderTextColor="rgba(227, 220, 203, 0.5)"
                   value={theme}
                   onChangeText={setTheme}
-                  className="flex-1 px-4 text-text text-lg font-ui"
-                  style={{ fontFamily: 'NeueHaasGrotesk-Text', zIndex: 50 }}
+                  className="w-full text-lg font-display mb-8"
+                  style={{
+                    fontFamily: 'NeueHaasGrotesk-Display',
+                    color: '#E3DCCB',
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#C5A059',
+                    paddingBottom: 8,
+                    backgroundColor: 'transparent',
+                    zIndex: 50
+                  }}
                   pointerEvents="auto"
                   autoCapitalize="sentences"
                   returnKeyType="done"
                   onSubmitEditing={handleWeave}
                 />
+
+                {/* Stele of Command (Weaver Controls) */}
+                <WeaverControls
+                  sentenceCount={sentenceCount}
+                  setSentenceCount={setSentenceCount}
+                  cefLevel={cefLevel}
+                  setCefLevel={setCefLevel}
+                  complexity={complexity}
+                  setComplexity={setComplexity}
+                />
               </View>
 
-              {/* Stele of Command (Weaver Controls) */}
-              <WeaverControls
-                sentenceCount={sentenceCount}
-                setSentenceCount={setSentenceCount}
-                cefLevel={cefLevel}
-                setCefLevel={setCefLevel}
-                complexity={complexity}
-                setComplexity={setComplexity}
-              />
-
-
-              {/* Molten Gold Button */}
+              {/* Molten Gold Button (Outside, Floating Below) */}
               <MoltenButton
                 label="Weave Curriculum"
                 onPress={handleWeave}

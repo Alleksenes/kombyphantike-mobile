@@ -22,16 +22,13 @@ export default function WeaverControls({
 }: WeaverControlsProps) {
     return (
         <View className="w-full mb-6">
-            {/* Container: Obsidian Card with Gold Border */}
-            <View className="border border-accent rounded-xl p-5 shadow-lg" style={{ backgroundColor: 'rgba(30, 25, 24, 0.8)' }}>
+            {/* Header */}
+            <Text className="text-accent font-display text-lg mb-4 tracking-wider text-center uppercase">
+                Stele of Command
+            </Text>
 
-                {/* Header */}
-                <Text className="text-accent font-display text-lg mb-4 tracking-wider text-center uppercase">
-                    Stele of Command
-                </Text>
-
-                {/* Dial of Scope: Slider */}
-                <View className="mb-6">
+            {/* Dial of Scope: Slider */}
+            <View className="mb-6">
                     <View className="flex-row justify-between mb-2">
                         <Text className="text-text font-ui text-sm">Scope</Text>
                         <Text className="text-accent font-ui font-bold">{sentenceCount} Sentences</Text>
@@ -90,8 +87,6 @@ export default function WeaverControls({
                         value={complexity}
                     />
                 </View>
-
-            </View>
         </View>
     );
 }
