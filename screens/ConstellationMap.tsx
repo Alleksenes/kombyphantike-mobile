@@ -205,7 +205,13 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, golde
   useEffect(() => {
     if (!nodes.length) return;
 
-    const simNodes = JSON.parse(JSON.stringify(nodes));
+    // Force simulation coordinates initialization
+    const simNodes = nodes.map(n => ({
+        ...n,
+        // If x and y are exactly 0 (backend default), clear them so d3 initializes positions
+        x: (n.x === 0 && n.y === 0) ? undefined : n.x,
+        y: (n.x === 0 && n.y === 0) ? undefined : n.y,
+    }));
     const simLinks = JSON.parse(JSON.stringify(links));
 
     const simulation = forceSimulation(simNodes)
@@ -216,6 +222,11 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, golde
         setSimulationNodes([...simNodes]);
         setSimulationLinks([...simLinks]);
       });
+
+    // Force an initial tick to ensure coordinates are populated immediately
+    simulation.tick();
+    setSimulationNodes([...simNodes]);
+    setSimulationLinks([...simLinks]);
 
     return () => {
       simulation.stop();
@@ -284,11 +295,8 @@ const ConstellationMap: React.FC<ConstellationMapProps> = ({ nodes, links, golde
                     return (
                         <Group key={`node-${node.id}`}>
                             <Circle cx={node.x} cy={node.y} r={r}>
-                                {node.status === 'mastered' && goldShader ? (
-                                    <Shader source={goldShader} uniforms={goldUniforms} />
-                                ) : (
-                                    <Fill color={node.status === 'locked' ? '#333' : '#E3DCCB'} />
-                                )}
+                                {/* DEBUG PAINT: Bright Cyan to verify visibility as requested */}
+                                <Fill color="#00FFFF" />
                             </Circle>
                             {/* Label */}
                             <Text
