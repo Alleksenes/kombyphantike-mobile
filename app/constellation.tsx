@@ -127,6 +127,7 @@ export default function ConstellationScreen() {
           <ConstellationMap
             nodes={nodes}
             links={links}
+            goldenPath={nodes.map(n => n.id)}
             onNodePress={handleNodePress}
           />
 
