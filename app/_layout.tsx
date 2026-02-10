@@ -7,7 +7,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OmegaLoader from '../components/OmegaLoader';
-import TheInspector from '../components/ui/TheInspector';
 import CosmicBackground from '../components/ui/CosmicBackground';
 import { initDatabase } from '../src/services/Database';
 import { ScriptoriumTheme } from '../src/theme';
@@ -54,7 +53,6 @@ export default function RootLayout() {
               <Stack.Screen name="results" />
               <Stack.Screen name="constellation" />
             </Stack>
-            <TheInspector />
           </PaperProvider>
         </GestureHandlerRootView>
       </View>
