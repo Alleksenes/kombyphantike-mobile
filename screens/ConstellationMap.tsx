@@ -46,13 +46,10 @@ type Props = {
   onNodePress?: (node: ConstellationNode) => void;
 };
 
-export default function ConstellationMap({ nodes, links, onNodePress }: Props) {
-  // ---------------------------------------------------------
-  // 1. HOOKS (MUST BE AT THE TOP - UNCONDITIONAL)
-  // ---------------------------------------------------------
-
+// Internal Component (Native Only)
+function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   // A. Fonts
-  const font = useFont(require('../assets/fonts/NeueHaasDisplay-Black.otf'), 12);
+  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.otf'), 12);
 
   // B. Gestures & Animation Values
   const translateX = useValue(0);
@@ -94,10 +91,6 @@ export default function ConstellationMap({ nodes, links, onNodePress }: Props) {
     const tx = translateX.current;
     const ty = translateY.current;
     const s = scale.current;
-
-    // transform: translate(tx, ty) scale(s)
-    // screenX = simX * s + tx
-    // simX = (screenX - tx) / s
 
     const simX = (x - tx) / s;
     const simY = (y - ty) / s;
@@ -149,31 +142,10 @@ export default function ConstellationMap({ nodes, links, onNodePress }: Props) {
     return () => simulation.stop();
   }, [nodes, links]);
 
-  // ---------------------------------------------------------
-  // 2. EARLY RETURNS (ONLY AFTER HOOKS)
-  // ---------------------------------------------------------
-
-  if (Platform.OS === 'web') {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0518' }}>
-        <Text style={{ color: '#E3DCCB', fontSize: 24, marginBottom: 20 }}>Cosmic Scriptorium</Text>
-        <Text style={{ color: '#E3DCCB', opacity: 0.7 }}>Constellation Map (Web View)</Text>
-        {nodes.map(node => (
-          <Text key={node.id} style={{ color: '#E3DCCB', marginVertical: 2 }}>
-            {node.label} ({node.status})
-          </Text>
-        ))}
-      </View>
-    );
-  }
-
   if (!font) {
     return <View style={styles.loader} />;
   }
 
-  // ---------------------------------------------------------
-  // 3. RENDER
-  // ---------------------------------------------------------
   return (
     <GestureDetector gesture={composedGesture}>
       <View style={styles.container}>
@@ -222,7 +194,6 @@ export default function ConstellationMap({ nodes, links, onNodePress }: Props) {
                     color={nodeColor}
                     opacity={node.status === 'locked' ? 0.3 : 1}
                   />
-                  {/* We removed the problematic <Fill> here */}
                 </Group>
               );
             })}
@@ -233,10 +204,32 @@ export default function ConstellationMap({ nodes, links, onNodePress }: Props) {
   );
 }
 
+export default function ConstellationMap({ nodes, links, onNodePress }: Props) {
+  if (Platform.OS === 'web') {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0518' }}>
+        <Text style={{ color: '#E3DCCB', fontSize: 24, marginBottom: 20 }}>Cosmic Scriptorium</Text>
+        <Text style={{ color: '#E3DCCB', opacity: 0.7 }}>Constellation Map (Web View)</Text>
+        {nodes.map(node => (
+          <Text
+            key={node.id}
+            onPress={() => onNodePress && onNodePress(node)}
+            style={{ color: '#E3DCCB', marginVertical: 2, cursor: 'pointer' }}
+          >
+            {node.label} ({node.status})
+          </Text>
+        ))}
+      </View>
+    );
+  }
+
+  return <ConstellationMapCanvas nodes={nodes} links={links} onNodePress={onNodePress} />;
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent', // Critical: Let CosmicBackground show through
+    backgroundColor: 'transparent',
   },
   canvas: {
     flex: 1,
