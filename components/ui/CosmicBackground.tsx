@@ -35,7 +35,7 @@ float noise(vec2 st) {
 }
 
 // Fractal Brownian Motion
-#define OCTAVES 5
+const int OCTAVES = 5;
 float fbm(vec2 st) {
     float v = 0.0;
     float a = 0.5;
