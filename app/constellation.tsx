@@ -2,7 +2,6 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import PhilologyCard from '../components/PhilologyCard';
-import CosmicBackground from '../components/ui/CosmicBackground';
 import { Token } from '../components/WordChip';
 import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 import { API_BASE_URL } from '../src/services/apiConfig';
@@ -19,7 +18,7 @@ export default function ConstellationScreen() {
 
 
   // Global Inspector Store
-  const { inspect, close, token: selectedToken } = useInspectorStore();
+  const { openInspector, closeInspector, token: selectedToken } = useInspectorStore();
 
   useEffect(() => {
     if (typeof graph === 'string') {
@@ -108,18 +107,17 @@ export default function ConstellationScreen() {
     console.log("Node Pressed:", node.label);
     setActiveNode(node);
     // Close the inspector when switching nodes
-    close();
+    closeInspector();
   };
 
   const handleTokenPress = (token: Token) => {
     console.log("Token Pressed:", token.text);
-    inspect(token);
+    openInspector(token);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <CosmicBackground />
       {nodes.length > 0 ? (
         <>
           <ConstellationMap
