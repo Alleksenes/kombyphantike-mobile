@@ -17,6 +17,7 @@ export default function ConstellationScreen() {
   // Interaction State
   const [activeNode, setActiveNode] = useState<ConstellationNode | null>(null);
 
+
   // Global Inspector Store
   const { inspect, close, token: selectedToken } = useInspectorStore();
 
@@ -116,7 +117,7 @@ export default function ConstellationScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Stack.Screen options={{ headerShown: false }} />
       <CosmicBackground />
       {nodes.length > 0 ? (

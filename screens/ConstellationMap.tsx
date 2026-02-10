@@ -1,19 +1,18 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { View, Dimensions, Platform, StyleSheet, Text } from 'react-native';
 import {
   Canvas,
   Circle,
   Group,
   Path,
   Skia,
-  useFont,
-  useValue,
-  runTiming,
   useComputedValue,
+  useFont,
+  useValue
 } from '@shopify/react-native-skia';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
 import * as d3 from 'd3-force';
+import { useEffect, useState } from 'react';
+import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { AncientContext, Token } from '../components/WordChip';
 
 // 1. GLOBAL CONSTANTS (Safe)
@@ -49,7 +48,7 @@ type Props = {
 // Internal Component (Native Only)
 function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   // A. Fonts
-  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.otf'), 12);
+  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 12);
 
   // B. Gestures & Animation Values
   const translateX = useValue(0);

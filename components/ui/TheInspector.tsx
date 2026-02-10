@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { useInspectorStore } from '../../src/store/inspectorStore';
 
 const CustomBackground = ({ style }: { style?: any }) => {
@@ -50,8 +50,8 @@ export default function TheInspector() {
   if (typeof token.ancient_context === 'string') {
     ancientContext = token.ancient_context;
   } else if (token.ancient_context && typeof token.ancient_context === 'object') {
-     ancientWord = token.ancient_context.greek || token.lemma;
-     ancientContext = token.ancient_context.translation || "";
+    ancientWord = token.ancient_context.greek || token.lemma;
+    ancientContext = token.ancient_context.translation || "";
   }
 
   return (
@@ -77,9 +77,9 @@ export default function TheInspector() {
             <Text style={styles.chipText}>{pos}</Text>
           </View>
           {tags.map((tag, i) => (
-             <View key={i} style={styles.chip}>
-               <Text style={styles.chipText}>{tag}</Text>
-             </View>
+            <View key={i} style={styles.chip}>
+              <Text style={styles.chipText}>{tag}</Text>
+            </View>
           ))}
         </View>
 
