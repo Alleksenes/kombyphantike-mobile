@@ -19,7 +19,7 @@ const CustomBackground = ({ style }: { style?: any }) => {
 
 export default function TheInspector() {
   const sheetRef = useRef<BottomSheet>(null);
-  const { token, isOpen, close } = useInspectorStore();
+  const { token, isOpen, closeInspector } = useInspectorStore();
 
   const snapPoints = useMemo(() => ['45%', '85%'], []);
 
@@ -33,9 +33,9 @@ export default function TheInspector() {
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
-      close();
+      closeInspector();
     }
-  }, [close]);
+  }, [closeInspector]);
 
   if (!token) return null;
 
@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#C5A059',
     width: 40,
     height: 4,
+    borderRadius: 2,
   },
   contentContainer: {
     flex: 1,
@@ -126,14 +127,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'GFSDidot',
-    fontSize: 48,
+    fontSize: 32,
     color: '#FFFFFF',
     marginBottom: 4,
   },
   subtitle: {
     fontFamily: 'NeueHaasGrotesk-Text',
     fontSize: 18,
-    color: '#9CA3AE', // Gray-400 equivalent
+    color: '#9CA3AF',
     fontStyle: 'italic',
   },
   gridContainer: {
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.3)', // Gold with low opacity
+    borderColor: '#C5A059',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: '#C5A059', // Gold
-    fontFamily: 'NeueHaasGrotesk-Text',
+    fontFamily: 'NeueHaasGrotesk-Display',
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
