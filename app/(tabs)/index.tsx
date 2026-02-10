@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, LayoutChangeEvent, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import OmegaLoader from '../../components/OmegaLoader';
-import CosmicBackground from '../../components/ui/CosmicBackground';
 import MoltenButton from '../../components/ui/MoltenButton';
 import WeaverControls from '../../components/ui/WeaverControls';
 import { SessionStore } from '../../services/SessionStore';
@@ -82,9 +81,6 @@ export default function WeaverScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-      {/* 1. Cosmic Background */}
-      <CosmicBackground />
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1, zIndex: 10, elevation: 10 }}

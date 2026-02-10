@@ -1,5 +1,5 @@
-import { Canvas, Rect, Shader, Skia } from '@shopify/react-native-skia';
-import { useEffect, useMemo } from 'react';
+import { BackdropBlur, Canvas, Fill, Image, Rect, Shader, Skia, SkImage, useCanvasRef } from '@shopify/react-native-skia';
+import { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
@@ -36,7 +36,8 @@ vec4 main(vec2 xy) {
     // -- MOTION (Low Frequency / "Breathing") --
     // We remove FBM loops to eliminate "pixelation" and "grain".
     // We use slow sine waves for "Soft Mesh" movement.
-    float t = time * 0.05; // Very slow, sub-perceptual movement
+    // OPTIMIZATION: Scaled by 0.01 for sub-perceptual movement
+    float t = time * 0.0005;
 
     // Create 3 large, soft "Orb" influences
 
@@ -79,9 +80,11 @@ vec4 main(vec2 xy) {
 }
 `;
 
-const CosmicBackground = () => {
+const EncoreBackground = () => {
   const { width, height } = useWindowDimensions();
   const time = useSharedValue(0);
+  const canvasRef = useCanvasRef();
+  const [snapshot, setSnapshot] = useState<SkImage | null>(null);
 
   useEffect(() => {
     time.value = withRepeat(
@@ -89,6 +92,26 @@ const CosmicBackground = () => {
       -1
     );
   }, [time]);
+
+  // -- RASTERIZATION GUARD --
+  // Capture the shader once it stabilizes to save GPU resources (16.6ms/frame).
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    // Reset snapshot to force re-render of the live canvas when dimensions change
+    setSnapshot(null);
+
+    // Small delay to ensure the first frame (with shader + blur) is rendered
+    const timeout = setTimeout(() => {
+      const image = canvasRef.current?.makeImageSnapshot();
+      if (image) {
+        console.log("[EncoreBackground] Snapshot created");
+        setSnapshot(image);
+      }
+    }, 150);
+
+    return () => clearTimeout(timeout);
+  }, [width, height]); // Re-snapshot if dimensions change
 
   const uniforms = useDerivedValue(() => {
     return {
@@ -108,17 +131,42 @@ const CosmicBackground = () => {
     return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0f0518' }]} />;
   }
 
+  // Tiered Rendering: Display cached bitmap if available
+  if (snapshot) {
+    return (
+      <Canvas style={[StyleSheet.absoluteFill, { zIndex: -1 }]} pointerEvents="none">
+        <Image
+          image={snapshot}
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fit="cover"
+        />
+      </Canvas>
+    );
+  }
+
   if (!shader) {
     return null;
   }
 
+  // Live Rendering (Initial state)
   return (
-    <Canvas style={[StyleSheet.absoluteFill, { zIndex: -1 }]} pointerEvents="none">
+    <Canvas
+      ref={canvasRef}
+      style={[StyleSheet.absoluteFill, { zIndex: -1 }]}
+      pointerEvents="none"
+    >
       <Rect x={0} y={0} width={width} height={height}>
         <Shader source={shader} uniforms={uniforms} />
       </Rect>
+      {/* Full-screen BackdropBlur for Encore soft-focus aesthetic */}
+      <BackdropBlur blur={60} clip={{ x: 0, y: 0, width, height }}>
+        <Fill color="transparent" />
+      </BackdropBlur>
     </Canvas>
   );
 };
 
-export default CosmicBackground;
+export default EncoreBackground;
