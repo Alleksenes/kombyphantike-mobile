@@ -49,7 +49,7 @@ vec4 main(vec2 xy) {
 }
 `;
 
-const EncoreBackground = () => {
+const CosmicBackground = () => {
   const { width, height } = useWindowDimensions();
   const time = useSharedValue(0);
 
@@ -86,4 +86,4 @@ const EncoreBackground = () => {
   );
 };
 
-export default EncoreBackground;
+export default CosmicBackground;

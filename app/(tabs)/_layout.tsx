@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { IconButton } from 'react-native-paper';
 
+// Default export for Tabs Layout
 export default function TabLayout() {
   return (
     <Tabs

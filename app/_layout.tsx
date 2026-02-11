@@ -8,7 +8,7 @@ import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OmegaLoader from '../components/OmegaLoader';
 import TheInspector from '../components/ui/TheInspector';
-import EncoreBackground from '../components/ui/EncoreBackground';
+import CosmicBackground from '../components/ui/CosmicBackground';
 import { initDatabase } from '../src/services/Database';
 import { ScriptoriumTheme } from '../src/theme';
 import '../global.css';
@@ -36,7 +36,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
         {/* 1. The Universe (Global Background) */}
-        <EncoreBackground />
+        <CosmicBackground />
 
         {/* 2. The Interaction Layer */}
         <GestureHandlerRootView style={{ flex: 1 }}>
