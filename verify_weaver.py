@@ -11,7 +11,7 @@ def run(playwright):
         route.fulfill(
             status=200,
             content_type="application/json",
-            body='{"draft_data": [], "graph": {"nodes": [{"id": "1", "label": "Test Node", "status": "unlocked", "x": 100, "y": 100}], "links": []}}'
+            body='{"nodes": [{"id": "1", "label": "Test Node", "status": "unlocked", "x": 100, "y": 100}], "links": [], "draft_data": []}'
         )
 
     # Intercept all requests to draft_curriculum
