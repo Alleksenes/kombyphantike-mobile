@@ -45,14 +45,7 @@ export default function WeaverScreen() {
       }
 
       const data = await response.json();
-      console.log("API Response:", JSON.stringify(data, null, 2)); // DEBUG LOG
-
-      // DATA MAPPING (DEFENSIVE CODING)
-      // Ensure we map 'edges' to 'links' if the backend missed the memo
-      const cleanData = {
-        nodes: data.nodes || data.graph?.nodes || [],
-        links: data.links || data.edges || data.graph?.links || data.graph?.edges || []
-      };
+      console.log("Graph Data Received, Node Count:", data.nodes.length);
 
       if (data.draft_data) {
         SessionStore.setDraft(data.draft_data, false);
@@ -60,10 +53,10 @@ export default function WeaverScreen() {
       SessionStore.setTheme(theme);
       SessionStore.setInstructions(theme);
 
-      // Navigate passing the stringified CLEAN data
+      // Navigate passing the stringified graph object
       router.push({
         pathname: '/constellation',
-        params: { graph: JSON.stringify(cleanData) }
+        params: { graph: JSON.stringify(data) }
       });
 
     } catch (err) {
