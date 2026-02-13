@@ -16,8 +16,8 @@ export default function WeaverScreen() {
   const [inputLayout, setInputLayout] = useState({ width: 0, height: 0 });
 
   const [sentenceCount, setSentenceCount] = useState(10);
-  const [complexity, setComplexity] = useState(false);
-  const [cefLevel, setCefLevel] = useState('Any');
+  const [isComplex, setIsComplex] = useState(false);
+  const [targetLevel, setTargetLevel] = useState('Any');
 
   const handleWeave = async () => {
     if (!theme.trim()) return;
@@ -26,17 +26,20 @@ export default function WeaverScreen() {
     setError(null);
 
     try {
+      const body = JSON.stringify({
+        theme: theme,
+        sentence_count: sentenceCount,
+        target_level: targetLevel,
+        complexity: isComplex ? "complex" : "lucid",
+      });
+      console.log("SENDING DRAFT REQUEST:", body);
+
       const response = await fetch(`${API_BASE_URL}/draft_curriculum`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          theme: theme,
-          sentence_count: sentenceCount,
-          cef_level: cefLevel,
-          complexity: complexity ? "complex" : "lucid",
-        }),
+        body: body,
       });
 
       if (!response.ok) {
@@ -128,10 +131,10 @@ export default function WeaverScreen() {
               <WeaverControls
                 sentenceCount={sentenceCount}
                 setSentenceCount={setSentenceCount}
-                cefLevel={cefLevel}
-                setCefLevel={setCefLevel}
-                complexity={complexity}
-                setComplexity={setComplexity}
+                cefLevel={targetLevel}
+                setCefLevel={setTargetLevel}
+                complexity={isComplex}
+                setComplexity={setIsComplex}
               />
 
 
