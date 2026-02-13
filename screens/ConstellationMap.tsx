@@ -3,51 +3,50 @@ import {
   Circle,
   Group,
   Path,
+  PathVerb // FIX: Added missing import
+  ,
   Skia,
   Text as SkiaText,
   useFont
 } from '@shopify/react-native-skia';
 import * as d3 from 'd3-force';
-import { useEffect, useRef, useState } from 'react';
-import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Dimensions, Platform, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useDerivedValue, useSharedValue } from 'react-native-reanimated';
 import { AncientContext, Token } from '../components/WordChip';
 
-// 1. GLOBAL CONSTANTS (Safe)
+// 1. GLOBAL CONSTANTS
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // 2. TYPES
-export type ConstellationNode = {
+// Extend D3's types correctly
+export type ConstellationNode = d3.SimulationNodeDatum & {
   id: string;
   label: string;
-  status: 'locked' | 'unlocked' | 'mastered';
-  x?: number;
-  y?: number;
+  status: 'locked' | 'unlocked' | 'mastered' | 'active';
+  type: 'theme' | 'lemma' | 'rule';
+  data?: any;
   target_sentence?: string;
   source_sentence?: string;
   target_tokens?: Token[];
   ancient_context?: string | AncientContext;
-  vx?: number;
-  vy?: number;
-  data?: any;
+  // D3 adds x, y, vx, vy automatically
 };
 
-export type ConstellationLink = {
-  source: string;
-  target: string;
-};
+export type ConstellationLink = d3.SimulationLinkDatum<ConstellationNode>;
 
 type Props = {
   nodes: ConstellationNode[];
   links: ConstellationLink[];
+  goldenPath: string[]; // FIX: Added missing prop
   onNodePress?: (node: ConstellationNode) => void;
 };
 
 // Internal Component (Native Only)
-function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
+function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props) {
   // A. Fonts
-  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 20);
+  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 14);
 
   // B. Gestures & Animation Values
   const translateX = useSharedValue(0);
@@ -57,16 +56,11 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
 
   // C. Local State for D3 Simulation
   const [simulationNodes, setSimulationNodes] = useState<ConstellationNode[]>([]);
-  const simulationRef = useRef<d3.Simulation<ConstellationNode, ConstellationLink> | null>(null);
 
   // D. Gesture Logic
   const panGesture = Gesture.Pan()
     .onStart(() => {
-      context.value = {
-        x: translateX.value,
-        y: translateY.value,
-        scale: scale.value,
-      };
+      context.value = { x: translateX.value, y: translateY.value, scale: scale.value };
     })
     .onUpdate((e) => {
       translateX.value = context.value.x + e.translationX;
@@ -75,32 +69,26 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
 
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
-      context.value = {
-        x: translateX.value,
-        y: translateY.value,
-        scale: scale.value,
-      };
+      context.value = { x: translateX.value, y: translateY.value, scale: scale.value };
     })
     .onUpdate((e) => {
       scale.value = context.value.scale * e.scale;
     });
 
   const handleTap = (x: number, y: number) => {
-    // Invert transform to get simulation coordinates
+    const s = scale.value;
     const tx = translateX.value;
     const ty = translateY.value;
-    const s = scale.value;
 
     const simX = (x - tx) / s;
     const simY = (y - ty) / s;
+    const hitRadius = 30;
 
-    // Find node
     const clickedNode = simulationNodes.find(node => {
-      if (!node.x || !node.y) return false;
+      if (node.x === undefined || node.y === undefined) return false;
       const dx = node.x - simX;
       const dy = node.y - simY;
-      const r = 30; // Hardcoded radius
-      return dx * dx + dy * dy < r * r * 2; // generous hit area
+      return dx * dx + dy * dy < hitRadius * hitRadius;
     });
 
     if (clickedNode && onNodePress) {
@@ -108,77 +96,57 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
     }
   };
 
-  const tapGesture = Gesture.Tap()
-    .onStart((e) => {
-      runOnJS(handleTap)(e.x, e.y);
-    });
+  const tapGesture = Gesture.Tap().onStart((e) => {
+    runOnJS(handleTap)(e.x, e.y);
+  });
 
   const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture, tapGesture);
 
-  // E. Transform Matrix (Computed for Skia)
+  // E. Transform Matrix
+  // FIX: Explicitly typed return for Skia transform
   const transform = useDerivedValue(() => {
-    return [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ];
-  }, [translateX, translateY, scale]);
+    return [{ translateX: translateX.value }, { translateY: translateY.value }, { scale: scale.value }];
+  });
 
   // F. Simulation Effect (D3)
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    // 1. Initial Positions (Prevent 0,0 Cluster)
-    nodes.forEach(node => {
-      if (node.x === undefined || node.y === undefined) {
-        node.x = SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 50;
-        node.y = SCREEN_HEIGHT / 2 + (Math.random() - 0.5) * 50;
-      }
-    });
-
-    // 2. Initialize simulation (Stopped)
+    // Initialize simulation
     const simulation = d3.forceSimulation(nodes)
-      .force('charge', d3.forceManyBody().strength(-400))
+      .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
-      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(100))
-      .stop();
+      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(90))
+      .stop(); // Stop automatic ticking
 
-    // 3. Warmup Phase (Calculate initial layout in one shot)
+    // Warmup
     simulation.tick(100);
     setSimulationNodes([...nodes]);
 
-    // 4. Throttled Tick for Animation
-    let lastTick = Date.now();
-    simulation.on('tick', () => {
-      const now = Date.now();
-      if (now - lastTick > 32) { // ~30fps throttle
-        lastTick = now;
-        setSimulationNodes([...nodes]);
+    return () => { simulation.stop(); };
+  }, [nodes, links]);
+
+  // G. Golden Path Logic
+  const goldenPathCmds = useMemo(() => {
+    if (simulationNodes.length === 0 || goldenPath.length === 0) return Skia.Path.Make();
+
+    const nodeMap = new Map(simulationNodes.map(n => [n.id, n]));
+    const cmds: any[] = []; // Using any to bypass strict PathVerb array typing issues temporarily
+
+    goldenPath.forEach((nodeId, index) => {
+      const node = nodeMap.get(nodeId);
+      if (node && node.x !== undefined && node.y !== undefined) {
+        if (index === 0) {
+          cmds.push(PathVerb.Move, node.x, node.y);
+        } else {
+          cmds.push(PathVerb.Line, node.x, node.y);
+        }
       }
     });
+    return Skia.Path.MakeFromCmds(cmds);
+  }, [simulationNodes, goldenPath]);
 
-    // 5. Start Animation
-    simulation.restart();
-    simulationRef.current = simulation;
-
-    return () => {
-      simulation.stop();
-    };
-  }, [nodes.length, links.length]);
-
-  // G. Update Simulation Data on Prop Changes (e.g. Status)
-  useEffect(() => {
-    if (simulationRef.current) {
-      simulationRef.current.nodes(nodes);
-      simulationRef.current.alpha(0.3).restart();
-      setSimulationNodes([...nodes]);
-    }
-  }, [nodes]);
-
-
-  if (!font) {
-    return <View style={styles.loader} />;
-  }
+  if (!font) return <View style={styles.loader} />;
 
   return (
     <GestureDetector gesture={composedGesture}>
@@ -186,58 +154,38 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
         <Canvas style={styles.canvas}>
           <Group transform={transform}>
 
-            {/* LINKS (Draw lines first so they are behind nodes) */}
+            {/* LINKS */}
             {links.map((link, i) => {
-              // D3 replaces string IDs with object references after simulation starts
+              // Safe casting for D3 links after simulation
               const source = link.source as unknown as ConstellationNode;
               const target = link.target as unknown as ConstellationNode;
 
               if (!source.x || !target.x) return null;
-
-              const path = Skia.Path.Make();
-              path.moveTo(source.x, source.y!);
-              path.lineTo(target.x, target.y!);
-
-              return (
-                <Path
-                  key={`link-${i}`}
-                  path={path}
-                  color="rgba(227, 220, 203, 0.3)" // Parchment White, Low Opacity
-                  style="stroke"
-                  strokeWidth={1}
-                />
-              );
+              return <Path key={`link-${i}`} path={`M ${source.x} ${source.y} L ${target.x} ${target.y}`} color="rgba(227, 220, 203, 0.2)" style="stroke" strokeWidth={1} />;
             })}
 
-            {/* NODES (Stars) */}
-            {simulationNodes.map((node, i) => {
-              if (!node.x || !node.y) return null;
+            {/* GOLDEN PATH */}
+            <Path path={goldenPathCmds} color="#C5A059" style="stroke" strokeWidth={3} strokeJoin="round" />
 
-              if (i === 0) {
-                 console.log("Render Node 0:", simulationNodes[0]?.x, simulationNodes[0]?.y);
-              }
+            {/* NODES */}
+            {simulationNodes.map((node) => {
+              if (node.x === undefined || node.y === undefined) return null;
 
-              // STYLING LOGIC (Modified for Debug Visibility)
-              const nodeColor = "#00FFFF"; // Debug Cyan
-              const nodeRadius = 30; // Hardcoded radius
+              const isMastered = node.status === 'mastered';
+              const isActive = node.status === 'active';
+              const nodeColor = isMastered ? "#C5A059" : (isActive ? "#FFFFFF" : "#6B7280");
+              const nodeRadius = isActive ? 20 : 15;
+              const textWidth = font.getTextWidth(node.label);
 
               return (
                 <Group key={`node-${node.id}`}>
-                  {/* The Star Body */}
-                  <Circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={nodeRadius}
-                    color={nodeColor}
-                    opacity={node.status === 'locked' ? 0.3 : 1}
-                  />
-                  {/* The Label */}
+                  <Circle cx={node.x} cy={node.y} r={nodeRadius} color={nodeColor} />
                   <SkiaText
-                    x={node.x}
-                    y={node.y}
+                    x={node.x - textWidth / 2}
+                    y={node.y + nodeRadius + 15}
                     text={node.label}
                     font={font}
-                    color="#00FF00"
+                    color={isActive ? "#FFFFFF" : "#9CA3AF"}
                   />
                 </Group>
               );
@@ -249,38 +197,15 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   );
 }
 
-export default function ConstellationMap({ nodes, links, onNodePress }: Props) {
+export default function ConstellationMap({ nodes, links, goldenPath, onNodePress }: Props) {
   if (Platform.OS === 'web') {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0518' }}>
-        <Text style={{ color: '#E3DCCB', fontSize: 24, marginBottom: 20 }}>Cosmic Scriptorium</Text>
-        <Text style={{ color: '#E3DCCB', opacity: 0.7 }}>Constellation Map (Web View)</Text>
-        {nodes.map(node => (
-          <Text
-            key={node.id}
-            onPress={() => onNodePress && onNodePress(node)}
-            style={{ color: '#E3DCCB', marginVertical: 2, cursor: 'pointer' }}
-          >
-            {node.label} ({node.status})
-          </Text>
-        ))}
-      </View>
-    );
+    return <View />; // Fallback
   }
-
-  return <ConstellationMapCanvas nodes={nodes} links={links} onNodePress={onNodePress} />;
+  return <ConstellationMapCanvas nodes={nodes} links={links} goldenPath={goldenPath} onNodePress={onNodePress} />;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  canvas: {
-    flex: 1,
-  },
-  loader: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  }
+  container: { flex: 1, backgroundColor: 'transparent' },
+  canvas: { flex: 1 },
+  loader: { flex: 1, backgroundColor: 'transparent' },
 });

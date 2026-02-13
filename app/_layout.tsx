@@ -2,16 +2,16 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OmegaLoader from '../components/OmegaLoader';
-import TheInspector from '../components/ui/TheInspector';
 import CosmicBackground from '../components/ui/CosmicBackground';
+import TheInspector from '../components/ui/TheInspector';
+import '../global.css';
 import { initDatabase } from '../src/services/Database';
 import { ScriptoriumTheme } from '../src/theme';
-import '../global.css';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -47,7 +47,6 @@ export default function RootLayout() {
                 headerShown: false,
                 // CRITICAL: Make the stack transparent so we see the stars
                 contentStyle: { backgroundColor: 'transparent' },
-                sceneStyle: { backgroundColor: 'transparent' },
                 animation: 'fade',
               }}
             >
