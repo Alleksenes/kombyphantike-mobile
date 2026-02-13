@@ -6,6 +6,8 @@ import {
   PathVerb // FIX: Added missing import
   ,
 
+
+
   Skia,
   Text as SkiaText,
   useFont
@@ -173,11 +175,6 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
               return <Path key={`link-${i}`} path={`M ${source.x} ${source.y} L ${target.x} ${target.y}`} color="rgba(227, 220, 203, 0.2)" style="stroke" strokeWidth={1} />;
             })}
 
-<<<<<<< HEAD
-
-            {/* GOLDEN PATH */}
-            <Path path={goldenPathCmds} color="#C5A059" style="stroke" strokeWidth={3} strokeJoin="round" />
-=======
             {/* GOLDEN PATH (The "Spline") */}
             {(() => {
               if (!goldenPath || goldenPath.length < 2) return null;
@@ -209,7 +206,6 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
                 </Path>
               );
             })()}
->>>>>>> 64ed99215875529677a366ff7ed6f11d5c735d4d
 
             {/* NODES */}
             {simulationNodes.map((node) => {
@@ -242,10 +238,6 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   );
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 64ed99215875529677a366ff7ed6f11d5c735d4d
 export default function ConstellationMap({ nodes, links, goldenPath, onNodePress }: Props) {
   if (Platform.OS === 'web') {
     return <View />; // Fallback
