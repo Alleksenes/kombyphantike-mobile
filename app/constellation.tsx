@@ -1,9 +1,10 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import PhilologyCard from '../components/PhilologyCard';
 import { Token } from '../components/WordChip';
-import { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
+import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 import { ApiService } from '../src/services/ApiService';
 import { useInspectorStore } from '../src/store/inspectorStore';
 
@@ -11,6 +12,7 @@ export default function ConstellationScreen() {
   const { graph } = useLocalSearchParams();
   const [nodes, setNodes] = useState<ConstellationNode[]>([]);
   const [links, setLinks] = useState<ConstellationLink[]>([]);
+  const [goldenPath, setGoldenPath] = useState<string[]>([]);
   const [isWeaving, setIsWeaving] = useState(false);
 
   // Interaction State
@@ -29,9 +31,15 @@ export default function ConstellationScreen() {
         if (Array.isArray(parsed.nodes) && Array.isArray(parsed.links)) {
           setNodes(parsed.nodes);
           setLinks(parsed.links);
+          if (Array.isArray(parsed.golden_path)) {
+            setGoldenPath(parsed.golden_path);
+          } else {
+            setGoldenPath([]);
+          }
         } else {
           setNodes([]);
           setLinks([]);
+          setGoldenPath([]);
         }
       } catch (e) {
         console.error("JSON Parse Error:", e);
@@ -107,6 +115,13 @@ export default function ConstellationScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       {nodes.length > 0 ? (
         <>
+          <ConstellationMap
+            nodes={nodes}
+            links={links}
+            goldenPath={goldenPath}
+            onNodePress={handleNodePress}
+          />
+
           {/* Actuator FAB */}
           <Pressable
             onPress={handleWeave}
@@ -147,13 +162,20 @@ export default function ConstellationScreen() {
 
           {/* Philology Card (Conditional) */}
           {activeNode && (activeNode.target_sentence || activeNode.source_sentence) && (
-            <PhilologyCard
-              sentence={activeNode.target_sentence || activeNode.source_sentence || ""}
-              tokens={activeNode.target_tokens}
-              translation={activeNode.source_sentence || activeNode.target_sentence || ""}
-              onTokenPress={handleTokenPress}
-              selectedToken={selectedToken}
-            />
+            <Animated.View
+              entering={FadeIn.duration(500)}
+              exiting={FadeOut.duration(300)}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+              pointerEvents="box-none"
+            >
+              <PhilologyCard
+                sentence={activeNode.target_sentence || activeNode.source_sentence || ""}
+                tokens={activeNode.target_tokens}
+                translation={activeNode.source_sentence || activeNode.target_sentence || ""}
+                onTokenPress={handleTokenPress}
+                selectedToken={selectedToken}
+              />
+            </Animated.View>
           )}
 
         </>
