@@ -1,4 +1,5 @@
 import {
+  BlurMask,
   Canvas,
   Circle,
   Group,
@@ -39,7 +40,7 @@ export type ConstellationLink = d3.SimulationLinkDatum<ConstellationNode>;
 type Props = {
   nodes: ConstellationNode[];
   links: ConstellationLink[];
-  goldenPath: string[]; // FIX: Added missing prop
+  goldenPath?: string[];
   onNodePress?: (node: ConstellationNode) => void;
 };
 
@@ -112,15 +113,22 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    // Initialize simulation
+    // 1. Initial Positions (Prevent 0,0 Cluster)
+    nodes.forEach(node => {
+      if (node.x === undefined || node.y === undefined) {
+        node.x = SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 50;
+        node.y = SCREEN_HEIGHT / 2 + (Math.random() - 0.5) * 50;
+      }
+    });
+
+    // 2. Initialize simulation (Stopped)
     const simulation = d3.forceSimulation(nodes)
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
       .force('link', d3.forceLink(links).id((d: any) => d.id).distance(90))
       .stop(); // Stop automatic ticking
 
-    // Warmup
-    simulation.tick(100);
+    // 3. Warmup Phase (Calculate initial layout in one shot)
     setSimulationNodes([...nodes]);
 
     return () => { simulation.stop(); };
@@ -161,7 +169,54 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
               const target = link.target as unknown as ConstellationNode;
 
               if (!source.x || !target.x) return null;
-              return <Path key={`link-${i}`} path={`M ${source.x} ${source.y} L ${target.x} ${target.y}`} color="rgba(227, 220, 203, 0.2)" style="stroke" strokeWidth={1} />;
+
+              const path = Skia.Path.Make();
+              path.moveTo(source.x, source.y!);
+              path.lineTo(target.x, target.y!);
+
+              return (
+                <Path
+                  key={`link-${i}`}
+                  path={path}
+                  color="rgba(197, 160, 89, 0.6)" // Gold, Medium Opacity
+                  style="stroke"
+                  strokeWidth={2}
+                />
+              );
+            })}
+
+            {/* GOLDEN PATH (The "Spline") */}
+            {(() => {
+              if (!goldenPath || goldenPath.length < 2) return null;
+
+              const path = Skia.Path.Make();
+
+              // We need to look up nodes by ID efficiently or just find them
+              // optimizing for small N: just find
+              const orderedNodes = goldenPath.map(id => simulationNodes.find(n => n.id === id)).filter(n => n && n.x !== undefined && n.y !== undefined) as ConstellationNode[];
+
+              if (orderedNodes.length < 2) return null;
+
+              orderedNodes.forEach((node, index) => {
+                if (index === 0) {
+                  path.moveTo(node.x!, node.y!);
+                } else {
+                  path.lineTo(node.x!, node.y!);
+                }
+              });
+
+              return (
+                <Path
+                  path={path}
+                  color="#C5A059"
+                  style="stroke"
+                  strokeWidth={3}
+                >
+                  <BlurMask blur={5} style="normal" />
+                </Path>
+              );
+            })()}
+            return <Path key={`link-${i}`} path={`M ${source.x} ${source.y} L ${target.x} ${target.y}`} color="rgba(227, 220, 203, 0.2)" style="stroke" strokeWidth={1} />;
             })}
 
             {/* GOLDEN PATH */}
@@ -179,7 +234,15 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
 
               return (
                 <Group key={`node-${node.id}`}>
-                  <Circle cx={node.x} cy={node.y} r={nodeRadius} color={nodeColor} />
+                  {/* The Star Body */}
+                  <Circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={nodeRadius}
+                    color={nodeColor}
+                    opacity={isLocked ? 0.4 : 1}
+                  />
+                  {/* The Label */}
                   <SkiaText
                     x={node.x - textWidth / 2}
                     y={node.y + nodeRadius + 15}
@@ -197,11 +260,11 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   );
 }
 
-export default function ConstellationMap({ nodes, links, goldenPath, onNodePress }: Props) {
+export default function ConstellationMap({ nodes, links, goldenPath, goldenPath, onNodePress }: Props) {
   if (Platform.OS === 'web') {
     return <View />; // Fallback
   }
-  return <ConstellationMapCanvas nodes={nodes} links={links} goldenPath={goldenPath} onNodePress={onNodePress} />;
+  return <ConstellationMapCanvas nodes={nodes} links={links} goldenPath={goldenPath} goldenPath={goldenPath} onNodePress={onNodePress} />;
 }
 
 const styles = StyleSheet.create({
