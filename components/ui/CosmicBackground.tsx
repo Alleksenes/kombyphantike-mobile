@@ -59,7 +59,7 @@ const CosmicBackground = () => {
       withTiming(100, { duration: 100000, easing: Easing.linear }),
       -1
     );
-  }, [time]);
+  }, []);
 
   const uniforms = useDerivedValue(() => ({
     resolution: [width, height],

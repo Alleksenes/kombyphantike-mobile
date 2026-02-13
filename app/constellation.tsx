@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import PhilologyCard from '../components/PhilologyCard';
 import { Token } from '../components/WordChip';
-import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
+import { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 import { API_BASE_URL } from '../src/services/apiConfig';
 import { useInspectorStore } from '../src/store/inspectorStore';
 
@@ -120,12 +120,6 @@ export default function ConstellationScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       {nodes.length > 0 ? (
         <>
-          <ConstellationMap
-            nodes={nodes}
-            links={links}
-            onNodePress={handleNodePress}
-          />
-
           {/* Actuator FAB */}
           <Pressable
             onPress={handleWeave}
