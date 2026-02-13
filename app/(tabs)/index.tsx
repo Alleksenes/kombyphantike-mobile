@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, LayoutChangeEvent, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import OmegaLoader from '../../components/OmegaLoader';
-import MoltenButton from '../../components/ui/MoltenButton';
+import AetherButton from '../../components/ui/AetherButton';
 import WeaverControls from '../../components/ui/WeaverControls';
 import { SessionStore } from '../../services/SessionStore';
 import { API_BASE_URL } from '../../src/services/apiConfig';
@@ -138,8 +138,8 @@ export default function WeaverScreen() {
               />
 
 
-              {/* Molten Gold Button */}
-              <MoltenButton
+              {/* Aether Glass Button */}
+              <AetherButton
                 label="Weave Curriculum"
                 onPress={handleWeave}
                 disabled={isLoading || !theme.trim()}
