@@ -50,16 +50,16 @@ vec4 main(vec2 xy) {
 `;
 
 const CosmicBackground = () => {
-  console.log("Shader Mounted");
   const { width, height } = useWindowDimensions();
   const time = useSharedValue(0);
 
   useEffect(() => {
+    // Geological speed breathing
     time.value = withRepeat(
       withTiming(100, { duration: 100000, easing: Easing.linear }),
       -1
     );
-  }, []);
+  }, [time]);
 
   const uniforms = useDerivedValue(() => ({
     resolution: [width, height],
