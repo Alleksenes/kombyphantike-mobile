@@ -1,13 +1,9 @@
 import {
+  BlurMask,
   Canvas,
   Circle,
   Group,
   Path,
-  PathVerb // FIX: Added missing import
-  ,
-
-
-
   Skia,
   Text as SkiaText,
   useFont
@@ -137,24 +133,45 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
     return () => { simulation.stop(); };
   }, [nodes, links]);
 
-  // G. Golden Path Logic
-  const goldenPathCmds = useMemo(() => {
-    if (simulationNodes.length === 0 || !goldenPath || goldenPath.length === 0) return Skia.Path.Make();
+  // G. Links Path Logic
+  const linksPath = useMemo(() => {
+    const path = Skia.Path.Make();
+    links.forEach(link => {
+      const source = link.source as unknown as ConstellationNode;
+      const target = link.target as unknown as ConstellationNode;
+
+      if (
+        source && target &&
+        source.x !== undefined && source.y !== undefined &&
+        target.x !== undefined && target.y !== undefined
+      ) {
+        path.moveTo(source.x, source.y);
+        path.lineTo(target.x, target.y);
+      }
+    });
+    return path;
+  }, [links, simulationNodes]);
+
+  // H. Golden Path Logic
+  const goldenPathPath = useMemo(() => {
+    const path = Skia.Path.Make();
+    if (!goldenPath || goldenPath.length < 2 || simulationNodes.length === 0) return path;
 
     const nodeMap = new Map(simulationNodes.map(n => [n.id, n]));
-    const cmds: any[] = []; // Using any to bypass strict PathVerb array typing issues temporarily
+    let firstPointSet = false;
 
-    goldenPath.forEach((nodeId, index) => {
+    goldenPath.forEach((nodeId) => {
       const node = nodeMap.get(nodeId);
       if (node && node.x !== undefined && node.y !== undefined) {
-        if (index === 0) {
-          cmds.push(PathVerb.Move, node.x, node.y);
+        if (!firstPointSet) {
+          path.moveTo(node.x, node.y);
+          firstPointSet = true;
         } else {
-          cmds.push(PathVerb.Line, node.x, node.y);
+          path.lineTo(node.x, node.y);
         }
       }
     });
-    return Skia.Path.MakeFromCmds(cmds);
+    return path;
   }, [simulationNodes, goldenPath]);
 
   if (!font) return <View style={styles.loader} />;
@@ -166,46 +183,22 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
           <Group transform={transform}>
 
             {/* LINKS */}
-            {links.map((link, i) => {
-              // Safe casting for D3 links after simulation
-              const source = link.source as unknown as ConstellationNode;
-              const target = link.target as unknown as ConstellationNode;
-
-              if (!source.x || !target.x) return null;
-              return <Path key={`link-${i}`} path={`M ${source.x} ${source.y} L ${target.x} ${target.y}`} color="rgba(227, 220, 203, 0.2)" style="stroke" strokeWidth={1} />;
-            })}
+            <Path
+              path={linksPath}
+              color="rgba(227, 220, 203, 0.2)"
+              style="stroke"
+              strokeWidth={1}
+            />
 
             {/* GOLDEN PATH (The "Spline") */}
-            {(() => {
-              if (!goldenPath || goldenPath.length < 2) return null;
-
-              const path = Skia.Path.Make();
-
-              // We need to look up nodes by ID efficiently or just find them
-              // optimizing for small N: just find
-              const orderedNodes = goldenPath.map(id => simulationNodes.find(n => n.id === id)).filter(n => n && n.x !== undefined && n.y !== undefined) as ConstellationNode[];
-
-              if (orderedNodes.length < 2) return null;
-
-              orderedNodes.forEach((node, index) => {
-                if (index === 0) {
-                  path.moveTo(node.x!, node.y!);
-                } else {
-                  path.lineTo(node.x!, node.y!);
-                }
-              });
-
-              return (
-                <Path
-                  path={path}
-                  color="#C5A059"
-                  style="stroke"
-                  strokeWidth={3}
-                >
-                  <BlurMask blur={5} style="normal" />
-                </Path>
-              );
-            })()}
+            <Path
+              path={goldenPathPath}
+              color="#C5A059"
+              style="stroke"
+              strokeWidth={3}
+            >
+              <BlurMask blur={5} style="normal" />
+            </Path>
 
             {/* NODES */}
             {simulationNodes.map((node) => {
