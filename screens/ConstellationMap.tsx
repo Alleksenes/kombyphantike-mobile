@@ -4,15 +4,13 @@ import {
   Group,
   Path,
   Skia,
-  useComputedValue,
-  useFont,
-  useValue
+  useFont
 } from '@shopify/react-native-skia';
 import * as d3 from 'd3-force';
 import { useEffect, useState } from 'react';
 import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnJS, useDerivedValue, useSharedValue } from 'react-native-reanimated';
 import { AncientContext, Token } from '../components/WordChip';
 
 // 1. GLOBAL CONSTANTS (Safe)
@@ -51,10 +49,10 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 12);
 
   // B. Gestures & Animation Values
-  const translateX = useValue(0);
-  const translateY = useValue(0);
-  const scale = useValue(1);
-  const context = useValue({ x: 0, y: 0, scale: 1 });
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const context = useSharedValue({ x: 0, y: 0, scale: 1 });
 
   // C. Local State for D3 Simulation
   const [simulationNodes, setSimulationNodes] = useState<ConstellationNode[]>([]);
@@ -62,34 +60,34 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   // D. Gesture Logic
   const panGesture = Gesture.Pan()
     .onStart(() => {
-      context.current = {
-        x: translateX.current,
-        y: translateY.current,
-        scale: scale.current,
+      context.value = {
+        x: translateX.value,
+        y: translateY.value,
+        scale: scale.value,
       };
     })
     .onUpdate((e) => {
-      translateX.current = context.current.x + e.translationX;
-      translateY.current = context.current.y + e.translationY;
+      translateX.value = context.value.x + e.translationX;
+      translateY.value = context.value.y + e.translationY;
     });
 
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
-      context.current = {
-        x: translateX.current,
-        y: translateY.current,
-        scale: scale.current,
+      context.value = {
+        x: translateX.value,
+        y: translateY.value,
+        scale: scale.value,
       };
     })
     .onUpdate((e) => {
-      scale.current = context.current.scale * e.scale;
+      scale.value = context.value.scale * e.scale;
     });
 
   const handleTap = (x: number, y: number) => {
     // Invert transform to get simulation coordinates
-    const tx = translateX.current;
-    const ty = translateY.current;
-    const s = scale.current;
+    const tx = translateX.value;
+    const ty = translateY.value;
+    const s = scale.value;
 
     const simX = (x - tx) / s;
     const simY = (y - ty) / s;
@@ -116,13 +114,13 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture, tapGesture);
 
   // E. Transform Matrix (Computed for Skia)
-  const transform = useComputedValue(() => {
+  const transform = useDerivedValue(() => {
     return [
-      { translateX: translateX.current },
-      { translateY: translateY.current },
-      { scale: scale.current },
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
     ];
-  }, [translateX, translateY, scale]);
+  });
 
   // F. Simulation Effect (D3)
   useEffect(() => {
