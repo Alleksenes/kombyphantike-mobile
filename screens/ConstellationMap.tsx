@@ -120,23 +120,26 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
       { translateY: translateY.value },
       { scale: scale.value },
     ];
-  });
+  }, [translateX, translateY, scale]);
 
+  // F. Simulation Effect (D3)
   // F. Simulation Effect (D3)
   useEffect(() => {
     if (nodes.length === 0) return;
 
     // Initialize simulation
     const simulation = d3.forceSimulation(nodes)
-      .force('charge', d3.forceManyBody().strength(-400)) // Repel nodes
-      .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)) // Center gravity
+      .force('charge', d3.forceManyBody().strength(-400))
+      .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
       .force('link', d3.forceLink(links).id((d: any) => d.id).distance(100))
       .on('tick', () => {
-        // Create a new array to trigger re-render of Skia Canvas
         setSimulationNodes([...nodes]);
       });
 
-    return () => simulation.stop();
+    // THE FIX: Explicitly return an arrow function
+    return () => {
+      simulation.stop();
+    };
   }, [nodes, links]);
 
   if (!font) {
