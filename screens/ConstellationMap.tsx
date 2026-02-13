@@ -4,6 +4,7 @@ import {
   Group,
   Path,
   Skia,
+  Text as SkiaText,
   useFont
 } from '@shopify/react-native-skia';
 import * as d3 from 'd3-force';
@@ -46,7 +47,7 @@ type Props = {
 // Internal Component (Native Only)
 function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   // A. Fonts
-  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 12);
+  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 20);
 
   // B. Gestures & Animation Values
   const translateX = useSharedValue(0);
@@ -98,7 +99,7 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
       if (!node.x || !node.y) return false;
       const dx = node.x - simX;
       const dy = node.y - simY;
-      const r = node.status === 'mastered' ? 25 : 15;
+      const r = 30; // Hardcoded radius
       return dx * dx + dy * dy < r * r * 2; // generous hit area
     });
 
@@ -209,13 +210,16 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
             })}
 
             {/* NODES (Stars) */}
-            {simulationNodes.map((node) => {
+            {simulationNodes.map((node, i) => {
               if (!node.x || !node.y) return null;
 
-              // STYLING LOGIC (From PR 79)
-              const isMastered = node.status === 'mastered';
+              if (i === 0) {
+                 console.log("Render Node 0:", simulationNodes[0]?.x, simulationNodes[0]?.y);
+              }
+
+              // STYLING LOGIC (Modified for Debug Visibility)
               const nodeColor = "#00FFFF"; // Debug Cyan
-              const nodeRadius = isMastered ? 25 : 15;
+              const nodeRadius = 30; // Hardcoded radius
 
               return (
                 <Group key={`node-${node.id}`}>
@@ -226,6 +230,14 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
                     r={nodeRadius}
                     color={nodeColor}
                     opacity={node.status === 'locked' ? 0.3 : 1}
+                  />
+                  {/* The Label */}
+                  <SkiaText
+                    x={node.x}
+                    y={node.y}
+                    text={node.label}
+                    font={font}
+                    color="#00FF00"
                   />
                 </Group>
               );
