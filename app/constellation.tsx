@@ -123,30 +123,41 @@ export default function ConstellationScreen() {
               position: 'absolute',
               bottom: 40,
               right: 20,
-              backgroundColor: '#C5A059',
+              // THE GOLDEN GRADIENT (Simulated with background color + border)
+              backgroundColor: '#1a1918', // Obsidian Core
+              borderWidth: 1,
+              borderColor: '#C5A059', // Solid Gold Border
+
+              // THE SHAPE
               paddingHorizontal: 24,
               paddingVertical: 16,
-              borderRadius: 30,
-              elevation: 5,
+              borderRadius: 100, // Pill Shape
+
+              // THE GLOW (Shadows)
+              shadowColor: '#C5A059',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.6,
+              shadowRadius: 10,
+              elevation: 10, // Android Glow
+
+              // INTERACTION
               opacity: pressed || isWeaving ? 0.8 : 1,
               zIndex: 100,
               flexDirection: 'row',
               alignItems: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
+              gap: 12,
             })}
           >
             {isWeaving ? (
-              <ActivityIndicator color="#1a1918" size="small" />
+              <ActivityIndicator color="#C5A059" size="small" />
             ) : (
               <Text style={{
-                color: '#1a1918',
-                fontWeight: 'bold',
+                color: '#E3DCCB', // Parchment Text
+                fontWeight: '600',
                 fontSize: 16,
-                fontFamily: 'NeueHaasGrotesk-Display',
-                letterSpacing: 0.5
+                fontFamily: 'NeueHaasGrotesk-Display', // The Noble Font
+                letterSpacing: 1,
+                textTransform: 'uppercase'
               }}>
                 Weave Sentences
               </Text>

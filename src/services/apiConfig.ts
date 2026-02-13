@@ -19,5 +19,6 @@ const getBaseUrl = () => {
     return `http://10.0.2.2:${API_PORT}`;
 };
 
-export const API_BASE_URL = getBaseUrl();
+export const API_BASE_URL = "http://10.0.2.2:8000";
+// export const API_BASE_URL = getBaseUrl();
 console.log("API URL:", API_BASE_URL) 
