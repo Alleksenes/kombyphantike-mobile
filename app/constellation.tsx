@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import PhilologyCard from '../components/PhilologyCard';
 import { Token } from '../components/WordChip';
 import { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
-import { API_BASE_URL } from '../src/services/apiConfig';
+import { ApiService } from '../src/services/ApiService';
 import { useInspectorStore } from '../src/store/inspectorStore';
 
 export default function ConstellationScreen() {
@@ -50,21 +50,8 @@ export default function ConstellationScreen() {
 
     try {
       console.log("Filling curriculum for nodes:", nodes.length);
-      const response = await fetch(`${API_BASE_URL}/fill_curriculum`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ worksheet_data: nodes }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Error: ${response.status} ${errorText}`);
-      }
-
-      /* const updatedNodes: ConstellationNode[] = await response.json(); */
-      const { worksheet_data: updatedNodes } = await response.json();
+      const result = await ApiService.fillCurriculum({ worksheet_data: nodes });
+      const updatedNodes = result.worksheet_data;
 
       if (!Array.isArray(updatedNodes)) {
         throw new Error("Invalid response structure from server: worksheet_data is not an array.");
