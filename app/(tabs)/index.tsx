@@ -32,7 +32,6 @@ export default function WeaverScreen() {
         target_level: targetLevel,
         complexity: isComplex ? "complex" : "lucid",
       };
-      console.log("SENDING DRAFT REQUEST:", JSON.stringify(payload));
 
       const data = await ApiService.draftCurriculum(payload);
       console.log("Graph Data Received, Node Count:", data.nodes.length);
