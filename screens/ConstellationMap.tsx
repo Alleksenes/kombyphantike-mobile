@@ -14,7 +14,7 @@ import {
 } from '@shopify/react-native-skia';
 import * as d3 from 'd3-force';
 import { useEffect, useMemo, useState } from 'react';
-import { Dimensions, Platform, StyleSheet, View } from 'react-native';
+import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useDerivedValue, useSharedValue } from 'react-native-reanimated';
 import { AncientContext, Token } from '../components/WordChip';
@@ -240,7 +240,14 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
 
 export default function ConstellationMap({ nodes, links, goldenPath, onNodePress }: Props) {
   if (Platform.OS === 'web') {
-    return <View />; // Fallback
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: 'white', marginBottom: 20 }}>Constellation Map (Web View)</Text>
+        {nodes.map(n => (
+            <Text key={n.id} style={{ color: 'gray' }}>{n.label}</Text>
+        ))}
+      </View>
+    );
   }
   return <ConstellationMapCanvas nodes={nodes} links={links} goldenPath={goldenPath} onNodePress={onNodePress} />;
 }

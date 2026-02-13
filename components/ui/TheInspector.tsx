@@ -6,7 +6,7 @@ import { IconButton } from 'react-native-paper';
 import { useInspectorStore } from '../../src/store/inspectorStore';
 import ParadigmGrid from '../ParadigmGrid';
 import { AudioPlayer } from '../../src/services/AudioPlayer';
-import { AncientContext } from '../WordChip';
+import { AncientContext, EtymologyJewel } from '../WordChip';
 
 type TabType = 'grammar' | 'context' | 'family';
 
@@ -85,15 +85,21 @@ export default function TheInspector() {
     </View>
   );
 
-  const renderMuseumPlacard = (context: string | AncientContext) => {
+  const renderMuseumPlacard = (context: string | AncientContext | EtymologyJewel) => {
     let author = "Unknown Source";
     let greek = "Greek text unavailable";
     let translation = "Translation unavailable";
+    let citations: string[] = [];
 
     if (typeof context === 'object' && context !== null) {
         author = context.author || author;
         greek = context.greek || greek;
         translation = context.translation || translation;
+
+        // Check for citations if it's EtymologyJewel (or has citations property)
+        if ('citations' in context && Array.isArray(context.citations)) {
+            citations = context.citations;
+        }
     } else if (context) {
         author = "Context";
         translation = context; // Fallback
@@ -118,7 +124,21 @@ export default function TheInspector() {
             <Text className="text-lg italic text-gray-500 font-serif text-center leading-6">
               {translation}
             </Text>
-          </View>
+
+            {/* Citations Section */}
+            {citations.length > 0 && (
+                <View className="mt-4 pt-4 border-t border-gray-300 w-full">
+                    <Text className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-widest text-center" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
+                        Citations
+                    </Text>
+                    {citations.map((cite, index) => (
+                        <Text key={index} className="text-xs text-gray-500 text-center mb-1 font-ui italic">
+                            {cite}
+                        </Text>
+                    ))}
+                </View>
+            )}
+        </View>
     );
   };
 
@@ -231,7 +251,7 @@ export default function TheInspector() {
              )}
 
             {/* Ancient Context "Eureka" Card (Museum Placard Style) */}
-            {token.ancient_context ? renderMuseumPlacard(token.ancient_context) : (
+            {(token.etymology_json || token.ancient_context) ? renderMuseumPlacard(token.etymology_json || token.ancient_context!) : (
                 <View className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
                     <Text className="text-gray-400 italic">No ancient context available.</Text>
                 </View>
