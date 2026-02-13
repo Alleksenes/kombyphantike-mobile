@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
 import { FlatList, View, Pressable } from 'react-native';
 import { Text, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +6,49 @@ import { useRouter } from 'expo-router';
 import OmegaLoader from '../../components/OmegaLoader';
 import { getHistory, getSession } from '../../src/services/Database';
 import { SessionStore } from '../../services/SessionStore';
+
+const formatDate = (dateString: string) => {
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  } catch (e) {
+    return dateString;
+  }
+};
+
+const HistoryItem = memo(({ item, onPress, theme }: { item: any, onPress: (item: any) => void, theme: any }) => (
+  <Pressable
+    onPress={() => onPress(item)}
+    className="mb-4 mx-4 p-4 rounded-lg bg-background border border-accent/30 active:opacity-70"
+    style={{
+       shadowColor: '#000',
+       shadowOffset: { width: 0, height: 2 },
+       shadowOpacity: 0.1,
+       shadowRadius: 4,
+       elevation: 2,
+    }}
+  >
+    <View className="flex-row justify-between items-center">
+        <View className="flex-1 mr-4">
+          <Text className="text-xl font-bold text-text mb-1" numberOfLines={1}>
+              {item.theme || "Untitled Scroll"}
+          </Text>
+          <Text className="text-sm text-ancient">
+              {formatDate(item.date)}
+          </Text>
+        </View>
+        <View>
+           <IconButton icon="chevron-right" iconColor={theme.colors.onSurfaceVariant} size={20} />
+        </View>
+    </View>
+  </Pressable>
+));
 
 export default function HistoryScreen() {
   const router = useRouter();
@@ -29,7 +72,7 @@ export default function HistoryScreen() {
     }
   };
 
-  const handlePress = async (session: any) => {
+  const handlePress = useCallback(async (session: any) => {
     // Show loading while fetching full details
     setLoading(true);
     try {
@@ -50,50 +93,11 @@ export default function HistoryScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(date);
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  const renderItem = ({ item }: { item: any }) => (
-    <Pressable
-      onPress={() => handlePress(item)}
-      className="mb-4 mx-4 p-4 rounded-lg bg-background border border-accent/30 active:opacity-70"
-      style={{
-         shadowColor: '#000',
-         shadowOffset: { width: 0, height: 2 },
-         shadowOpacity: 0.1,
-         shadowRadius: 4,
-         elevation: 2,
-      }}
-    >
-      <View className="flex-row justify-between items-center">
-          <View className="flex-1 mr-4">
-            <Text className="text-xl font-bold text-text mb-1" numberOfLines={1}>
-                {item.theme || "Untitled Scroll"}
-            </Text>
-            <Text className="text-sm text-ancient">
-                {formatDate(item.date)}
-            </Text>
-          </View>
-          <View>
-             <IconButton icon="chevron-right" iconColor={theme.colors.onSurfaceVariant} size={20} />
-          </View>
-      </View>
-    </Pressable>
-  );
+  const renderItem = useCallback(({ item }: { item: any }) => (
+    <HistoryItem item={item} onPress={handlePress} theme={theme} />
+  ), [handlePress, theme]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" style={{ backgroundColor: theme.colors.background }}>
