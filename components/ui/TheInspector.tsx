@@ -1,8 +1,14 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import { useInspectorStore } from '../../src/store/inspectorStore';
+import ParadigmGrid from '../ParadigmGrid';
+import { AudioPlayer } from '../../src/services/AudioPlayer';
+import { AncientContext } from '../WordChip';
+
+type TabType = 'grammar' | 'context' | 'family';
 
 const CustomBackground = ({ style }: { style?: any }) => {
   return (
@@ -20,8 +26,9 @@ const CustomBackground = ({ style }: { style?: any }) => {
 export default function TheInspector() {
   const sheetRef = useRef<BottomSheet>(null);
   const { token, isOpen, closeInspector } = useInspectorStore();
+  const [activeTab, setActiveTab] = useState<TabType>('grammar');
 
-  const snapPoints = useMemo(() => ['45%', '85%'], []);
+  const snapPoints = useMemo(() => ['50%', '85%'], []);
 
   useEffect(() => {
     if (isOpen && token) {
@@ -37,22 +44,221 @@ export default function TheInspector() {
     }
   }, [closeInspector]);
 
+  // Styles/Colors
+  const activeTabColor = '#C5A059'; // Gold
+  const inactiveTabColor = '#9CA3AF'; // Gray
+
+  const renderBadge = (label: string, isMorph: boolean = false) => (
+    <View key={label} className={`px-2 py-1 rounded mr-2 mb-2 ${isMorph ? 'bg-orange-900/40 border border-orange-800' : 'bg-gray-800 border border-gray-700'}`}>
+      <Text className={`text-xs uppercase font-bold ${isMorph ? 'text-orange-300' : 'text-gray-400'}`}>
+        {label}
+      </Text>
+    </View>
+  );
+
+  const renderTabHeader = () => (
+    <View className="flex-row border-b border-gray-800 mb-4">
+      {(['grammar', 'context', 'family'] as TabType[]).map((tab) => (
+        <TouchableOpacity
+          key={tab}
+          onPress={() => setActiveTab(tab)}
+          className="flex-1 pb-3 items-center"
+          style={{
+            borderBottomWidth: activeTab === tab ? 2 : 0,
+            borderBottomColor: activeTab === tab ? activeTabColor : 'transparent',
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: 'NeueHaasGrotesk-Display',
+              color: activeTab === tab ? activeTabColor : inactiveTabColor,
+              fontWeight: activeTab === tab ? 'bold' : 'normal',
+              textTransform: 'uppercase',
+              fontSize: 12,
+              letterSpacing: 1,
+            }}
+          >
+            {tab}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderMuseumPlacard = (context: string | AncientContext) => {
+    let author = "Unknown Source";
+    let greek = "Greek text unavailable";
+    let translation = "Translation unavailable";
+
+    if (typeof context === 'object' && context !== null) {
+        author = context.author || author;
+        greek = context.greek || greek;
+        translation = context.translation || translation;
+    } else if (context) {
+        author = "Context";
+        translation = context; // Fallback
+    }
+
+    return (
+        <View className="p-6 bg-[#f4f1ea] rounded-xl border border-gray-300 shadow-sm mt-2">
+            {/* Author / Citation */}
+            <Text className="text-xs font-bold text-[#C0A062] uppercase mb-4 tracking-widest text-center" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
+              {author}
+            </Text>
+
+            {/* Greek Text */}
+            <Text className="text-2xl font-serif text-[#5D4037] text-center leading-8 mb-4 font-greek" style={{ fontFamily: 'GFSDidot' }}>
+              {greek}
+            </Text>
+
+            {/* Separator */}
+            <View className="h-[1px] bg-gray-300 w-1/3 self-center mb-4" />
+
+            {/* Translation */}
+            <Text className="text-lg italic text-gray-500 font-serif text-center leading-6">
+              {translation}
+            </Text>
+          </View>
+    );
+  };
+
+  const renderContent = () => {
+    if (!token) return null;
+
+    switch (activeTab) {
+      case 'grammar':
+        return (
+          <View className="flex-1 gap-4 pb-10">
+             {/* Header: The Word + Audio */}
+             <View className="flex-row items-center justify-between">
+              <Text className="text-4xl font-bold text-white mb-1 flex-1 font-greek" style={{ fontFamily: 'GFSDidot' }}>
+                {token.text}
+              </Text>
+              <IconButton
+                 icon="volume-high"
+                 iconColor="#C0A062"
+                 size={28}
+                 onPress={() => AudioPlayer.playSentence(token.text)}
+              />
+            </View>
+
+            {/* Badges */}
+            <View className="flex-row flex-wrap">
+              {token.pos && renderBadge(token.pos)}
+              {token.tag && token.tag.split('|').filter(t => t !== '_').map((t, i) => (
+                renderBadge(t, true)
+              ))}
+            </View>
+
+             {/* Section A: The Rule (Static - Knot Definition) */}
+             {token.knot_definition ? (
+               <View className="mb-2 bg-gray-900/30 p-3 rounded-lg border border-gray-800">
+                 <Text className="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>The Rule</Text>
+                 <Text className="text-sm text-[#9CA3AE] font-serif italic leading-5">
+                   {token.knot_definition}
+                 </Text>
+               </View>
+             ) : null}
+
+             {/* Section B: The Logic (Dynamic - Knot Context) */}
+             {token.knot_context ? (
+               <View className="mb-2 bg-gray-900/30 p-3 rounded-lg border border-gray-800">
+                 <Text className="text-[10px] font-bold text-[#C5A059] uppercase mb-1 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>The Logic</Text>
+                 <Text className="text-sm text-[#C5A059] font-sans leading-5">
+                   {token.knot_context}
+                 </Text>
+               </View>
+             ) : null}
+
+            {/* The Morphology */}
+            {token.morphology ? (
+               <View className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                 <Text className="text-[10px] font-bold text-gray-400 uppercase mb-1" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>Morphology</Text>
+                 <Text className="text-sm text-gray-300 leading-5">{token.morphology}</Text>
+               </View>
+             ) : null}
+
+            {/* The Lemma */}
+            <View className="flex-row items-center justify-between bg-gray-800/30 p-3 rounded-lg border border-gray-800">
+                <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
+                  Lemma
+                </Text>
+                <View className="flex-row items-center">
+                  <Text className="text-lg font-medium text-white font-serif italic mr-2 font-greek" style={{ fontFamily: 'GFSDidot' }}>
+                    {token.lemma}
+                  </Text>
+                  <IconButton
+                    icon="volume-high"
+                    iconColor="#C0A062"
+                    size={20}
+                    onPress={() => AudioPlayer.playSentence(token.lemma)}
+                    style={{ margin: 0 }}
+                  />
+                </View>
+            </View>
+
+            {/* Paradigm Grid */}
+            <View className="mt-2">
+              <Text className="text-xs font-bold text-[#C5A059] uppercase mb-2 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>Paradigm</Text>
+              {token.has_paradigm && token.paradigm ? (
+                <ParadigmGrid
+                  paradigm={token.paradigm}
+                  highlightForm={token.text}
+                  pos={token.pos}
+                />
+              ) : (
+                <View className="p-4 items-center justify-center bg-gray-800/30 rounded-xl border border-gray-700">
+                  <Text className="text-gray-400 italic">No paradigm available.</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        );
+
+      case 'context':
+        return (
+          <View className="mt-2 gap-4 pb-10">
+             {/* Definition Section */}
+             {token.definition && (
+               <View className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
+                  <Text className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
+                    Definition
+                  </Text>
+                  <Text className="text-lg text-gray-200 font-serif leading-6">
+                    {token.definition}
+                  </Text>
+               </View>
+             )}
+
+            {/* Ancient Context "Eureka" Card (Museum Placard Style) */}
+            {token.ancient_context ? renderMuseumPlacard(token.ancient_context) : (
+                <View className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
+                    <Text className="text-gray-400 italic">No ancient context available.</Text>
+                </View>
+            )}
+          </View>
+        );
+
+      case 'family':
+        return (
+          <View className="mt-2 pb-10">
+             <View className="p-6 bg-gray-800/30 rounded-xl border border-gray-700 items-center">
+               <Text className="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest" style={{ fontFamily: 'NeueHaasGrotesk-Display' }}>
+                  Related Forms
+               </Text>
+               <Text className="text-gray-400 italic text-center mb-2">
+                  Family relations for <Text className="text-[#C5A059] font-bold">{token.text}</Text>
+               </Text>
+               <Text className="text-gray-500 text-xs text-center">
+                  (Etymological data and cognates are not yet charted in the stars)
+               </Text>
+             </View>
+          </View>
+        );
+    }
+  };
+
   if (!token) return null;
-
-  // Data Parsing
-  const pos = token.pos || 'UNK';
-  const tags = token.tag ? token.tag.split('|').filter(t => t !== '_') : [];
-
-  // Ancient Root Logic
-  let ancientWord = token.lemma;
-  let ancientContext = "";
-
-  if (typeof token.ancient_context === 'string') {
-    ancientContext = token.ancient_context;
-  } else if (token.ancient_context && typeof token.ancient_context === 'object') {
-    ancientWord = token.ancient_context.greek || token.lemma;
-    ancientContext = token.ancient_context.translation || "";
-  }
 
   return (
     <BottomSheet
@@ -65,34 +271,10 @@ export default function TheInspector() {
       handleIndicatorStyle={styles.handleIndicator}
     >
       <BottomSheetView style={styles.contentContainer}>
-        {/* 1. HEADER SECTION */}
-        <View style={styles.header}>
-          <Text style={styles.title}>{token.text}</Text>
-          <Text style={styles.subtitle}>{token.transliteration || `/${token.text}/`}</Text>
-        </View>
-
-        {/* 2. DATA GRID */}
-        <View style={styles.gridContainer}>
-          <View style={styles.chip}>
-            <Text style={styles.chipText}>{pos}</Text>
-          </View>
-          {tags.map((tag, i) => (
-            <View key={i} style={styles.chip}>
-              <Text style={styles.chipText}>{tag}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* 3. SEPARATOR */}
-        <View style={styles.separator} />
-
-        {/* 4. ANCIENT ROOT SECTION */}
-        <View style={styles.rootSection}>
-          <Text style={styles.sectionLabel}>ANCIENT ROOT</Text>
-          <Text style={styles.ancientWord}>{ancientWord}</Text>
-          {ancientContext ? <Text style={styles.ancientContext}>{ancientContext}</Text> : null}
-        </View>
-
+        {renderTabHeader()}
+        <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+            {renderContent()}
+        </BottomSheetScrollView>
       </BottomSheetView>
     </BottomSheet>
   );
@@ -122,70 +304,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
   },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    fontFamily: 'GFSDidot',
-    fontSize: 32,
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontFamily: 'NeueHaasGrotesk-Text',
-    fontSize: 18,
-    color: '#9CA3AF',
-    fontStyle: 'italic',
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 24,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#C5A059',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(197, 160, 89, 0.05)',
-  },
-  chipText: {
-    color: '#C5A059', // Gold
-    fontFamily: 'NeueHaasGrotesk-Display',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 24,
-  },
-  rootSection: {
-    alignItems: 'flex-start',
-  },
-  sectionLabel: {
-    fontFamily: 'NeueHaasGrotesk-Display',
-    fontSize: 12,
-    color: '#C5A059', // Gold
-    letterSpacing: 2,
-    marginBottom: 12,
-  },
-  ancientWord: {
-    fontFamily: 'GFSDidot',
-    fontSize: 32,
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textShadowColor: 'rgba(197, 160, 89, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10, // Glow effect
-  },
-  ancientContext: {
-    fontFamily: 'NeueHaasGrotesk-Text',
-    fontSize: 14,
-    color: '#9CA3AE',
-    fontStyle: 'italic',
-  }
 });

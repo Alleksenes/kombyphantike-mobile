@@ -131,10 +131,13 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
     if (nodes.length === 0) return;
 
     // 1. Initial Positions (Prevent 0,0 Cluster)
+    // Only initialize if x/y are missing to preserve layout on re-renders
+    let needsInit = false;
     nodes.forEach(node => {
       if (node.x === undefined || node.y === undefined) {
         node.x = SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 50;
         node.y = SCREEN_HEIGHT / 2 + (Math.random() - 0.5) * 50;
+        needsInit = true;
       }
     });
 
@@ -146,7 +149,9 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
       .stop();
 
     // 3. Warmup Phase (Calculate initial layout in one shot)
-    simulation.tick(100);
+    if (needsInit) {
+        simulation.tick(100);
+    }
     setSimulationNodes([...nodes]);
 
     // 4. Throttled Tick for Animation
@@ -204,9 +209,9 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
                 <Path
                   key={`link-${i}`}
                   path={path}
-                  color="rgba(227, 220, 203, 0.3)" // Parchment White, Low Opacity
+                  color="rgba(197, 160, 89, 0.6)" // Gold, Medium Opacity
                   style="stroke"
-                  strokeWidth={1}
+                  strokeWidth={2}
                 />
               );
             })}
@@ -254,6 +259,7 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
               // STYLING LOGIC (Modified for Visibility)
               const nodeColor = "#E3DCCB"; // Parchment
               const nodeRadius = 30; // Hardcoded radius
+              const isLocked = node.status === 'locked';
 
               return (
                 <Group key={`node-${node.id}`}>
@@ -263,15 +269,15 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
                     cy={node.y}
                     r={nodeRadius}
                     color={nodeColor}
-                    opacity={1}
+                    opacity={isLocked ? 0.4 : 1}
                   />
                   {/* The Label */}
                   <SkiaText
-                    x={node.x}
-                    y={node.y}
+                    x={node.x - (node.label.length * 5)} // Simple centering approximation
+                    y={node.y + nodeRadius + 20}
                     text={node.label}
                     font={font}
-                    color="#00FF00"
+                    color="#E3DCCB" // Parchment
                   />
                 </Group>
               );
