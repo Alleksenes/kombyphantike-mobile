@@ -13,7 +13,7 @@ import OmegaLoader from '../components/OmegaLoader';
 // Import the store
 import { SessionStore } from '../services/SessionStore';
 import { saveSession } from '../src/services/Database';
-import { API_BASE_URL } from '../src/services/apiConfig';
+import { ApiService } from '../src/services/ApiService';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -70,18 +70,10 @@ export default function ResultsScreen() {
     console.log("Igniting AI Generation...");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/fill_curriculum`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          worksheet_data: draftData,
-          instruction_text: instructions
-        }),
+      const result = await ApiService.fillCurriculum({
+        worksheet_data: draftData,
+        instruction_text: instructions
       });
-
-      if (!response.ok) throw new Error("Fill failed");
-
-      const result = await response.json();
 
       // 3. Update UI with filled sentences
       if (result.worksheet_data) {

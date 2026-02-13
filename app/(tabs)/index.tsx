@@ -6,7 +6,7 @@ import OmegaLoader from '../../components/OmegaLoader';
 import AetherButton from '../../components/ui/AetherButton';
 import WeaverControls from '../../components/ui/WeaverControls';
 import { SessionStore } from '../../services/SessionStore';
-import { API_BASE_URL } from '../../src/services/apiConfig';
+import { ApiService } from '../../src/services/ApiService';
 
 export default function WeaverScreen() {
   const router = useRouter();
@@ -26,28 +26,15 @@ export default function WeaverScreen() {
     setError(null);
 
     try {
-      const body = JSON.stringify({
+      const payload = {
         theme: theme,
         sentence_count: sentenceCount,
         target_level: targetLevel,
         complexity: isComplex ? "complex" : "lucid",
-      });
-      console.log("SENDING DRAFT REQUEST:", body);
+      };
+      console.log("SENDING DRAFT REQUEST:", JSON.stringify(payload));
 
-      const response = await fetch(`${API_BASE_URL}/draft_curriculum`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: body,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Error: ${response.status} ${errorText}`);
-      }
-
-      const data = await response.json();
+      const data = await ApiService.draftCurriculum(payload);
       console.log("Graph Data Received, Node Count:", data.nodes.length);
 
       if (data.draft_data) {

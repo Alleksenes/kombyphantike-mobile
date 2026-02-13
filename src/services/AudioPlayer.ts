@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import { API_BASE_URL } from './apiConfig';
+import { ApiService } from './ApiService';
 
 let soundObject: Audio.Sound | null = null;
 
@@ -10,17 +10,7 @@ export const AudioPlayer = {
       // 1. Fetch Audio
       console.log(`[Audio] Requesting speech for: "${text.substring(0, 20)}..."`);
 
-      const response = await fetch(`${API_BASE_URL}/speak`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Audio fetch failed: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await ApiService.speak({ text });
       const audioData = data.audio;
 
       if (!audioData) {
