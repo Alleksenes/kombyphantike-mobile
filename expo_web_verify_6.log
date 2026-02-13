@@ -1,0 +1,102 @@
+Starting project at /app
+React Compiler enabled
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.31 - expected version: ~54.0.33
+  expo-router@6.0.22 - expected version: ~6.0.23
+  expo-video@3.0.15 - expected version: ~3.0.16
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% (16/92)
+λ node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 17.4% (124/304)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.3% (190/270)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 54.1% (385/565)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.3% (282/410)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.0% (605/883)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.7% (401/547)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.0% ( 861/1099)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 59.4% (543/732)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.8% (1103/1379)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.7% ( 721/1005)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 75.4% (1375/1584)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.7% (1028/1296)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.5% (1510/1673)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 68.1% (1295/1577)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.9% (1709/1773)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 80.7% (1582/1761)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.1% (1789/1835)
+λ Bundled 33995ms node_modules/expo-router/node/render.js (1892 modules)
+API URL: http://localhost:8000
+"textShadow*" style props are deprecated. Use "textShadow".
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.2% (1888/1918)
+Web Bundled 40050ms node_modules/expo-router/entry.js (1946 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 42.5% (357/560)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.9% ( 757/1061)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.9% (1232/1509)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 84.7% (1669/1814)
+Web Bundled 14800ms node_modules/expo-router/entry.js (1947 modules)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 100ms node_modules/expo-router/node/render.js (1 module)
+API URL: http://localhost:8000
+"textShadow*" style props are deprecated. Use "textShadow".
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 833ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 81ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 164ms node_modules/expo-router/node/render.js (1 module)
+API URL: http://localhost:8000
+"textShadow*" style props are deprecated. Use "textShadow".
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 1476ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 136ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 71ms node_modules/expo-router/node/render.js (1 module)
+API URL: http://localhost:8000
+"textShadow*" style props are deprecated. Use "textShadow".
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 599ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 108ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 99ms node_modules/expo-router/node/render.js (1 module)
+API URL: http://localhost:8000
+"textShadow*" style props are deprecated. Use "textShadow".
+λ  WARN  [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+  factory (src/services/AudioPlayer.ts:3:1)
+  <unknown> (components/PhilologyCard.tsx:6:41)
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 1297ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 161ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 387ms node_modules/expo-router/node/render.js (1 module)
+λ  LOG  API URL: http://localhost:8000
+"textShadow*" style props are deprecated. Use "textShadow".
+λ  WARN  [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+  factory (src/services/AudioPlayer.ts:10:7)
+  <unknown> (components/PhilologyCard.tsx:19:24)
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ  WARN  TouchableWithoutFeedback is deprecated. Please use Pressable.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 3420ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 508ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console

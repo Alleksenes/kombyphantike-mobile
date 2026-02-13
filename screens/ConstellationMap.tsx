@@ -214,7 +214,7 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
 
               // STYLING LOGIC (From PR 79)
               const isMastered = node.status === 'mastered';
-              const nodeColor = "#FF0000" // = isMastered ? "#C5A059" : "#FFFFFF"; // Gold vs White
+              const nodeColor = "#00FFFF"; // Debug Cyan
               const nodeRadius = isMastered ? 25 : 15;
 
               return (
