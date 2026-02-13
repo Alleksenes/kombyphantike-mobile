@@ -7,7 +7,7 @@ import {
   useFont
 } from '@shopify/react-native-skia';
 import * as d3 from 'd3-force';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useDerivedValue, useSharedValue } from 'react-native-reanimated';
@@ -56,6 +56,7 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
 
   // C. Local State for D3 Simulation
   const [simulationNodes, setSimulationNodes] = useState<ConstellationNode[]>([]);
+  const simulationRef = useRef<d3.Simulation<ConstellationNode, ConstellationLink> | null>(null);
 
   // D. Gesture Logic
   const panGesture = Gesture.Pan()
@@ -123,24 +124,56 @@ function ConstellationMapCanvas({ nodes, links, onNodePress }: Props) {
   }, [translateX, translateY, scale]);
 
   // F. Simulation Effect (D3)
-  // F. Simulation Effect (D3)
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    // Initialize simulation
+    // 1. Initial Positions (Prevent 0,0 Cluster)
+    nodes.forEach(node => {
+      if (node.x === undefined || node.y === undefined) {
+        node.x = SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 50;
+        node.y = SCREEN_HEIGHT / 2 + (Math.random() - 0.5) * 50;
+      }
+    });
+
+    // 2. Initialize simulation (Stopped)
     const simulation = d3.forceSimulation(nodes)
       .force('charge', d3.forceManyBody().strength(-400))
       .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
       .force('link', d3.forceLink(links).id((d: any) => d.id).distance(100))
-      .on('tick', () => {
-        setSimulationNodes([...nodes]);
-      });
+      .stop();
 
-    // THE FIX: Explicitly return an arrow function
+    // 3. Warmup Phase (Calculate initial layout in one shot)
+    simulation.tick(100);
+    setSimulationNodes([...nodes]);
+
+    // 4. Throttled Tick for Animation
+    let lastTick = Date.now();
+    simulation.on('tick', () => {
+      const now = Date.now();
+      if (now - lastTick > 32) { // ~30fps throttle
+        lastTick = now;
+        setSimulationNodes([...nodes]);
+      }
+    });
+
+    // 5. Start Animation
+    simulation.restart();
+    simulationRef.current = simulation;
+
     return () => {
       simulation.stop();
     };
-  }, [nodes, links]);
+  }, [nodes.length, links.length]);
+
+  // G. Update Simulation Data on Prop Changes (e.g. Status)
+  useEffect(() => {
+    if (simulationRef.current) {
+      simulationRef.current.nodes(nodes);
+      simulationRef.current.alpha(0.3).restart();
+      setSimulationNodes([...nodes]);
+    }
+  }, [nodes]);
+
 
   if (!font) {
     return <View style={styles.loader} />;
