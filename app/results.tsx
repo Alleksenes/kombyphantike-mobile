@@ -1,49 +1,54 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import PhilologyCard from '../components/PhilologyCard';
 import { Token } from '../components/WordChip';
 import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 import { ApiService } from '../src/services/ApiService';
+import { SessionStore } from '../services/SessionStore';
 import { useInspectorStore } from '../src/store/inspectorStore';
 
-export default function ConstellationScreen() {
-  const { graph } = useLocalSearchParams();
+export default function ResultsScreen() {
+  const router = useRouter();
   const [nodes, setNodes] = useState<ConstellationNode[]>([]);
   const [links, setLinks] = useState<ConstellationLink[]>([]);
+  const [goldenPath, setGoldenPath] = useState<string[]>([]);
   const [isWeaving, setIsWeaving] = useState(false);
-  const [goldenPath, setGoldenPath] = useState<string[]>([]); // ADD THIS STATE
 
   // Interaction State
   const [activeNode, setActiveNode] = useState<ConstellationNode | null>(null);
-
 
   // Global Inspector Store
   const { openInspector, closeInspector, token: selectedToken } = useInspectorStore();
 
   useEffect(() => {
-    if (typeof graph === 'string') {
-      try {
-        const parsed = JSON.parse(graph);
-        // Basic validation to ensure we have nodes and links arrays
-        if (Array.isArray(parsed.nodes) && Array.isArray(parsed.links)) {
-          setNodes(parsed.nodes);
-          setLinks(parsed.links);
-          setGoldenPath(parsed.golden_path || []); // PARSE THE PATH
-        } else {
-          setNodes([]);
-          setLinks([]);
+    const draft = SessionStore.getDraft();
+
+    if (draft) {
+      let data = draft;
+      if (typeof draft === 'string') {
+        try {
+          data = JSON.parse(draft);
+        } catch (e) {
+          // Silent failure
         }
-      } catch (e) {
-        console.error("JSON Parse Error:", e);
-        setNodes([]);
-        setLinks([]);
       }
-    } else {
-      setNodes([]);
-      setLinks([]);
+
+      if (data) {
+        // Case 1: Full Constellation Graph (nodes + links)
+        if (Array.isArray(data.nodes)) {
+          setNodes(data.nodes);
+          setLinks(data.links || []);
+          setGoldenPath(data.golden_path || []);
+        }
+        // Case 2: Just Nodes (e.g. initial draft)
+        else if (Array.isArray(data)) {
+           setNodes(data);
+           setLinks([]);
+        }
+      }
     }
-  }, [graph]);
+  }, []);
 
   const handleWeave = async () => {
     if (isWeaving || nodes.length === 0) return;
@@ -63,16 +68,15 @@ export default function ConstellationScreen() {
         return prevNodes.map(node => {
           const match = updateMap.get(node.id);
           if (match) {
-            // *** FIX 2: LOOK FOR THE SENTENCE IN THE CORRECT PLACE (node.data) ***
             const hasTarget = !!match.data?.target_sentence;
             return {
               ...node, // Keep the original node
               data: match.data, // Overwrite with the updated data from the server
               status: hasTarget ? 'mastered' : node.status, // Update status
-              // Preserve simulation coordinates - THIS IS BRILLIANT
+              // Preserve simulation coordinates
               x: node.x,
               y: node.y,
-              vx: node.vx, // Also preserve velocity to stop jittering
+              vx: node.vx,
               vy: node.vy,
             };
           }
@@ -81,8 +85,8 @@ export default function ConstellationScreen() {
       });
 
     } catch (error) {
-      console.error("Fill Curriculum Error:", error);
-      // Ideally show a toast or alert here
+       // Ideally show a toast or alert here
+       // No console.log for code health
     } finally {
       setIsWeaving(false);
     }
@@ -90,7 +94,6 @@ export default function ConstellationScreen() {
 
   const handleNodePress = (node: ConstellationNode) => {
     setActiveNode(node);
-    // Close the inspector when switching nodes
     closeInspector();
   };
 
@@ -106,9 +109,10 @@ export default function ConstellationScreen() {
           <ConstellationMap
             nodes={nodes}
             links={links}
-            goldenPath={goldenPath} // PASS THE PATH
+            goldenPath={goldenPath}
             onNodePress={handleNodePress}
           />
+
           {/* Actuator FAB */}
           <Pressable
             onPress={handleWeave}
@@ -180,7 +184,7 @@ export default function ConstellationScreen() {
             fontWeight: 'bold',
             opacity: 0.9
           }}>
-            No Constellation Data
+            No Result Data
           </Text>
           <Text style={{
             color: '#E3DCCB',
@@ -189,7 +193,7 @@ export default function ConstellationScreen() {
             opacity: 0.7,
             lineHeight: 24
           }}>
-            Please weave a curriculum to view your path.
+            Unable to load the constellation from history.
           </Text>
         </View>
       )}
