@@ -51,7 +51,6 @@ export default function RootLayout() {
               }}
             >
               <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="results" />
               <Stack.Screen name="constellation" />
             </Stack>
             <TheInspector />
