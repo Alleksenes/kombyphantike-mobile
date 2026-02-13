@@ -2,24 +2,40 @@ import { API_BASE_URL } from './apiConfig';
 
 // Define types for payloads and responses
 
-export interface ConstellationNode {
-  id: string;
-  label: string;
-  status: 'locked' | 'unlocked' | 'mastered';
-  x?: number;
-  y?: number;
+export interface NodeData {
+  knot_id?: string;
+  hero?: string;
+  knot_definition?: string;
+  ancient_context?: { author: string; greek: string; translation: string; citations?: string[] };
   target_sentence?: string;
   source_sentence?: string;
   target_tokens?: any[];
-  ancient_context?: string | any;
-  vx?: number;
-  vy?: number;
-  data?: any;
+  // ... any other fields
+  [key: string]: any;
+}
+
+export interface ConstellationNode {
+  id: string;
+  label: string;
+  type: string;
+  status: string; // 'locked' | 'unlocked' | 'mastered' | 'active'
+  data?: NodeData; // <-- DATA IS A STRUCTURED OBJECT
+  x?: number; // Added by D3
+  y?: number; // Added by D3
+  vx?: number; // Added by D3
+  vy?: number; // Added by D3
 }
 
 export interface ConstellationLink {
-  source: string;
-  target: string;
+  source: string | ConstellationNode;
+  target: string | ConstellationNode;
+  value?: number;
+}
+
+export interface ConstellationGraph {
+  nodes: ConstellationNode[];
+  links: ConstellationLink[];
+  golden_path: string[];
 }
 
 export interface DraftCurriculumPayload {

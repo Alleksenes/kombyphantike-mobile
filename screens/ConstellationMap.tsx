@@ -14,26 +14,14 @@ import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useDerivedValue, useSharedValue } from 'react-native-reanimated';
 import { AncientContext, Token } from '../components/WordChip';
+import { ConstellationLink, ConstellationNode } from '../services/ApiService';
 
 // 1. GLOBAL CONSTANTS
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // 2. TYPES
-// Extend D3's types correctly
-export type ConstellationNode = d3.SimulationNodeDatum & {
-  id: string;
-  label: string;
-  status: 'locked' | 'unlocked' | 'mastered' | 'active';
-  type: 'theme' | 'lemma' | 'rule';
-  data?: any;
-  target_sentence?: string;
-  source_sentence?: string;
-  target_tokens?: Token[];
-  ancient_context?: string | AncientContext;
-  // D3 adds x, y, vx, vy automatically
-};
-
-export type ConstellationLink = d3.SimulationLinkDatum<ConstellationNode>;
+// The D3 type extension
+export type D3Node = d3.SimulationNodeDatum & ConstellationNode;
 
 type Props = {
   nodes: ConstellationNode[];
@@ -54,7 +42,7 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   const context = useSharedValue({ x: 0, y: 0, scale: 1 });
 
   // C. Local State for D3 Simulation
-  const [simulationNodes, setSimulationNodes] = useState<ConstellationNode[]>([]);
+  const [simulationNodes, setSimulationNodes] = useState<D3Node[]>([]);
 
   // D. Gesture Logic
   const panGesture = Gesture.Pan()
@@ -120,7 +108,7 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
     });
 
     // 2. Initialize simulation (Stopped)
-    const simulation = d3.forceSimulation(nodes)
+    const simulation = d3.forceSimulation(nodes as D3Node[])
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
       .force('link', d3.forceLink(links).id((d: any) => d.id).distance(90))
@@ -128,7 +116,7 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
 
     // 3. Warmup Phase (Calculate initial layout in one shot)
     simulation.tick(100);
-    setSimulationNodes([...nodes]);
+    setSimulationNodes([...nodes] as D3Node[]);
 
     return () => { simulation.stop(); };
   }, [nodes, links]);
@@ -137,8 +125,8 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   const linksPath = useMemo(() => {
     const path = Skia.Path.Make();
     links.forEach(link => {
-      const source = link.source as unknown as ConstellationNode;
-      const target = link.target as unknown as ConstellationNode;
+      const source = link.source as unknown as D3Node;
+      const target = link.target as unknown as D3Node;
 
       if (
         source && target &&
