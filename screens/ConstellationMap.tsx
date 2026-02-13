@@ -136,7 +136,7 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
 
   // G. Golden Path Logic
   const goldenPathCmds = useMemo(() => {
-    if (simulationNodes.length === 0 || goldenPath.length === 0) return Skia.Path.Make();
+    if (simulationNodes.length === 0 || !goldenPath || goldenPath.length === 0) return Skia.Path.Make();
 
     const nodeMap = new Map(simulationNodes.map(n => [n.id, n]));
     const cmds: any[] = []; // Using any to bypass strict PathVerb array typing issues temporarily
@@ -216,11 +216,6 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
                 </Path>
               );
             })()}
-            return <Path key={`link-${i}`} path={`M ${source.x} ${source.y} L ${target.x} ${target.y}`} color="rgba(227, 220, 203, 0.2)" style="stroke" strokeWidth={1} />;
-            })}
-
-            {/* GOLDEN PATH */}
-            <Path path={goldenPathCmds} color="#C5A059" style="stroke" strokeWidth={3} strokeJoin="round" />
 
             {/* NODES */}
             {simulationNodes.map((node) => {
@@ -228,6 +223,7 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
 
               const isMastered = node.status === 'mastered';
               const isActive = node.status === 'active';
+              const isLocked = node.status === 'locked';
               const nodeColor = isMastered ? "#C5A059" : (isActive ? "#FFFFFF" : "#6B7280");
               const nodeRadius = isActive ? 20 : 15;
               const textWidth = font.getTextWidth(node.label);
@@ -260,11 +256,11 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   );
 }
 
-export default function ConstellationMap({ nodes, links, goldenPath, goldenPath, onNodePress }: Props) {
+export default function ConstellationMap({ nodes, links, goldenPath, onNodePress }: Props) {
   if (Platform.OS === 'web') {
     return <View />; // Fallback
   }
-  return <ConstellationMapCanvas nodes={nodes} links={links} goldenPath={goldenPath} goldenPath={goldenPath} onNodePress={onNodePress} />;
+  return <ConstellationMapCanvas nodes={nodes} links={links} goldenPath={goldenPath} onNodePress={onNodePress} />;
 }
 
 const styles = StyleSheet.create({
