@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import PhilologyCard from '../components/PhilologyCard';
 import { Token } from '../components/WordChip';
-import { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
+import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
 import { ApiService } from '../src/services/ApiService';
 import { useInspectorStore } from '../src/store/inspectorStore';
 
@@ -107,6 +107,13 @@ export default function ConstellationScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       {nodes.length > 0 ? (
         <>
+          {/* Layer 2: The Cosmic Orrery */}
+          <ConstellationMap
+            nodes={nodes}
+            links={links}
+            onNodePress={handleNodePress}
+          />
+
           {/* Actuator FAB */}
           <Pressable
             onPress={handleWeave}
