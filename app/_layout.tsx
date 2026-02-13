@@ -34,12 +34,12 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: '#1a1918' }}>
+      <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
         {/* 1. The Universe (Global Background) */}
         <CosmicBackground />
 
         {/* 2. The Interaction Layer */}
-        <GestureHandlerRootView style={{ flex: 1 }}>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: 'transparent' }}>
           <PaperProvider theme={ScriptoriumTheme}>
             <StatusBar style="light" />
             <Stack
@@ -47,6 +47,7 @@ export default function RootLayout() {
                 headerShown: false,
                 // CRITICAL: Make the stack transparent so we see the stars
                 contentStyle: { backgroundColor: 'transparent' },
+                sceneStyle: { backgroundColor: 'transparent' },
                 animation: 'fade',
               }}
             >

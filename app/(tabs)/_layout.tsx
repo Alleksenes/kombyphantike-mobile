@@ -10,6 +10,8 @@ export default function TabLayout() {
         // Fixed: sceneContainerStyle is not a valid prop on Tabs.
         // Using sceneStyle in screenOptions for transparent background.
         sceneStyle: { backgroundColor: 'transparent' },
+        // @ts-ignore: Ensuring transparency on web
+        sceneContainerStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
           backgroundColor: '#1a1918', // Fallback for Android
           borderTopColor: '#3e0a15',
