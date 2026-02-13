@@ -7,6 +7,13 @@ export interface AncientContext {
   translation: string;
 }
 
+export interface EtymologyJewel {
+  author: string;
+  greek: string;
+  translation: string;
+  citations: string[];
+}
+
 export interface Token {
   text: string;
   lemma: string;
@@ -17,6 +24,7 @@ export interface Token {
   has_paradigm?: boolean;
   paradigm?: { form: string; tags: string[] }[];
   ancient_context?: string | AncientContext;
+  etymology_json?: EtymologyJewel;
   definition?: string;
   transliteration?: string;
   morphology?: string;
