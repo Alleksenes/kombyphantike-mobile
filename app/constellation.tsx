@@ -41,8 +41,12 @@ export default function ConstellationScreen() {
   useEffect(() => {
     if (typeof graph === 'string') {
       try {
+        console.log("Graph Param:", graph);
         // Type assertion tells TypeScript to trust us
         const parsedGraph = JSON.parse(graph) as ConstellationGraph;
+        console.log("Parsed Nodes:", parsedGraph.nodes);
+        console.log("Parsed Links:", parsedGraph.links);
+
         if (Array.isArray(parsedGraph.nodes)) {
           setNodes(parsedGraph.nodes);
           setLinks(parsedGraph.links || []);
@@ -81,6 +85,7 @@ export default function ConstellationScreen() {
       if (!response.ok) throw new Error('AI Generation Failed');
 
       const result = await response.json();
+      console.log("Fill Curriculum Response:", result);
       const updatedData = result.worksheet_data || [];
 
       // MERGE: Update nodes with new sentences
