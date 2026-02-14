@@ -14,7 +14,7 @@ const CustomBackground = ({ style }: { style?: any }) => {
   return (
     <View style={[style, styles.backgroundContainer]}>
       <BlurView
-        intensity={40}
+        intensity={80}
         tint="dark"
         style={StyleSheet.absoluteFill}
       />
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   backgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 5, 24, 0.85)',
+    backgroundColor: 'rgba(15, 5, 24, 0.7)',
   },
   handleIndicator: {
     backgroundColor: '#C5A059',
