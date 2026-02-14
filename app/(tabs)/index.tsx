@@ -16,8 +16,8 @@ export default function WeaverScreen() {
   const [inputLayout, setInputLayout] = useState({ width: 0, height: 0 });
 
   const [sentenceCount, setSentenceCount] = useState(10);
-  const [isComplex, setIsComplex] = useState(false);
-  const [targetLevel, setTargetLevel] = useState('Any');
+  const [cefLevel, setCefLevel] = useState('Any');
+  const [complexity, setComplexity] = useState(false);
 
   const handleWeave = async () => {
     if (!theme.trim()) return;
@@ -29,8 +29,8 @@ export default function WeaverScreen() {
       const payload = {
         theme: theme,
         sentence_count: sentenceCount,
-        target_level: targetLevel,
-        complexity: isComplex ? "complex" : "lucid",
+        target_level: cefLevel, // Matches the backend CurriculumRequest
+        complexity: complexity ? "complex" : "lucid",
       };
 
       const data = await ApiService.draftCurriculum(payload);
@@ -117,10 +117,10 @@ export default function WeaverScreen() {
               <WeaverControls
                 sentenceCount={sentenceCount}
                 setSentenceCount={setSentenceCount}
-                cefLevel={targetLevel}
-                setCefLevel={setTargetLevel}
-                complexity={isComplex}
-                setComplexity={setIsComplex}
+                cefLevel={cefLevel}
+                setCefLevel={setCefLevel}
+                complexity={complexity}
+                setComplexity={setComplexity}
               />
 
 
