@@ -1,8 +1,78 @@
-npm warn exec The following package was not found and will be installed: expo@54.0.33
-npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
 Starting project at /app
-ConfigError: Cannot determine the project's Expo SDK version because the module `expo` is not installed. Install it with `npm install expo` and try again.
+React Compiler enabled
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.31 - expected version: ~54.0.33
+  expo-router@6.0.22 - expected version: ~6.0.23
+  expo-video@3.0.15 - expected version: ~3.0.16
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 31.6% (13/28)
+λ node_modules/expo-router/node/render.js ▓░░░░░░░░░░░░░░░ 11.6% ( 82/241)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 31.6% ( 96/191)
+λ node_modules/expo-router/node/render.js ▓▓▓▓░░░░░░░░░░░░ 27.9% (208/403)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.8% (190/276)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 54.3% (388/594)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.8% (278/404)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.7% (517/675)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.4% (357/512)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.7% (661/977)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.4% (387/541)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 61.1% ( 919/1261)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 60.9% (549/730)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.3% (1111/1396)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 60.9% ( 728/1008)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.4% (1379/1655)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 62.2% ( 902/1196)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 82.4% (1578/1738)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 62.2% (1189/1541)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.7% (1751/1839)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 76.8% (1547/1765)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.6% (1824/1875)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.5% (1829/1912)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.7% (1881/1923)
+λ Bundled 43935ms node_modules/expo-router/node/render.js (1980 modules)
+API URL: http://localhost:8000
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.9% (2001/2022)
+Web Bundled 50947ms node_modules/expo-router/entry.js (2032 modules)
+Error: Premature close
+    at onclose (node:internal/streams/end-of-stream:171:30)
+    at processTicksAndRejections (node:internal/process/task_queues:85:11)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 67ms node_modules/expo-router/node/render.js (1 module)
+API URL: http://localhost:8000
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 867ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 30.7% (220/397)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 35.4% (392/659)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.1% (588/886)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 49.5% ( 768/1097)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 56.9% ( 994/1321)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.5% (1215/1537)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.6% (1422/1723)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.3% (1660/1841)
+Web Bundled 31039ms node_modules/expo-router/entry.js (2033 modules)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 72ms node_modules/expo-router/node/render.js (1 module)
+API URL: http://localhost:8000
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 1407ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 98ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 70ms node_modules/expo-router/node/render.js (1 module)
+API URL: http://localhost:8000
+[expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 665ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 129ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console

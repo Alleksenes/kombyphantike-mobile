@@ -107,7 +107,8 @@ function ConstellationMapCanvas({ nodes, links, goldenPath = [], onNodePress }: 
       .force('link', d3.forceLink(links as D3Link[]).id((d: any) => d.id).distance(100).strength(0.5))
       .on('tick', () => {
         setSimulationNodes([...simulation.nodes()]);
-      });
+      })
+      .alpha(1).restart();
 
     return () => { simulation.stop(); };
   }, [nodes, links]);
@@ -150,6 +151,8 @@ function ConstellationMapCanvas({ nodes, links, goldenPath = [], onNodePress }: 
 
   if (!font) return <View style={styles.loader} />;
 
+  console.log("Drawing Nodes Count:", simulationNodes.length);
+
   return (
     <GestureDetector gesture={composedGesture}>
       <View style={styles.container}>
@@ -181,7 +184,12 @@ function ConstellationMapCanvas({ nodes, links, goldenPath = [], onNodePress }: 
 
             {/* NODES */}
             {simulationNodes.map((node) => {
-              if (node.x === undefined || node.y === undefined) return null;
+              // DEBUG: Fallback to center if coords missing
+              let { x, y } = node;
+              if (x === undefined || y === undefined) {
+                x = SCREEN_WIDTH / 2;
+                y = SCREEN_HEIGHT / 2;
+              }
 
               const isMastered = node.status === 'mastered';
               const isActive = node.status === 'active';
@@ -191,16 +199,16 @@ function ConstellationMapCanvas({ nodes, links, goldenPath = [], onNodePress }: 
 
               return (
                 <Group key={`node-${node.id}`}>
-                  <Circle cx={node.x} cy={node.y} r={nodeRadius + 4}>
+                  <Circle cx={x} cy={y} r={nodeRadius + 4}>
                     <BlurMask blur={isMastered ? 12 : 6} style="solid" />
                     <Paint color={isMastered ? "#C5A059" : nodeColor} />
                   </Circle>
-                  <Circle cx={node.x} cy={node.y} r={nodeRadius} color={"#0f0518"} />
-                  <Circle cx={node.x} cy={node.y} r={nodeRadius - 2} color={nodeColor} />
+                  <Circle cx={x} cy={y} r={nodeRadius} color={"#0f0518"} />
+                  <Circle cx={x} cy={y} r={nodeRadius - 2} color={nodeColor} />
 
                   <SkiaText
-                    x={node.x - textWidth / 2}
-                    y={node.y + nodeRadius + 20}
+                    x={x - textWidth / 2}
+                    y={y + nodeRadius + 20}
                     text={node.label}
                     font={font}
                     color={isActive ? "#FFFFFF" : "#9CA3AF"}
