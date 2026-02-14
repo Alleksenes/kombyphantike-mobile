@@ -1,198 +1,200 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import PhilologyCard from '../components/PhilologyCard';
-import { Token } from '../components/WordChip';
-import ConstellationMap from '../screens/ConstellationMap';
-import { ApiService, ConstellationLink, ConstellationNode } from '../src/services/ApiService';
-import { useInspectorStore } from '../src/store/inspectorStore';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+// --- COMPONENT IMPORTS (Corrected Paths) ---
+import InspectorSheet from '../components/InspectorSheet';
+import PhilologyCard from '../components/PhilologyCard'; // FIX: Path was wrong, should be ../
+import CosmicBackground from '../components/ui/CosmicBackground'; // FIX: Path was wrong, should be ../
+import ConstellationMap from '../screens/ConstellationMap'; // FIX: Path was wrong, should be ../
+
+// --- THE SINGLE SOURCE OF TRUTH ---
+import { ConstellationGraph, ConstellationLink, ConstellationNode } from '../src/types';
+
+// --- SERVICES ---
+import { API_BASE_URL } from '../src/services/apiConfig';
+
+
+// -----------------------------------------------------------------
+// --- DELETE THESE - They are the source of all your errors ---
+//
+// interface NodeData { ... }
+// interface ConstellationNode { ... } 
+//
+// -----------------------------------------------------------------
+
 
 export default function ConstellationScreen() {
   const { graph } = useLocalSearchParams();
+
+  // State now uses the CANONICAL types
   const [nodes, setNodes] = useState<ConstellationNode[]>([]);
   const [links, setLinks] = useState<ConstellationLink[]>([]);
   const [isWeaving, setIsWeaving] = useState(false);
-  const [goldenPath, setGoldenPath] = useState<string[]>([]); // ADD THIS STATE
 
-  // Interaction State
-  const [activeNode, setActiveNode] = useState<ConstellationNode | null>(null);
+  // Selection State
+  const [activeSentenceNode, setActiveSentenceNode] = useState<ConstellationNode | null>(null);
+  const [selectedToken, setSelectedToken] = useState<any | null>(null);
 
-
-  // Global Inspector Store
-  const { openInspector, closeInspector, token: selectedToken } = useInspectorStore();
-
+  // 1. Hydrate the Universe
   useEffect(() => {
     if (typeof graph === 'string') {
       try {
-        const parsed = JSON.parse(graph);
-        // Basic validation to ensure we have nodes and links arrays
-        if (Array.isArray(parsed.nodes) && Array.isArray(parsed.links)) {
-          setNodes(parsed.nodes);
-          setLinks(parsed.links);
-          setGoldenPath(parsed.golden_path || []); // PARSE THE PATH
-        } else {
-          setNodes([]);
-          setLinks([]);
+        // Type assertion tells TypeScript to trust us
+        const parsedGraph = JSON.parse(graph) as ConstellationGraph;
+        if (Array.isArray(parsedGraph.nodes)) {
+          setNodes(parsedGraph.nodes);
+          setLinks(parsedGraph.links || []);
         }
       } catch (e) {
-        console.error("JSON Parse Error:", e);
-        setNodes([]);
-        setLinks([]);
+        console.error("Universe Parse Error:", e);
       }
-    } else {
-      setNodes([]);
-      setLinks([]);
     }
   }, [graph]);
 
-  const handleWeave = async () => {
-    if (isWeaving || nodes.length === 0) return;
+  // 2. The Actuator Logic (Fill with AI)
+  const handleWeaveSentences = async () => {
+    if (isWeaving) return;
     setIsWeaving(true);
 
     try {
-      const result = await ApiService.fillCurriculum({ worksheet_data: nodes });
-      const updatedNodes = result.worksheet_data;
+      const leanNodes = nodes.map(n => ({
+        id: n.id,
+        label: n.label,
+        type: n.type,
+        data: {
+          knot_definition: n.data?.knot_definition,
+          ancient_context: n.data?.ancient_context
+        }
+      }));
 
-      if (!Array.isArray(updatedNodes)) {
-        throw new Error("Invalid response structure from server: worksheet_data is not an array.");
-      }
-
-      setNodes(prevNodes => {
-        // efficient lookup map
-        const updateMap = new Map(updatedNodes.map(n => [n.id, n]));
-        return prevNodes.map(node => {
-          const match = updateMap.get(node.id);
-          if (match) {
-            // *** FIX 2: LOOK FOR THE SENTENCE IN THE CORRECT PLACE (node.data) ***
-            const hasTarget = !!match.data?.target_sentence;
-            return {
-              ...node, // Keep the original node
-              data: match.data, // Overwrite with the updated data from the server
-              status: hasTarget ? 'mastered' : node.status, // Update status
-              // Preserve simulation coordinates - THIS IS BRILLIANT
-              x: node.x,
-              y: node.y,
-              vx: node.vx, // Also preserve velocity to stop jittering
-              vy: node.vy,
-            };
-          }
-          return node;
-        });
+      const response = await fetch(`${API_BASE_URL}/fill_curriculum`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          worksheet_data: leanNodes,
+          instruction_text: "Fill these nodes."
+        }),
       });
 
+      if (!response.ok) throw new Error('AI Generation Failed');
+
+      const result = await response.json();
+      const updatedData = result.worksheet_data || [];
+
+      // MERGE: Update nodes with new sentences
+      setNodes(prev => prev.map(node => {
+        const match = updatedData.find((n: any) => n.id === node.id);
+        if (match && match.data?.target_sentence) {
+          return {
+            ...node,
+            status: 'mastered',
+            data: { ...node.data, ...match.data }
+          };
+        }
+        return node;
+      }));
+
     } catch (error) {
-      console.error("Fill Curriculum Error:", error);
-      // Ideally show a toast or alert here
+      console.error(error);
     } finally {
       setIsWeaving(false);
     }
   };
 
-  const handleNodePress = (node: ConstellationNode) => {
-    setActiveNode(node);
-    // Close the inspector when switching nodes
-    closeInspector();
+  // 3. Interaction Handlers
+  const onNodePress = (node: ConstellationNode) => {
+    if (node.type === 'rule' && node.status === 'mastered') {
+      setActiveSentenceNode(node);
+      setSelectedToken(null);
+    }
   };
 
-  const handleTokenPress = (token: Token) => {
-    openInspector(token);
+  const onTokenPress = (token: any) => {
+    setSelectedToken(token);
   };
+
+  const closeInspector = () => setSelectedToken(null);
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <Stack.Screen options={{ headerShown: false }} />
-      {nodes.length > 0 ? (
-        <>
-          <ConstellationMap
-            nodes={nodes}
-            links={links}
-            goldenPath={goldenPath} // PASS THE PATH
-            onNodePress={handleNodePress}
-          />
-          {/* Actuator FAB */}
-          <Pressable
-            onPress={handleWeave}
-            disabled={isWeaving}
-            style={({ pressed }) => ({
-              position: 'absolute',
-              bottom: 40,
-              right: 20,
-              // THE GOLDEN GRADIENT (Simulated with background color + border)
-              backgroundColor: '#1a1918', // Obsidian Core
-              borderWidth: 1,
-              borderColor: '#C5A059', // Solid Gold Border
-
-              // THE SHAPE
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderRadius: 100, // Pill Shape
-
-              // THE GLOW (Shadows)
-              shadowColor: '#C5A059',
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.6,
-              shadowRadius: 10,
-              elevation: 10, // Android Glow
-
-              // INTERACTION
-              opacity: pressed || isWeaving ? 0.8 : 1,
-              zIndex: 100,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            })}
-          >
-            {isWeaving ? (
-              <ActivityIndicator color="#C5A059" size="small" />
-            ) : (
-              <Text style={{
-                color: '#E3DCCB', // Parchment Text
-                fontWeight: '600',
-                fontSize: 16,
-                fontFamily: 'NeueHaasGrotesk-Display', // The Noble Font
-                letterSpacing: 1,
-                textTransform: 'uppercase'
-              }}>
-                Weave Sentences
-              </Text>
-            )}
-          </Pressable>
-
-          {/* Philology Card (Conditional) */}
-          {activeNode && (activeNode.data?.target_sentence || activeNode.data?.source_sentence) && (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <CosmicBackground />
+        <ConstellationMap
+          nodes={nodes}
+          links={links}
+          goldenPath={[]}
+          onNodePress={onNodePress}
+        />
+        {activeSentenceNode && activeSentenceNode.data?.target_sentence && (
+          <View style={styles.cardContainer}>
             <PhilologyCard
-              sentence={activeNode.data?.target_sentence || activeNode.data?.source_sentence || ""}
-              tokens={activeNode.data?.target_tokens}
-              translation={activeNode.data?.source_sentence || activeNode.data?.target_sentence || ""}
-              onTokenPress={handleTokenPress}
-              selectedToken={selectedToken}
+              sentence={activeSentenceNode.data.target_sentence}
+              translation={activeSentenceNode.data.source_sentence || ""}
+              tokens={activeSentenceNode.data.target_tokens}
+              onTokenPress={onTokenPress}
             />
-          )}
-
-        </>
-      ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Text style={{
-            color: '#E3DCCB',
-            fontSize: 24,
-            textAlign: 'center',
-            marginBottom: 16,
-            fontWeight: 'bold',
-            opacity: 0.9
-          }}>
-            No Constellation Data
-          </Text>
-          <Text style={{
-            color: '#E3DCCB',
-            fontSize: 16,
-            textAlign: 'center',
-            opacity: 0.7,
-            lineHeight: 24
-          }}>
-            Please weave a curriculum to view your path.
-          </Text>
-        </View>
-      )}
-    </View>
+          </View>
+        )}
+        {selectedToken && (
+          <InspectorSheet
+            token={selectedToken}
+            onClose={closeInspector}
+          />
+        )}
+        {/* ... Actuator FABs and Loaders ... */}
+        {!isWeaving && nodes.length > 0 && !nodes.some(n => n.status === 'mastered') && (
+          <Pressable onPress={handleWeaveSentences} style={styles.fab}>
+            <Text style={styles.fabText}>WEAVE SENTENCES</Text>
+          </Pressable>
+        )}
+        {isWeaving && (
+          <View style={styles.loader}>
+            <ActivityIndicator size="large" color="#C5A059" />
+            <Text style={styles.loaderText}>Transmuting...</Text>
+          </View>
+        )}
+      </View>
+    </GestureHandlerRootView>
   );
 }
+
+// ... your styles ...
+const styles = StyleSheet.create({
+  cardContainer: {
+    position: 'absolute',
+    top: 60, left: 20, right: 20,
+    zIndex: 50,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 40, right: 20,
+    backgroundColor: '#1a1918',
+    borderColor: '#C5A059',
+    borderWidth: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 100,
+    elevation: 10,
+    zIndex: 100,
+  },
+  fabText: {
+    color: '#E3DCCB',
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  loader: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  loaderText: {
+    color: '#C5A059',
+    marginTop: 8,
+    fontFamily: 'NeueHaasGrotesk-Text',
+  }
+});

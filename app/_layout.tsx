@@ -15,9 +15,9 @@ import { ScriptoriumTheme } from '../src/theme';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    'GFSDidot': require('../assets/fonts/GFSDidot.otf'),
-    'NeueHaasGrotesk-Display': require('../assets/fonts/NeueHaasGrotesk.otf'),
-    'NeueHaasGrotesk-Text': require('../assets/fonts/NeueHaasGroteskLight.otf'),
+    'GFSDidot': require('../assets/fonts/GFSDidot.ttf'),
+    'NeueHaasGrotesk-Display': require('../assets/fonts/NeueHaasGrotesk.ttf'),
+    'NeueHaasGrotesk-Text': require('../assets/fonts/NeueHaasGrotesk.ttf'),
   });
 
   useEffect(() => {

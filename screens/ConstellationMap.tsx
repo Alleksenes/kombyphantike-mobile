@@ -3,63 +3,66 @@ import {
   Canvas,
   Circle,
   Group,
+  Paint,
   Path,
   Skia,
-  Text as SkiaText,
+  Text as SkiaText, // <--- ALIAS IS CRITICAL
   useFont
 } from '@shopify/react-native-skia';
 import * as d3 from 'd3-force';
 import { useEffect, useMemo, useState } from 'react';
-import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Platform, Text as RNText, StyleSheet, View } from 'react-native'; // <--- RN Text aliased too
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useDerivedValue, useSharedValue } from 'react-native-reanimated';
-import { AncientContext, Token } from '../components/WordChip';
-import { ConstellationLink, ConstellationNode } from '../services/ApiService';
 
-// 1. GLOBAL CONSTANTS
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// --- THE CANONICAL TRUTH ---
+import { ConstellationLink, ConstellationNode } from '../src/types';
 
-// 2. TYPES
-// The D3 type extension
+// --- THE D3 EXTENSION ---
+// We create a new type for D3 that INCLUDES our canonical type
 export type D3Node = d3.SimulationNodeDatum & ConstellationNode;
+export type D3Link = d3.SimulationLinkDatum<D3Node>;
 
+// --- THE PROPS CONTRACT ---
+// Single, clean definition
 type Props = {
   nodes: ConstellationNode[];
   links: ConstellationLink[];
-  goldenPath: string[]; // FIX: Added missing prop
+  goldenPath?: string[];
   onNodePress?: (node: ConstellationNode) => void;
 };
 
-// Internal Component (Native Only)
-function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props) {
+// --- GLOBAL CONSTANTS ---
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+
+// The Internal Canvas Component
+function ConstellationMapCanvas({ nodes, links, goldenPath = [], onNodePress }: Props) {
   // A. Fonts
-  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 14);
+  const font = useFont(require('../assets/fonts/NeueHaasGrotesk.ttf'), 14); // Use OTF if that's the file name
 
   // B. Gestures & Animation Values
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const scale = useSharedValue(1);
-  const context = useSharedValue({ x: 0, y: 0, scale: 1 });
+  const savedScale = useSharedValue(1);
 
   // C. Local State for D3 Simulation
   const [simulationNodes, setSimulationNodes] = useState<D3Node[]>([]);
 
   // D. Gesture Logic
   const panGesture = Gesture.Pan()
-    .onStart(() => {
-      context.value = { x: translateX.value, y: translateY.value, scale: scale.value };
-    })
-    .onUpdate((e) => {
-      translateX.value = context.value.x + e.translationX;
-      translateY.value = context.value.y + e.translationY;
+    .onChange((e) => {
+      translateX.value += e.changeX;
+      translateY.value += e.changeY;
     });
 
   const pinchGesture = Gesture.Pinch()
-    .onStart(() => {
-      context.value = { x: translateX.value, y: translateY.value, scale: scale.value };
+    .onChange((e) => {
+      scale.value = savedScale.value * e.scale;
     })
-    .onUpdate((e) => {
-      scale.value = context.value.scale * e.scale;
+    .onEnd(() => {
+      savedScale.value = scale.value;
     });
 
   const handleTap = (x: number, y: number) => {
@@ -69,13 +72,13 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
 
     const simX = (x - tx) / s;
     const simY = (y - ty) / s;
-    const hitRadius = 30;
+    const hitRadiusSq = 30 * 30; // Compare squared distances for performance
 
     const clickedNode = simulationNodes.find(node => {
       if (node.x === undefined || node.y === undefined) return false;
       const dx = node.x - simX;
       const dy = node.y - simY;
-      return dx * dx + dy * dy < hitRadius * hitRadius;
+      return dx * dx + dy * dy < hitRadiusSq;
     });
 
     if (clickedNode && onNodePress) {
@@ -83,14 +86,13 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
     }
   };
 
-  const tapGesture = Gesture.Tap().onStart((e) => {
+  const tapGesture = Gesture.Tap().onEnd((e) => {
     runOnJS(handleTap)(e.x, e.y);
   });
 
-  const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture, tapGesture);
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture, tapGesture);
 
   // E. Transform Matrix
-  // FIX: Explicitly typed return for Skia transform
   const transform = useDerivedValue(() => {
     return [{ translateX: translateX.value }, { translateY: translateY.value }, { scale: scale.value }];
   });
@@ -99,24 +101,13 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    // 1. Initial Positions (Prevent 0,0 Cluster)
-    nodes.forEach(node => {
-      if (node.x === undefined || node.y === undefined) {
-        node.x = SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 50;
-        node.y = SCREEN_HEIGHT / 2 + (Math.random() - 0.5) * 50;
-      }
-    });
-
-    // 2. Initialize simulation (Stopped)
     const simulation = d3.forceSimulation(nodes as D3Node[])
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
-      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(90))
-      .stop(); // Stop automatic ticking
-
-    // 3. Warmup Phase (Calculate initial layout in one shot)
-    simulation.tick(100);
-    setSimulationNodes([...nodes] as D3Node[]);
+      .force('charge', d3.forceManyBody().strength(-400))
+      .force('center', d3.forceCenter(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2).strength(0.1))
+      .force('link', d3.forceLink(links as D3Link[]).id((d: any) => d.id).distance(100).strength(0.5))
+      .on('tick', () => {
+        setSimulationNodes([...simulation.nodes()]);
+      });
 
     return () => { simulation.stop(); };
   }, [nodes, links]);
@@ -125,14 +116,9 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   const linksPath = useMemo(() => {
     const path = Skia.Path.Make();
     links.forEach(link => {
-      const source = link.source as unknown as D3Node;
-      const target = link.target as unknown as D3Node;
-
-      if (
-        source && target &&
-        source.x !== undefined && source.y !== undefined &&
-        target.x !== undefined && target.y !== undefined
-      ) {
+      const source = link.source as D3Node;
+      const target = link.target as D3Node;
+      if (source.x && source.y && target.x && target.y) {
         path.moveTo(source.x, source.y);
         path.lineTo(target.x, target.y);
       }
@@ -170,23 +156,28 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
         <Canvas style={styles.canvas}>
           <Group transform={transform}>
 
-            {/* LINKS */}
+            {/* LAYER 1: Standard Connections (The Faint Web) */}
             <Path
               path={linksPath}
               color="rgba(227, 220, 203, 0.2)"
               style="stroke"
-              strokeWidth={1}
+              strokeWidth={1.5}
             />
 
-            {/* GOLDEN PATH (The "Spline") */}
-            <Path
-              path={goldenPathPath}
-              color="#C5A059"
-              style="stroke"
-              strokeWidth={3}
-            >
-              <BlurMask blur={5} style="normal" />
-            </Path>
+            {/* LAYER 2: THE GOLDEN PATH (The Spline) */}
+            {/* PLACE IT HERE: After links, but before Nodes */}
+            {goldenPathPath && (
+              <Path
+                path={goldenPathPath}
+                color="#C5A059"
+                style="stroke"
+                strokeWidth={4}
+                strokeJoin="round"
+                strokeCap="round"
+              >
+                <BlurMask blur={8} style="normal" />
+              </Path>
+            )}
 
             {/* NODES */}
             {simulationNodes.map((node) => {
@@ -194,17 +185,22 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
 
               const isMastered = node.status === 'mastered';
               const isActive = node.status === 'active';
-              const isLocked = node.status === 'locked';
               const nodeColor = isMastered ? "#C5A059" : (isActive ? "#FFFFFF" : "#6B7280");
-              const nodeRadius = isActive ? 20 : 15;
+              const nodeRadius = node.type === 'theme' ? 25 : (isActive ? 20 : 15);
               const textWidth = font.getTextWidth(node.label);
 
               return (
                 <Group key={`node-${node.id}`}>
-                  <Circle cx={node.x} cy={node.y} r={nodeRadius} color={nodeColor} />
+                  <Circle cx={node.x} cy={node.y} r={nodeRadius + 4}>
+                    <BlurMask blur={isMastered ? 12 : 6} style="solid" />
+                    <Paint color={isMastered ? "#C5A059" : nodeColor} />
+                  </Circle>
+                  <Circle cx={node.x} cy={node.y} r={nodeRadius} color={"#0f0518"} />
+                  <Circle cx={node.x} cy={node.y} r={nodeRadius - 2} color={nodeColor} />
+
                   <SkiaText
                     x={node.x - textWidth / 2}
-                    y={node.y + nodeRadius + 15}
+                    y={node.y + nodeRadius + 20}
                     text={node.label}
                     font={font}
                     color={isActive ? "#FFFFFF" : "#9CA3AF"}
@@ -219,14 +215,12 @@ function ConstellationMapCanvas({ nodes, links, goldenPath, onNodePress }: Props
   );
 }
 
+// The Main Component Export
 export default function ConstellationMap({ nodes, links, goldenPath, onNodePress }: Props) {
   if (Platform.OS === 'web') {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: 'white', marginBottom: 20 }}>Constellation Map (Web View)</Text>
-        {nodes.map(n => (
-            <Text key={n.id} style={{ color: 'gray' }}>{n.label}</Text>
-        ))}
+        <RNText style={{ color: 'white' }}>Constellation Map (Web Fallback)</RNText>
       </View>
     );
   }
@@ -236,5 +230,5 @@ export default function ConstellationMap({ nodes, links, goldenPath, onNodePress
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   canvas: { flex: 1 },
-  loader: { flex: 1, backgroundColor: 'transparent' },
+  loader: { flex: 1, backgroundColor: '#0f0518' },
 });

@@ -5,8 +5,7 @@ import { Keyboard, KeyboardAvoidingView, LayoutChangeEvent, Platform, StyleSheet
 import OmegaLoader from '../../components/OmegaLoader';
 import AetherButton from '../../components/ui/AetherButton';
 import WeaverControls from '../../components/ui/WeaverControls';
-import { SessionStore } from '../../services/SessionStore';
-import { ApiService } from '../../src/services/ApiService';
+import { API_BASE_URL } from '../../src/services/apiConfig';
 
 export default function WeaverScreen() {
   const router = useRouter();
@@ -26,31 +25,44 @@ export default function WeaverScreen() {
     setError(null);
 
     try {
-      const payload = {
-        theme: theme,
-        sentence_count: sentenceCount,
-        target_level: cefLevel, // Matches the backend CurriculumRequest
-        complexity: complexity ? "complex" : "lucid",
-      };
-
-      const data = await ApiService.draftCurriculum(payload);
-      console.log("Graph Data Received, Node Count:", data.nodes.length);
-
-      if (data.draft_data) {
-        SessionStore.setDraft(data.draft_data, false);
-      }
-      SessionStore.setTheme(theme);
-      SessionStore.setInstructions(theme);
-
-      // Navigate passing the stringified graph object
-      router.push({
-        pathname: '/constellation',
-        params: { graph: JSON.stringify(data) }
+      // 1. The Handshake
+      const response = await fetch(`${API_BASE_URL}/draft_curriculum`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // We pass the controls from the Stele
+        body: JSON.stringify({
+          theme: theme,
+          sentence_count: sentenceCount,
+          target_level: cefLevel,
+          complexity: complexity ? "complex" : "lucid"
+        }),
       });
 
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Server Error: ${errText}`);
+      }
+
+      const graph = await response.json();
+
+      // 2. The Validation (The Fix)
+      // We check for 'nodes', NOT 'draft_data'
+      if (graph && graph.nodes && graph.nodes.length > 0) {
+        // 3. The Navigation
+        // We pass the graph stringified to the next screen
+        router.push({
+          pathname: '/constellation',
+          params: { graph: JSON.stringify(graph) }
+        });
+      } else {
+        throw new Error('The Oracle returned an empty universe.');
+      }
+
     } catch (err) {
-      console.error("Weave Error:", err);
-      setError('The Threads are Tangled. Check your Conduit.');
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Failed to weave curriculum.');
     } finally {
       setIsLoading(false);
     }
