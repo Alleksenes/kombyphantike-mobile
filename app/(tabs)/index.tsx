@@ -2,6 +2,7 @@ import { BackdropBlur, Canvas, Fill, RoundedRect } from '@shopify/react-native-s
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, LayoutChangeEvent, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import OmegaLoader from '../../components/OmegaLoader';
 import AetherButton from '../../components/ui/AetherButton';
 import WeaverControls from '../../components/ui/WeaverControls';
@@ -74,7 +75,7 @@ export default function WeaverScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <SafeAreaView style={{ flex: 1, zIndex: 10, justifyContent: 'center' }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1, zIndex: 10, elevation: 10 }}
@@ -83,7 +84,10 @@ export default function WeaverScreen() {
           <View className="flex-1 justify-center items-center px-6">
 
             {/* Title */}
-            <Text className="text-4xl font-display text-text mb-8 text-center font-bold tracking-tight">
+            <Text
+              className="text-4xl font-display text-text mb-8 text-center font-bold tracking-tight"
+              style={{ color: '#E3DCCB' }}
+            >
               Create a Curriculum
             </Text>
 
@@ -162,6 +166,6 @@ export default function WeaverScreen() {
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
