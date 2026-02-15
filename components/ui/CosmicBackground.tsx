@@ -1,61 +1,44 @@
+import React, { useMemo, useEffect } from 'react';
+import { StyleSheet, useWindowDimensions, Platform, View } from 'react-native';
 import { Canvas, Rect, Shader, Skia } from '@shopify/react-native-skia';
-import { useEffect, useMemo } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { useSharedValue, withRepeat, withTiming, Easing, useDerivedValue } from 'react-native-reanimated';
 
-/**
- * The Cosmic Background.
- * Replaces the deprecated Atmosphere component.
- */
+// THE ENCORE CHROMATIC SHADER
+// Adapted from the Obsidian Theme SCSS to GLSL
 const COSMIC_SHADER = `
 uniform vec2 resolution;
 uniform float time;
 
-// Palette (The Sacred Pigments)
-// #0f0518 (Obsidian Void) -> vec3(15, 5, 24) / 255.0
-const vec3 C_VOID   = vec3(0.059, 0.020, 0.094);
-// #3e0a15 (Oxblood Ink) -> vec3(62, 10, 21) / 255.0
-const vec3 C_INK    = vec3(0.243, 0.039, 0.082);
-// #1a0b2e (Deep Plum) -> vec3(26, 11, 46) / 255.0
-const vec3 C_PLUM   = vec3(0.102, 0.043, 0.180);
-// #C5A059 (Liquid Gold) -> vec3(197, 160, 89) / 255.0
-const vec3 C_GOLD   = vec3(0.773, 0.627, 0.349);
+// The Encore Palette
+const vec3 c_cyan   = vec3(0.059, 0.961, 0.996);
+const vec3 c_purple = vec3(0.435, 0.000, 1.000);
+const vec3 c_red    = vec3(1.000, 0.000, 0.000);
+const vec3 c_yellow = vec3(1.000, 0.871, 0.000);
+const vec3 c_lime   = vec3(0.655, 1.000, 0.000);
 
-float random(vec2 st) {
-    return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+// Smooth Noise Function
+float random (in vec2 _st) {
+    return fract(sin(dot(_st.xy, vec2(12.9898,78.233)))*43758.5453123);
 }
 
-// 2D Noise based on Morgan McGuire @morgan3d
-// https://www.shadertoy.com/view/4dS3Wd
-float noise(vec2 st) {
-    vec2 i = floor(st);
-    vec2 f = fract(st);
-
-    // Four corners in 2D of a tile
+float noise (in vec2 _st) {
+    vec2 i = floor(_st);
+    vec2 f = fract(_st);
     float a = random(i);
     float b = random(i + vec2(1.0, 0.0));
     float c = random(i + vec2(0.0, 1.0));
     float d = random(i + vec2(1.0, 1.0));
-
     vec2 u = f * f * (3.0 - 2.0 * f);
-
-    return mix(a, b, u.x) +
-            (c - a)* u.y * (1.0 - u.x) +
-            (d - b) * u.x * u.y;
+    return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
-const int OCTAVES = 5;
-
-float fbm(vec2 st) {
+float fbm ( in vec2 _st) {
     float v = 0.0;
     float a = 0.5;
-    vec2 shift = vec2(100.0);
-    // Rotate to reduce axial bias
-    mat2 rot = mat2(cos(0.5), sin(0.5),
-                    -sin(0.5), cos(0.50));
-    for (int i = 0; i < OCTAVES; ++i) {
-        v += a * noise(st);
-        st = rot * st * 2.0 + shift;
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.50));
+    for (int i = 0; i < 4; ++i) {
+        v += a * noise(_st);
+        _st = rot * _st * 2.0;
         a *= 0.5;
     }
     return v;
@@ -65,41 +48,23 @@ vec4 main(vec2 xy) {
     vec2 st = xy / resolution.xy;
     st.x *= resolution.x/resolution.y;
 
-    // Geological Time Scale: Slow movement over 120s loop
+    // Diagonal movement (like 45deg linear gradient)
     float t = time * 0.05;
+    vec2 flow = vec2(st.x + st.y + t);
 
-    // Domain Warping Pattern
-    vec2 q = vec2(0.0);
-    q.x = fbm( st + 0.01*t );
-    q.y = fbm( st + vec2(1.0));
+    // Warp the domain to make it "Liquid" instead of static stripes
+    float n = fbm(st * 3.0 - t * 0.2);
 
-    vec2 r = vec2(0.0);
-    r.x = fbm( st + 4.0*q + vec2(1.7,9.2)+ 0.15*t );
-    r.y = fbm( st + 4.0*q + vec2(8.3,2.8)+ 0.126*t);
+    // Mix the palette based on the flow and noise
+    vec3 color = mix(c_cyan, c_purple, sin(flow.x * 3.0 + n) * 0.5 + 0.5);
+    color = mix(color, c_red, sin(flow.x * 2.0 + n * 2.0 + 2.0) * 0.5 + 0.5);
+    color = mix(color, c_yellow, sin(flow.x * 4.0 - n + 4.0) * 0.5 + 0.5);
 
-    float f = fbm( st + 4.0*r );
+    // Add the "Grain" (The Obsidian texture)
+    float grain = random(st * time) * 0.08;
 
-    // Color Mixing
-    // Start with Deep Void
-    vec3 color = mix(C_VOID, C_INK, clamp((f*f)*4.0, 0.0, 1.0));
-
-    // Mix in Deep Plum based on intermediate warp 'q'
-    color = mix(color, C_PLUM, clamp(length(q), 0.0, 1.0));
-
-    // Add Liquid Gold highlights sparingly
-    // Use the final warp 'r' and high frequency details
-    float goldMask = smoothstep(0.8, 1.0, r.x * r.y * f);
-    color = mix(color, C_GOLD, goldMask * 0.4);
-
-    // Dithering: High frequency noise to prevent banding
-    // "Pigmented paper feel"
-    float dither = (random(xy + time) - 0.5) * 0.03;
-    color += dither;
-
-    // Subtle Vignette for depth
-    vec2 uv = xy / resolution.xy;
-    float vig = uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y) * 15.0;
-    color *= mix(0.7, 1.0, pow(vig, 0.2));
+    // Darken it slightly to keep text readable (Obsidian mode)
+    color = color * 0.6 + vec3(grain);
 
     return vec4(color, 1.0);
 }
@@ -110,39 +75,27 @@ const CosmicBackground = () => {
   const time = useSharedValue(0);
 
   useEffect(() => {
-    time.value = withRepeat(
-      withTiming(120, { duration: 120000, easing: Easing.linear }),
-      -1,
-      true // Reverse for seamless flow
-    );
+    // Slower, infinite loop for the "Scroll" effect
+    time.value = withRepeat(withTiming(1000, { duration: 100000, easing: Easing.linear }), -1);
   }, [time]);
 
-  const uniforms = useDerivedValue(() => ({
-    resolution: [width, height],
-    time: time.value,
-  }));
+  const uniforms = useDerivedValue(() => ({ resolution: [width, height], time: time.value }));
 
-  const shader = useMemo(() => {
-    if (Platform.OS === 'web') return null;
-    return Skia.RuntimeEffect.Make(COSMIC_SHADER);
-  }, []);
+  // WEB FALLBACK: If on web, return null (handled by CSS in root)
+  const shader = useMemo(() => (Platform.OS === 'web' ? null : Skia.RuntimeEffect.Make(COSMIC_SHADER)), []);
 
-  // Web Fallback
-  if (Platform.OS === 'web') {
-    return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0f0518' }]} />;
+  if (Platform.OS === 'web' || !shader) {
+    return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1a1918' }]} />;
   }
 
-  if (!shader) return null;
-
   return (
-    <Canvas
-      style={[StyleSheet.absoluteFill, { zIndex: -1 }]}
-      pointerEvents="none"
-    >
-      <Rect x={0} y={0} width={width} height={height}>
-        <Shader source={shader} uniforms={uniforms} />
-      </Rect>
-    </Canvas>
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Canvas style={{ flex: 1 }}>
+        <Rect x={0} y={0} width={width} height={height}>
+          <Shader source={shader} uniforms={uniforms} />
+        </Rect>
+      </Canvas>
+    </View>
   );
 };
 
