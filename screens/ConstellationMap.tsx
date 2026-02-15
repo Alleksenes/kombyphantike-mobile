@@ -151,8 +151,6 @@ function ConstellationMapCanvas({ nodes, links, goldenPath = [], onNodePress }: 
 
   if (!font) return <View style={styles.loader} />;
 
-  console.log("Drawing Nodes Count:", simulationNodes.length);
-
   return (
     <GestureDetector gesture={composedGesture}>
       <View style={styles.container}>
