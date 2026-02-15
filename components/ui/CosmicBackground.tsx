@@ -3,6 +3,10 @@ import { useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
+/**
+ * The Cosmic Background.
+ * Replaces the deprecated Atmosphere component.
+ */
 const COSMIC_SHADER = `
 uniform vec2 resolution;
 uniform float time;
