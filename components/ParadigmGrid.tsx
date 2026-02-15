@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { ParadigmEntry, parseNounParadigm, parseVerbParadigm } from '../utils/paradigm_utils';
 
 interface ParadigmGridProps {
@@ -76,7 +76,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
 
         {/* Grid Header */}
         <View className="flex-row mb-2 border-b border-gray-800 pb-2">
-          <View style={{ width: 40 }} />
+          <View style={styles.fixedWidthColumn} />
           <Text className={headerTextClass}>Singular</Text>
           <Text className={headerTextClass}>Plural</Text>
         </View>
@@ -90,7 +90,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
 
             return (
               <View key={person} className={`flex-row items-center py-3 ${idx < persons.length - 1 ? rowBorderClass : ''}`}>
-                <View style={{ width: 40 }}>
+                <View style={styles.fixedWidthColumn}>
                   <Text className={labelTextClass}>{person}</Text>
                 </View>
 
@@ -130,7 +130,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
 
       {/* Grid Header */}
       <View className="flex-row mb-2 border-b border-gray-800 pb-2">
-        <View style={{ width: 40 }} />
+        <View style={styles.fixedWidthColumn} />
         <Text className={headerTextClass}>Singular</Text>
         <Text className={headerTextClass}>Plural</Text>
       </View>
@@ -144,7 +144,7 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
           return (
             <View key={idx} className={`flex-row items-center py-3 ${idx < nounData.length - 1 ? rowBorderClass : ''}`}>
               {/* Case Label */}
-              <View style={{ width: 40 }}>
+              <View style={styles.fixedWidthColumn}>
                 <Text className={labelTextClass}>{label}</Text>
               </View>
 
@@ -172,3 +172,9 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  fixedWidthColumn: {
+    width: 40,
+  },
+});
