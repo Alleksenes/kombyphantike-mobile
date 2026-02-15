@@ -4,24 +4,25 @@ import { Platform } from 'react-native';
 const API_PORT = '8000';
 
 const getBaseUrl = () => {
-    // 1. Prioritize Environment Variable
-    if (process.env.EXPO_PUBLIC_API_URL) {
-        const url = process.env.EXPO_PUBLIC_API_URL;
-        // Check for insecure protocol in production
-        if (!__DEV__ && url.startsWith('http://')) {
-            console.warn('Insecure API URL (HTTP) detected in production: ' + url);
-        }
-        return url;
-    }
+    // 1. Check for explicit environment variable override
+    const explicitUrl = process.env.EXPO_PUBLIC_API_URL;
 
-    // 2. Production Fallback (Error)
-    // If we are in production and no env var is set, return a placeholder error URL
-    // so we don't accidentally connect to localhost or 10.0.2.2 which won't work or is insecure.
+    // In production, we enforce usage of the environment variable
     if (!__DEV__) {
-        return 'https://api.missing-env-var.error';
+        if (!explicitUrl) {
+            return 'https://api.missing-env-var.error';
+        }
+        if (explicitUrl.startsWith('http://')) {
+            console.warn('Insecure API URL (HTTP) detected in production');
+        }
+        return explicitUrl;
     }
 
-    // 3. Development Auto-Detection
+    // In development, allow override if present
+    if (explicitUrl) {
+        return explicitUrl;
+    }
+
     if (Platform.OS === 'web') return `http://localhost:${API_PORT}`;
 
     // AUTOMATIC IP DETECTION
