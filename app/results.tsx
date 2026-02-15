@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import PhilologyCard from '../components/PhilologyCard';
 import { Token } from '../components/WordChip';
-import ConstellationMap, { ConstellationLink, ConstellationNode } from '../screens/ConstellationMap';
+import ConstellationMap from '../screens/ConstellationMap';
 import { ApiService } from '../src/services/ApiService';
+import { ConstellationLink, ConstellationNode } from '../src/types';
 import { SessionStore } from '../services/SessionStore';
 import { useInspectorStore } from '../src/store/inspectorStore';
 
@@ -163,11 +164,11 @@ export default function ResultsScreen() {
           </Pressable>
 
           {/* Philology Card (Conditional) */}
-          {activeNode && (activeNode.target_sentence || activeNode.source_sentence) && (
+          {activeNode && (activeNode.data?.target_sentence || activeNode.data?.source_sentence) && (
             <PhilologyCard
-              sentence={activeNode.target_sentence || activeNode.source_sentence || ""}
-              tokens={activeNode.target_tokens}
-              translation={activeNode.source_sentence || activeNode.target_sentence || ""}
+              sentence={activeNode.data?.target_sentence || activeNode.data?.source_sentence || ""}
+              tokens={activeNode.data?.target_tokens}
+              translation={activeNode.data?.source_sentence || activeNode.data?.target_sentence || ""}
               onTokenPress={handleTokenPress}
               selectedToken={selectedToken}
             />
