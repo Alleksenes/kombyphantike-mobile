@@ -1,7 +1,7 @@
 import React from 'react';
 import renderer, { act } from 'react-test-renderer';
 import { useThemeColor } from './use-theme-color';
-import { Colors } from '@/constants/theme';
+import { Colors } from '@/src/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 jest.mock('@/hooks/use-color-scheme', () => ({
