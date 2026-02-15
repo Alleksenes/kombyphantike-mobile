@@ -39,11 +39,9 @@ const getBaseUrl = () => {
         return `http://10.0.2.2:${API_PORT}`;
     }
 
+    // For iOS and others, localhost usually works for simulators
     return `http://localhost:${API_PORT}`;
 };
 
 export const API_BASE_URL = getBaseUrl();
-
-if (__DEV__) {
-    console.log("API URL:", API_BASE_URL);
-}
+console.log("API URL:", API_BASE_URL);
