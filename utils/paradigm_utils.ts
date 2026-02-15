@@ -86,3 +86,96 @@ export function matchTags(formTags: any[], requiredTags: string[]): boolean {
   const threshold = normReq.length < 3 ? normReq.length : normReq.length - 1;
   return hits >= threshold;
 }
+
+export interface ParadigmEntry {
+  form: string;
+  tags: string[];
+}
+
+// Helper function to find a form with specific tags using a relaxed "best match" scoring
+export const findForm = (paradigm: ParadigmEntry[], requiredTags: string[]): string => {
+  const matchingForms = paradigm.filter(entry => {
+    return matchTags(entry.tags, requiredTags);
+  });
+
+  if (matchingForms.length === 0) {
+    // Log potential mismatches to help debug tag alignment (e.g., '1st' vs '1')
+    if (paradigm.length > 0) {
+      console.log(`[ParadigmGrid] No match for tags: [${requiredTags.join(', ')}]`);
+    }
+    return '-';
+  }
+
+  // Deduplicate forms and join
+  const uniqueForms = Array.from(new Set(matchingForms.map(e => e.form)));
+  return uniqueForms.join(', ');
+};
+
+// Parse logic for Nouns
+export const parseNounParadigm = (paradigm: ParadigmEntry[]) => {
+  const rowsOrder = [
+    { label: 'Nom', tags: ['nominative'] },
+    { label: 'Gen', tags: ['genitive'] },
+    { label: 'Acc', tags: ['accusative'] },
+    { label: 'Voc', tags: ['vocative'] },
+  ];
+
+  return rowsOrder.map((row) => ({
+    label: row.label,
+    forms: {
+      Singular: findForm(paradigm, [...row.tags, 'singular']),
+      Plural: findForm(paradigm, [...row.tags, 'plural']),
+    },
+  }));
+};
+
+export const parseVerbParadigm = (paradigm: ParadigmEntry[]) => {
+  console.log("Raw Paradigm:", JSON.stringify(paradigm, null, 2));
+
+  // Structure: Tense -> Voice -> Person (1,2,3) -> { Singular: string, Plural: string }
+  const result: Record<string, Record<string, Record<string, { Singular: string; Plural: string }>>> = {
+    Present: { Active: {}, Passive: {} },
+    Imperfect: { Active: {}, Passive: {} },
+    Aorist: { Active: {}, Passive: {} },
+    Future: { Active: {}, Passive: {} },
+    Subjunctive: { Active: {}, Passive: {} },
+  };
+
+  // Define categories with their specific required tags.
+  // Note: We remove 'imperfective' from Present to be more lenient,
+  // as Present is the default aspect often.
+  // For Imperfect and Aorist, we keep aspect to distinguish them (both are past).
+  const categories = [
+    { label: 'Present', tags: ['present'] },
+    { label: 'Imperfect', tags: ['past', 'imperfective'] },
+    { label: 'Aorist', tags: ['past', 'perfective'] },
+    { label: 'Future', tags: ['future'] },
+    { label: 'Subjunctive', tags: ['subjunctive'] },
+  ];
+
+  const voices = ['Active', 'Passive'];
+  const persons = ['1', '2', '3'];
+  const numbers = ['Singular', 'Plural'];
+
+  categories.forEach(category => {
+    // We do NOT pre-filter the paradigm here. We pass the full paradigm to findForm
+    // but with more specific tags.
+
+    voices.forEach(voice => {
+      persons.forEach(person => {
+        result[category.label][voice][person] = { Singular: '-', Plural: '-' };
+
+        const personTag = person === '1' ? 'first-person' : person === '2' ? 'second-person' : 'third-person';
+        const voiceTag = voice.toLowerCase();
+
+        numbers.forEach(number => {
+          // Combine category tags (Tense/Mood/Aspect) with Voice/Person/Number
+          const reqTags = [...category.tags, voiceTag, personTag, number.toLowerCase()];
+          result[category.label][voice][person][number] = findForm(paradigm, reqTags);
+        });
+      });
+    });
+  });
+
+  return result;
+};
