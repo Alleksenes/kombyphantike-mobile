@@ -1,6 +1,7 @@
 // THE CANONICAL DATA CONTRACT
 // This file rules them all. Backend and Frontend must agree on this!
 
+import type { Token, AncientContext } from '../components/WordChip';
 
 export interface NodeData {
   knot_id?: string;
@@ -8,8 +9,8 @@ export interface NodeData {
   knot_definition?: string;
   target_sentence?: string; // The Greek Sentence
   source_sentence?: string; // The English Translation
-  target_tokens?: any[];
-  ancient_context?: { author: string; greek: string; translation: string } | string;
+  target_tokens?: Token[];
+  ancient_context?: AncientContext | string;
 }
 
 export interface ConstellationNode {

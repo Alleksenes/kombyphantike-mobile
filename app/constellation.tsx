@@ -3,47 +3,33 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-// --- COMPONENT IMPORTS (Corrected Paths) ---
-import InspectorSheet from '../components/InspectorSheet';
-import PhilologyCard from '../components/PhilologyCard'; // FIX: Path was wrong, should be ../
-import CosmicBackground from '../components/ui/CosmicBackground'; // FIX: Path was wrong, should be ../
-import ConstellationMap from '../screens/ConstellationMap'; // FIX: Path was wrong, should be ../
+import PhilologyCard from '../components/PhilologyCard';
+import ConstellationMap from '../screens/ConstellationMap';
+import { Token } from '../components/WordChip';
 
-// --- THE SINGLE SOURCE OF TRUTH ---
 import { ConstellationGraph, ConstellationLink, ConstellationNode } from '../src/types';
-
-// --- SERVICES ---
+import { useInspectorStore } from '../src/store/inspectorStore';
 import { API_BASE_URL } from '../src/services/apiConfig';
-
-
-// -----------------------------------------------------------------
-// --- DELETE THESE - They are the source of all your errors ---
-//
-// interface NodeData { ... }
-// interface ConstellationNode { ... } 
-//
-// -----------------------------------------------------------------
 
 
 export default function ConstellationScreen() {
   const { graph } = useLocalSearchParams();
+  const openInspector = useInspectorStore((s) => s.openInspector);
 
-  // State now uses the CANONICAL types
+  // State uses the CANONICAL types from src/types.ts
   const [nodes, setNodes] = useState<ConstellationNode[]>([]);
   const [links, setLinks] = useState<ConstellationLink[]>([]);
   const [isWeaving, setIsWeaving] = useState(false);
 
   // Selection State
   const [activeSentenceNode, setActiveSentenceNode] = useState<ConstellationNode | null>(null);
-  const [selectedToken, setSelectedToken] = useState<any | null>(null);
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
 
-  // 1. Hydrate the Universe
+  // 1. Hydrate the Universe from route params
   useEffect(() => {
     if (typeof graph === 'string') {
       try {
-        // Type assertion tells TypeScript to trust us
         const parsedGraph = JSON.parse(graph) as ConstellationGraph;
-
         if (Array.isArray(parsedGraph.nodes)) {
           setNodes(parsedGraph.nodes);
           setLinks(parsedGraph.links || []);
@@ -54,7 +40,7 @@ export default function ConstellationScreen() {
     }
   }, [graph]);
 
-  // 2. The Actuator Logic (Fill with AI)
+  // 2. AI Fill (Weave Sentences)
   const handleWeaveSentences = async () => {
     if (isWeaving) return;
     setIsWeaving(true);
@@ -84,13 +70,12 @@ export default function ConstellationScreen() {
       const result = await response.json();
       const updatedData = result.worksheet_data || [];
 
-      // MERGE: Update nodes with new sentences
       setNodes(prev => prev.map(node => {
         const match = updatedData.find((n: any) => n.id === node.id);
         if (match && match.data?.target_sentence) {
           return {
             ...node,
-            status: 'mastered',
+            status: 'mastered' as const,
             data: { ...node.data, ...match.data }
           };
         }
@@ -104,7 +89,8 @@ export default function ConstellationScreen() {
     }
   };
 
-  // 3. Interaction Handlers
+  // 3. Interaction Handlers — The Complete Chain:
+  //    Node tap -> PhilologyCard appears -> Token tap -> TheInspector opens (via Zustand)
   const onNodePress = (node: ConstellationNode) => {
     if (node.type === 'rule' && node.status === 'mastered') {
       setActiveSentenceNode(node);
@@ -112,45 +98,53 @@ export default function ConstellationScreen() {
     }
   };
 
-  const onTokenPress = (token: any) => {
-    setSelectedToken(token);
+  const onTokenPress = (token: Token) => {
+    // Enrich token with node-level context before opening inspector
+    const enrichedToken: Token = {
+      ...token,
+      knot_definition: token.knot_definition || activeSentenceNode?.data?.knot_definition,
+      ancient_context: token.ancient_context || activeSentenceNode?.data?.ancient_context,
+    };
+    setSelectedToken(enrichedToken);
+    openInspector(enrichedToken);
   };
 
-  const closeInspector = () => setSelectedToken(null);
-
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
+    <GestureHandlerRootView style={styles.root}>
+      <View style={styles.scene}>
         <Stack.Screen options={{ headerShown: false }} />
-        <CosmicBackground />
+
+        {/* The Map fills the screen; CosmicBackground is rendered globally in _layout.tsx */}
         <ConstellationMap
           nodes={nodes}
           links={links}
           goldenPath={[]}
           onNodePress={onNodePress}
         />
+
+        {/* PhilologyCard: appears when a mastered node is tapped */}
         {activeSentenceNode && activeSentenceNode.data?.target_sentence && (
-          <View style={styles.cardContainer}>
+          <View style={styles.cardContainer} pointerEvents="box-none">
             <PhilologyCard
               sentence={activeSentenceNode.data.target_sentence}
               translation={activeSentenceNode.data.source_sentence || ""}
               tokens={activeSentenceNode.data.target_tokens}
               onTokenPress={onTokenPress}
+              selectedToken={selectedToken}
             />
           </View>
         )}
-        {selectedToken && (
-          <InspectorSheet
-            token={selectedToken}
-            onClose={closeInspector}
-          />
-        )}
-        {/* ... Actuator FABs and Loaders ... */}
+
+        {/* TheInspector is mounted globally in _layout.tsx and reacts to inspectorStore */}
+
+        {/* FAB: Weave Sentences */}
         {!isWeaving && nodes.length > 0 && !nodes.some(n => n.status === 'mastered') && (
           <Pressable onPress={handleWeaveSentences} style={styles.fab}>
             <Text style={styles.fabText}>WEAVE SENTENCES</Text>
           </Pressable>
         )}
+
+        {/* Loader */}
         {isWeaving && (
           <View style={styles.loader}>
             <ActivityIndicator size="large" color="#C5A059" />
@@ -162,16 +156,25 @@ export default function ConstellationScreen() {
   );
 }
 
-// ... your styles ...
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  scene: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   cardContainer: {
     position: 'absolute',
-    top: 60, left: 20, right: 20,
+    top: 60,
+    left: 20,
+    right: 20,
     zIndex: 50,
   },
   fab: {
     position: 'absolute',
-    bottom: 40, right: 20,
+    bottom: 40,
+    right: 20,
     backgroundColor: '#1a1918',
     borderColor: '#C5A059',
     borderWidth: 1,
@@ -197,5 +200,5 @@ const styles = StyleSheet.create({
     color: '#C5A059',
     marginTop: 8,
     fontFamily: 'NeueHaasGrotesk-Text',
-  }
+  },
 });

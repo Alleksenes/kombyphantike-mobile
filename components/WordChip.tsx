@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, StyleSheet } from 'react-native';
 
 export interface AncientContext {
   author: string;
@@ -45,34 +45,10 @@ function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipPr
 
   if (isPunctuation) {
     return (
-      <Text className="text-xl text-text font-greek self-end mb-1" style={{ fontFamily: 'GFSDidot' }}>
+      <Text style={styles.punctuation}>
         {token.text}
       </Text>
     );
-  }
-
-  // Interaction State Logic
-  let containerStyle = "mr-1.5 mb-2 px-1 py-1 "; // Reduced horizontal padding to look more like text
-  let textStyle = "text-xl font-greek ";
-  let subTextStyle = "text-[10px] font-ui italic -mt-1 ";
-
-  if (isFocused) {
-    // Focused: Highlights the word being inspected
-    containerStyle += "bg-accent rounded-lg";
-    textStyle += "text-background"; // Dark text on Gold
-    subTextStyle += "text-background/60";
-  } else {
-    // Normal: Transparent background with subtle underline for interactivity
-    containerStyle += "bg-transparent border-b ";
-
-    if (isHeavy) {
-       containerStyle += "border-text/20"; // Subtle visual cue
-    } else {
-       containerStyle += "border-transparent";
-    }
-
-    textStyle += "text-text"; // Warm Parchment
-    subTextStyle += "text-gray-500";
   }
 
   return (
@@ -80,14 +56,28 @@ function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipPr
       onPress={() => onPress(token)}
       onLongPress={() => onLongPress(token)}
       delayLongPress={500}
-      className={containerStyle}
+      style={[
+        styles.chip,
+        isFocused ? styles.chipFocused : styles.chipNormal,
+        !isFocused && isHeavy && styles.chipHeavy,
+      ]}
     >
-      <View className="items-center">
-        <Text className={textStyle} style={{ fontFamily: 'GFSDidot' }}>
+      <View style={styles.chipContent}>
+        <Text
+          style={[
+            styles.mainText,
+            isFocused ? styles.mainTextFocused : styles.mainTextNormal,
+          ]}
+        >
           {token.text}
         </Text>
         {token.transliteration && (
-          <Text className={subTextStyle} style={{ fontFamily: 'NeueHaasGrotesk-Text' }}>
+          <Text
+            style={[
+              styles.subText,
+              isFocused ? styles.subTextFocused : styles.subTextNormal,
+            ]}
+          >
             {token.transliteration}
           </Text>
         )}
@@ -97,3 +87,56 @@ function WordChip({ token, onPress, onLongPress, isFocused = false }: WordChipPr
 }
 
 export default memo(WordChip);
+
+const styles = StyleSheet.create({
+  punctuation: {
+    fontSize: 20,
+    color: '#E3DCCB',
+    fontFamily: 'GFSDidot',
+    alignSelf: 'flex-end',
+    marginBottom: 4,
+  },
+  chip: {
+    marginRight: 6,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  chipFocused: {
+    backgroundColor: '#C0A062',
+    borderRadius: 8,
+  },
+  chipNormal: {
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
+  },
+  chipHeavy: {
+    borderBottomColor: 'rgba(227, 220, 203, 0.2)',
+  },
+  chipContent: {
+    alignItems: 'center',
+  },
+  mainText: {
+    fontSize: 20,
+    fontFamily: 'GFSDidot',
+  },
+  mainTextFocused: {
+    color: '#1a1918',
+  },
+  mainTextNormal: {
+    color: '#E3DCCB',
+  },
+  subText: {
+    fontSize: 10,
+    fontStyle: 'italic',
+    marginTop: -2,
+    fontFamily: 'NeueHaasGrotesk-Text',
+  },
+  subTextFocused: {
+    color: 'rgba(26, 25, 24, 0.6)',
+  },
+  subTextNormal: {
+    color: '#6B7280',
+  },
+});

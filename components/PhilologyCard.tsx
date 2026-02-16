@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, memo } from 'react';
-import { Dimensions, View, Text } from 'react-native';
+import { Dimensions, View, Text, StyleSheet } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import WordChip, { Token, AncientContext } from './WordChip';
 import { AudioPlayer } from '../src/services/AudioPlayer';
@@ -25,15 +25,12 @@ function PhilologyCard({
 }: PhilologyCardProps) {
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
-  // Use provided tokens or fallback to splitting the sentence
   const displayTokens = useMemo(() => {
     if (tokens && tokens.length > 0) return tokens;
-    // Fallback: create dummy tokens from sentence
     return sentence.split(/\s+/).map((text) => ({
-        text,
-        lemma: text, // Fallback
-        pos: 'UNKNOWN',
-        // minimal Token shape
+      text,
+      lemma: text,
+      pos: 'UNKNOWN',
     } as Token));
   }, [tokens, sentence]);
 
@@ -50,59 +47,117 @@ function PhilologyCard({
   };
 
   const handleLongPress = useCallback(async (token: Token) => {
-      try {
-          await AudioPlayer.playSentence(token.text);
-      } catch (e) {
-          console.error("Failed to play word audio", e);
-      }
+    try {
+      await AudioPlayer.playSentence(token.text);
+    } catch (e) {
+      console.error("Failed to play word audio", e);
+    }
   }, []);
 
   return (
-    <View
-      className="bg-card rounded-3xl p-6 shadow-lg border border-gray-700 self-center mt-12 absolute top-0 z-50"
-      style={{ width: CARD_WIDTH, backgroundColor: '#1a1918' }}
-    >
-      <View className="flex-row justify-between mb-4">
-        <Text className="text-xs font-bold tracking-widest text-accent uppercase">Active Node</Text>
-         <View className="h-6 w-6 justify-center items-center">
-            {isLoadingAudio ? (
-              <OmegaLoader size={20} color="#C0A062" />
-            ) : (
-              <IconButton
-                icon="volume-high"
-                size={20}
-                iconColor="#C0A062"
-                onPress={handleSpeakSentence}
-                style={{ margin: 0 }}
-              />
-            )}
-          </View>
+    <View style={styles.card}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerLabel}>Active Node</Text>
+        <View style={styles.audioButton}>
+          {isLoadingAudio ? (
+            <OmegaLoader size={20} color="#C0A062" />
+          ) : (
+            <IconButton
+              icon="volume-high"
+              size={20}
+              iconColor="#C0A062"
+              onPress={handleSpeakSentence}
+              style={{ margin: 0 }}
+            />
+          )}
+        </View>
       </View>
 
-      <View className="flex-row flex-wrap items-end justify-center mb-6">
-          {displayTokens.map((token, idx) => {
-             // Check strict equality or fallback to text matching if tokens are regenerated
-             const isFocused = selectedToken ? (selectedToken === token || selectedToken.text === token.text) : false;
+      {/* Token Display */}
+      <View style={styles.tokenRow}>
+        {displayTokens.map((token, idx) => {
+          const isFocused = selectedToken
+            ? (selectedToken === token || selectedToken.text === token.text)
+            : false;
 
-             return (
-                <WordChip
-                  key={`${token.text}-${idx}`}
-                  token={token}
-                  onPress={onTokenPress}
-                  onLongPress={handleLongPress}
-                  isFocused={isFocused}
-                />
-             );
-          })}
+          return (
+            <WordChip
+              key={`${token.text}-${idx}`}
+              token={token}
+              onPress={onTokenPress}
+              onLongPress={handleLongPress}
+              isFocused={isFocused}
+            />
+          );
+        })}
       </View>
 
-      <View className="pt-4 border-t border-gray-800">
-        <Text className="text-sm text-gray-400 font-serif italic text-center leading-5">
-            {translation}
-        </Text>
+      {/* Translation */}
+      <View style={styles.translationContainer}>
+        <Text style={styles.translationText}>{translation}</Text>
       </View>
     </View>
   );
 }
 
 export default memo(PhilologyCard);
+
+const styles = StyleSheet.create({
+  card: {
+    width: CARD_WIDTH,
+    backgroundColor: '#1a1918',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(55, 65, 81, 1)',
+    alignSelf: 'center',
+    // Shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    // Elevation for Android
+    elevation: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    color: '#C0A062',
+    textTransform: 'uppercase',
+    fontFamily: 'NeueHaasGrotesk-Display',
+  },
+  audioButton: {
+    height: 24,
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tokenRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  translationContainer: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(31, 41, 55, 1)',
+  },
+  translationText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 20,
+    fontFamily: 'GFSDidot',
+  },
+});
