@@ -4,53 +4,40 @@ import { ParadigmEntry, parseNounParadigm, parseVerbParadigm } from '../utils/pa
 
 interface ParadigmGridProps {
   paradigm: ParadigmEntry[];
-  highlightForm?: string; // Optional: highlight if matches this form
+  highlightForm?: string;
   pos?: string;
 }
 
 export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmGridProps) {
-  // Strict POS check: Only treat as verb if explicitly tagged as VERB or AUX.
-  // This ensures words like "ορίζοντας" (participle acting as noun) are treated as Nouns if their POS is NOUN.
   const isVerb = pos === 'VERB' || pos === 'AUX';
 
   const [activeTense, setActiveTense] = useState<'Present' | 'Imperfect' | 'Aorist' | 'Future' | 'Subjunctive'>('Present');
   const [activeVoice, setActiveVoice] = useState<'Active' | 'Passive'>('Active');
 
-  // Noir-Velvet Theme: Dark card background, Gold accents, Paper text
-  // We enforce a dark theme look for the card even in light mode to act as a "Boutique" element
-  const containerClass = "p-4 rounded-xl bg-black/20 border border-gray-800 shadow-sm";
-  const titleClass = "text-xs font-bold text-accent uppercase tracking-widest mb-4";
-
-  // Headers
-  const headerTextClass = "flex-1 text-center font-bold text-gray-500 text-[10px] uppercase tracking-wider";
-
-  // Cells
-  const rowBorderClass = "border-b border-gray-800/50";
-  const labelTextClass = "text-gray-400 font-bold text-xs uppercase";
-  const highlightClass = "text-accent font-bold bg-accent/10 border border-accent/30";
+  // CRITICAL: Both hooks called unconditionally to satisfy Rules of Hooks.
+  // React requires the same hooks in the same order on every render.
+  const verbData = useMemo(() => parseVerbParadigm(paradigm), [paradigm]);
+  const nounData = useMemo(() => parseNounParadigm(paradigm), [paradigm]);
 
   if (isVerb) {
-    const verbData = useMemo(() => parseVerbParadigm(paradigm), [paradigm]);
     const currentData = verbData[activeTense][activeVoice];
     const persons = ['1', '2', '3'];
 
     return (
-      <View className={containerClass}>
-        <View className="flex-row justify-between items-center mb-4">
-          <Text className={titleClass.replace('mb-4', '')}>
-            Verb Paradigm
-          </Text>
+      <View style={styles.container}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Verb Paradigm</Text>
         </View>
 
         {/* Tense Tabs */}
-        <View className="flex-row mb-4 bg-gray-900/50 rounded-lg p-1 overflow-hidden flex-wrap">
-          {['Present', 'Imperfect', 'Aorist', 'Future', 'Subjunctive'].map((tense) => (
+        <View style={styles.tabBar}>
+          {(['Present', 'Imperfect', 'Aorist', 'Future', 'Subjunctive'] as const).map((tense) => (
             <TouchableOpacity
               key={tense}
-              onPress={() => setActiveTense(tense as any)}
-              className={`items-center py-1.5 px-2 rounded-md ${activeTense === tense ? 'bg-gray-700' : ''}`}
+              onPress={() => setActiveTense(tense)}
+              style={[styles.tab, activeTense === tense && styles.tabActive]}
             >
-              <Text className={`text-[9px] uppercase font-bold tracking-wider ${activeTense === tense ? 'text-accent' : 'text-gray-500'}`} numberOfLines={1}>
+              <Text style={[styles.tabText, activeTense === tense && styles.tabTextActive]} numberOfLines={1}>
                 {tense === 'Subjunctive' ? 'Subj' : tense}
               </Text>
             </TouchableOpacity>
@@ -58,15 +45,15 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
         </View>
 
         {/* Voice Toggle */}
-        <View className="flex-row justify-center mb-4">
-          <View className="flex-row bg-gray-900/50 rounded-lg p-1">
-            {['Active', 'Passive'].map((voice) => (
+        <View style={styles.voiceRow}>
+          <View style={styles.voiceToggle}>
+            {(['Active', 'Passive'] as const).map((voice) => (
               <TouchableOpacity
                 key={voice}
-                onPress={() => setActiveVoice(voice as any)}
-                className={`px-4 py-1.5 rounded-md ${activeVoice === voice ? 'bg-gray-700' : ''}`}
+                onPress={() => setActiveVoice(voice)}
+                style={[styles.voiceTab, activeVoice === voice && styles.voiceTabActive]}
               >
-                <Text className={`text-[10px] uppercase font-bold tracking-wider ${activeVoice === voice ? 'text-accent' : 'text-gray-500'}`}>
+                <Text style={[styles.voiceTabText, activeVoice === voice && styles.voiceTabTextActive]}>
                   {voice} Voice
                 </Text>
               </TouchableOpacity>
@@ -75,38 +62,36 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
         </View>
 
         {/* Grid Header */}
-        <View className="flex-row mb-2 border-b border-gray-800 pb-2">
+        <View style={styles.gridHeader}>
           <View style={styles.fixedWidthColumn} />
-          <Text className={headerTextClass}>Singular</Text>
-          <Text className={headerTextClass}>Plural</Text>
+          <Text style={styles.headerText}>Singular</Text>
+          <Text style={styles.headerText}>Plural</Text>
         </View>
 
         {/* Grid Body */}
         <View>
           {persons.map((person, idx) => {
             const forms = currentData[person];
-            const isSingularMatch = highlightForm && forms.Singular.split(', ').includes(highlightForm);
-            const isPluralMatch = highlightForm && forms.Plural.split(', ').includes(highlightForm);
+            const isSingularMatch = highlightForm != null && forms.Singular.split(', ').includes(highlightForm);
+            const isPluralMatch = highlightForm != null && forms.Plural.split(', ').includes(highlightForm);
 
             return (
-              <View key={person} className={`flex-row items-center py-3 ${idx < persons.length - 1 ? rowBorderClass : ''}`}>
+              <View key={person} style={[styles.gridRow, idx < persons.length - 1 && styles.gridRowBorder]}>
                 <View style={styles.fixedWidthColumn}>
-                  <Text className={labelTextClass}>{person}</Text>
+                  <Text style={styles.labelText}>{person}</Text>
                 </View>
 
-                {/* Singular */}
-                <View className="flex-1 items-center justify-center px-1">
-                  <View className={`px-2 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                    <Text className={isSingularMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
+                <View style={styles.cellContainer}>
+                  <View style={[styles.cellInner, isSingularMatch && styles.cellHighlight]}>
+                    <Text style={[styles.cellText, isSingularMatch && styles.cellTextHighlight]}>
                       {forms.Singular}
                     </Text>
                   </View>
                 </View>
 
-                {/* Plural */}
-                <View className="flex-1 items-center justify-center px-1">
-                  <View className={`px-2 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                    <Text className={isPluralMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
+                <View style={styles.cellContainer}>
+                  <View style={[styles.cellInner, isPluralMatch && styles.cellHighlight]}>
+                    <Text style={[styles.cellText, isPluralMatch && styles.cellTextHighlight]}>
                       {forms.Plural}
                     </Text>
                   </View>
@@ -120,47 +105,40 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
   }
 
   // Noun Rendering
-  const nounData = useMemo(() => parseNounParadigm(paradigm), [paradigm]);
-
   return (
-    <View className={containerClass}>
-      <Text className={titleClass}>
-        Noun Paradigm
-      </Text>
+    <View style={styles.container}>
+      <Text style={[styles.title, styles.titleSpacing]}>Noun Paradigm</Text>
 
       {/* Grid Header */}
-      <View className="flex-row mb-2 border-b border-gray-800 pb-2">
+      <View style={styles.gridHeader}>
         <View style={styles.fixedWidthColumn} />
-        <Text className={headerTextClass}>Singular</Text>
-        <Text className={headerTextClass}>Plural</Text>
+        <Text style={styles.headerText}>Singular</Text>
+        <Text style={styles.headerText}>Plural</Text>
       </View>
 
       {/* Grid Body */}
       <View>
         {nounData.map(({ label, forms }, idx) => {
-          const isSingularMatch = highlightForm && forms.Singular.split(', ').includes(highlightForm);
-          const isPluralMatch = highlightForm && forms.Plural.split(', ').includes(highlightForm);
+          const isSingularMatch = highlightForm != null && forms.Singular.split(', ').includes(highlightForm);
+          const isPluralMatch = highlightForm != null && forms.Plural.split(', ').includes(highlightForm);
 
           return (
-            <View key={idx} className={`flex-row items-center py-3 ${idx < nounData.length - 1 ? rowBorderClass : ''}`}>
-              {/* Case Label */}
+            <View key={idx} style={[styles.gridRow, idx < nounData.length - 1 && styles.gridRowBorder]}>
               <View style={styles.fixedWidthColumn}>
-                <Text className={labelTextClass}>{label}</Text>
+                <Text style={styles.labelText}>{label}</Text>
               </View>
 
-              {/* Singular */}
-              <View className="flex-1 items-center justify-center px-1">
-                <View className={`px-2 py-1.5 rounded ${isSingularMatch ? highlightClass : ''}`}>
-                  <Text className={isSingularMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
+              <View style={styles.cellContainer}>
+                <View style={[styles.cellInner, isSingularMatch && styles.cellHighlight]}>
+                  <Text style={[styles.cellText, isSingularMatch && styles.cellTextHighlight]}>
                     {forms.Singular}
                   </Text>
                 </View>
               </View>
 
-              {/* Plural */}
-              <View className="flex-1 items-center justify-center px-1">
-                <View className={`px-2 py-1.5 rounded ${isPluralMatch ? highlightClass : ''}`}>
-                  <Text className={isPluralMatch ? 'text-accent font-bold font-greek text-center' : 'text-text font-greek text-center'}>
+              <View style={styles.cellContainer}>
+                <View style={[styles.cellInner, isPluralMatch && styles.cellHighlight]}>
+                  <Text style={[styles.cellText, isPluralMatch && styles.cellTextHighlight]}>
                     {forms.Plural}
                   </Text>
                 </View>
@@ -174,7 +152,144 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
 }
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(55, 65, 81, 1)',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#C0A062',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+  },
+  titleSpacing: {
+    marginBottom: 16,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    backgroundColor: 'rgba(17, 24, 39, 0.5)',
+    borderRadius: 8,
+    padding: 4,
+    flexWrap: 'wrap',
+  },
+  tab: {
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  tabActive: {
+    backgroundColor: 'rgba(55, 65, 81, 1)',
+  },
+  tabText: {
+    fontSize: 9,
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    color: '#6B7280',
+  },
+  tabTextActive: {
+    color: '#C0A062',
+  },
+  voiceRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  voiceToggle: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(17, 24, 39, 0.5)',
+    borderRadius: 8,
+    padding: 4,
+  },
+  voiceTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  voiceTabActive: {
+    backgroundColor: 'rgba(55, 65, 81, 1)',
+  },
+  voiceTabText: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    color: '#6B7280',
+  },
+  voiceTabTextActive: {
+    color: '#C0A062',
+  },
+  gridHeader: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(55, 65, 81, 1)',
+    paddingBottom: 8,
+  },
+  headerText: {
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#6B7280',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   fixedWidthColumn: {
     width: 40,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  gridRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(55, 65, 81, 0.5)',
+  },
+  labelText: {
+    color: '#9CA3AF',
+    fontWeight: 'bold',
+    fontSize: 12,
+    textTransform: 'uppercase',
+  },
+  cellContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  cellInner: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  cellHighlight: {
+    backgroundColor: 'rgba(192, 160, 98, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(192, 160, 98, 0.3)',
+  },
+  cellText: {
+    color: '#E3DCCB',
+    fontFamily: 'GFSDidot',
+    textAlign: 'center',
+  },
+  cellTextHighlight: {
+    color: '#C0A062',
+    fontWeight: 'bold',
+    fontFamily: 'GFSDidot',
+    textAlign: 'center',
   },
 });

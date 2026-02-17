@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git -C \"C:\\\\Users\\\\alleksenes\\\\kombyphantike-mobile\\\\.claude\\\\worktrees\\\\brave-sammet\" log --oneline -20)",
+      "Bash(git add:*)"
+    ]
+  }
+}
