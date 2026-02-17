@@ -1,7 +1,17 @@
 import { BackdropBlur, Canvas, Fill, RoundedRect } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, LayoutChangeEvent, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  LayoutChangeEvent,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import OmegaLoader from '../../components/OmegaLoader';
 import AetherButton from '../../components/ui/AetherButton';
@@ -21,23 +31,18 @@ export default function WeaverScreen() {
 
   const handleWeave = async () => {
     if (!theme.trim()) return;
-
     setIsLoading(true);
     setError(null);
 
     try {
-      // 1. The Handshake
       const response = await fetch(`${API_BASE_URL}/draft_curriculum`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // We pass the controls from the Stele
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          theme: theme,
+          theme,
           sentence_count: sentenceCount,
           target_level: cefLevel,
-          complexity: complexity ? "complex" : "lucid"
+          complexity: complexity ? 'complex' : 'lucid',
         }),
       });
 
@@ -48,19 +53,14 @@ export default function WeaverScreen() {
 
       const graph = await response.json();
 
-      // 2. The Validation (The Fix)
-      // We check for 'nodes', NOT 'draft_data'
       if (graph && graph.nodes && graph.nodes.length > 0) {
-        // 3. The Navigation
-        // We pass the graph stringified to the next screen
         router.push({
           pathname: '/constellation',
-          params: { graph: JSON.stringify(graph) }
+          params: { graph: JSON.stringify(graph) },
         });
       } else {
         throw new Error('The Oracle returned an empty universe.');
       }
-
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to weave curriculum.');
@@ -75,32 +75,31 @@ export default function WeaverScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, zIndex: 10, justifyContent: 'center' }}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1, zIndex: 10, elevation: 10 }}
+        style={styles.keyboardView}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 justify-center items-center px-6">
+          <View style={styles.content}>
 
-            {/* Title */}
-            <Text
-              className="text-4xl font-display text-text mb-8 text-center font-bold tracking-tight"
-              style={{ color: '#E3DCCB' }}
-            >
-              Create a Curriculum
-            </Text>
+            <Text style={styles.title}>Create a Curriculum</Text>
 
-            <View className="w-full max-w-md">
-              {/* Glass Input */}
+            <View style={styles.formContainer}>
+              {/* ── Glass Input ─────────────────────────────────────── */}
               <View
-                className="w-full mb-8 h-[64px] rounded-xl overflow-hidden relative"
-                style={Platform.OS === 'web' ? { borderWidth: 1, borderColor: '#C5A059', backgroundColor: 'rgba(255,255,255,0.05)' } : undefined}
+                style={[
+                  styles.inputWrapper,
+                  Platform.OS === 'web' && styles.inputWrapperWeb,
+                ]}
                 onLayout={onInputLayout}
               >
                 {Platform.OS !== 'web' && inputLayout.width > 0 && (
                   <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-                    <BackdropBlur blur={10} clip={{ x: 0, y: 0, width: inputLayout.width, height: inputLayout.height, rx: 12, ry: 12 }}>
+                    <BackdropBlur
+                      blur={10}
+                      clip={{ x: 0, y: 0, width: inputLayout.width, height: inputLayout.height, rx: 12, ry: 12 }}
+                    >
                       <Fill color="rgba(255,255,255,0.05)" />
                     </BackdropBlur>
                     <RoundedRect
@@ -117,19 +116,17 @@ export default function WeaverScreen() {
                 )}
                 <TextInput
                   placeholder="Enter a Theme (e.g., 'Justice', 'The Sea')..."
-                  placeholderTextColor="rgba(227, 220, 203, 0.5)"
+                  placeholderTextColor="rgba(227, 220, 203, 0.4)"
                   value={theme}
                   onChangeText={setTheme}
-                  className="flex-1 px-4 text-text text-lg font-ui"
-                  style={{ fontFamily: 'NeueHaasGrotesk-Text', zIndex: 50 }}
-                  pointerEvents="auto"
+                  style={styles.textInput}
                   autoCapitalize="sentences"
                   returnKeyType="done"
                   onSubmitEditing={handleWeave}
                 />
               </View>
 
-              {/* Stele of Command (Weaver Controls) */}
+              {/* ── Stele of Command ────────────────────────────────── */}
               <WeaverControls
                 sentenceCount={sentenceCount}
                 setSentenceCount={setSentenceCount}
@@ -139,8 +136,7 @@ export default function WeaverScreen() {
                 setComplexity={setComplexity}
               />
 
-
-              {/* Aether Glass Button */}
+              {/* ── CTA Button ──────────────────────────────────────── */}
               <AetherButton
                 label="Weave Curriculum"
                 onPress={handleWeave}
@@ -148,18 +144,14 @@ export default function WeaverScreen() {
               />
 
               {isLoading && (
-                <View className="mt-8 items-center">
+                <View style={styles.loaderBlock}>
                   <OmegaLoader size={48} color="#C0A062" />
-                  <Text className="text-accent mt-4 font-ui italic">
-                    Weaving the threads of knowledge...
-                  </Text>
+                  <Text style={styles.loaderText}>Weaving the threads of knowledge...</Text>
                 </View>
               )}
 
               {error && (
-                <Text className="text-red-500 mt-4 text-center font-ui">
-                  {error}
-                </Text>
+                <Text style={styles.errorText}>{error}</Text>
               )}
             </View>
 
@@ -169,3 +161,74 @@ export default function WeaverScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    zIndex: 10,
+  },
+  keyboardView: {
+    flex: 1,
+    zIndex: 10,
+    elevation: 10,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  title: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#E3DCCB',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginBottom: 32,
+  },
+  formContainer: {
+    width: '100%',
+    maxWidth: 420,
+  },
+  inputWrapper: {
+    width: '100%',
+    height: 64,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 24,
+    position: 'relative',
+  },
+  inputWrapperWeb: {
+    borderWidth: 1,
+    borderColor: '#C5A059',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  textInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    color: '#E3DCCB',
+    fontSize: 16,
+    fontFamily: 'NeueHaasGrotesk-Text',
+    zIndex: 50,
+    height: '100%',
+  },
+  loaderBlock: {
+    marginTop: 32,
+    alignItems: 'center',
+  },
+  loaderText: {
+    fontFamily: 'NeueHaasGrotesk-Text',
+    fontSize: 13,
+    color: '#C0A062',
+    fontStyle: 'italic',
+    marginTop: 12,
+  },
+  errorText: {
+    fontFamily: 'NeueHaasGrotesk-Text',
+    fontSize: 13,
+    color: '#F87171',
+    textAlign: 'center',
+    marginTop: 16,
+  },
+});

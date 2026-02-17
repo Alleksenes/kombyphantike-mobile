@@ -24,6 +24,7 @@ export default function ConstellationScreen() {
   // Selection State
   const [activeSentenceNode, setActiveSentenceNode] = useState<ConstellationNode | null>(null);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const [goldenPath, setGoldenPath] = useState<string[]>([]);
 
   // 1. Hydrate the Universe from route params
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function ConstellationScreen() {
         if (Array.isArray(parsedGraph.nodes)) {
           setNodes(parsedGraph.nodes);
           setLinks(parsedGraph.links || []);
+          setGoldenPath(parsedGraph.golden_path || []);
         }
       } catch (e) {
         console.error("Universe Parse Error:", e);
@@ -118,7 +120,7 @@ export default function ConstellationScreen() {
         <ConstellationMap
           nodes={nodes}
           links={links}
-          goldenPath={[]}
+          goldenPath={goldenPath}
           onNodePress={onNodePress}
         />
 

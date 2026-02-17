@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, memo } from 'react';
-import { FlatList, View, Pressable } from 'react-native';
+import { useCallback, useEffect, memo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { Text, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -17,35 +17,26 @@ const formatDate = (dateString: string) => {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date);
-  } catch (e) {
+  } catch {
     return dateString;
   }
 };
 
-const HistoryItem = memo(({ item, onPress, theme }: { item: any, onPress: (item: any) => void, theme: any }) => (
+const HistoryItem = memo(({ item, onPress, theme }: { item: any; onPress: (item: any) => void; theme: any }) => (
   <Pressable
     onPress={() => onPress(item)}
-    className="mb-4 mx-4 p-4 rounded-lg bg-background border border-accent/30 active:opacity-70"
-    style={{
-       shadowColor: '#000',
-       shadowOffset: { width: 0, height: 2 },
-       shadowOpacity: 0.1,
-       shadowRadius: 4,
-       elevation: 2,
-    }}
+    style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
   >
-    <View className="flex-row justify-between items-center">
-        <View className="flex-1 mr-4">
-          <Text className="text-xl font-bold text-text mb-1" numberOfLines={1}>
-              {item.theme || "Untitled Scroll"}
-          </Text>
-          <Text className="text-sm text-ancient">
-              {formatDate(item.date)}
-          </Text>
-        </View>
-        <View>
-           <IconButton icon="chevron-right" iconColor={theme.colors.onSurfaceVariant} size={20} />
-        </View>
+    <View style={styles.itemContent}>
+      <View style={styles.itemText}>
+        <Text style={styles.itemTitle} numberOfLines={1}>
+          {item.theme || 'Untitled Scroll'}
+        </Text>
+        <Text style={styles.itemDate}>
+          {formatDate(item.date)}
+        </Text>
+      </View>
+      <IconButton icon="chevron-right" iconColor={theme.colors.onSurfaceVariant} size={20} />
     </View>
   </Pressable>
 ));
@@ -63,33 +54,28 @@ export default function HistoryScreen() {
   const loadSessions = async () => {
     setLoading(true);
     try {
-      const data = await getHistory(50, 0); // Fetch top 50
+      const data = await getHistory(50, 0);
       setSessions(data);
     } catch (e) {
-      console.error("Failed to load sessions", e);
+      console.error('Failed to load sessions', e);
     } finally {
       setLoading(false);
     }
   };
 
   const handlePress = useCallback(async (session: any) => {
-    // Show loading while fetching full details
     setLoading(true);
     try {
       const fullSession = await getSession(session.id);
       if (fullSession && fullSession.json_data) {
-         // JSON is stored as string in DB, but SessionStore expects object or string.
-         // Database.ts: saveSession does JSON.stringify.
-         // SessionStore.ts: "if draft is string, parse it".
-         // So passing string is fine.
-         SessionStore.setDraft(fullSession.json_data, true);
-         SessionStore.setTheme(fullSession.theme);
-         router.push('/results');
+        SessionStore.setDraft(fullSession.json_data, true);
+        SessionStore.setTheme(fullSession.theme);
+        router.push('/results');
       } else {
-        console.error("Session data missing");
+        console.error('Session data missing');
       }
     } catch (e) {
-      console.error("Failed to open session", e);
+      console.error('Failed to open session', e);
     } finally {
       setLoading(false);
     }
@@ -100,15 +86,16 @@ export default function HistoryScreen() {
   ), [handlePress, theme]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" style={{ backgroundColor: theme.colors.background }}>
-      <View className="flex-row items-center justify-between px-2 py-2">
-        <Text variant="headlineSmall" className="font-bold text-text ml-2">
+    <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text variant="headlineSmall" style={styles.headerTitle}>
           Archived Scrolls
         </Text>
       </View>
 
       {loading ? (
-        <View className="flex-1 justify-center items-center">
+        <View style={styles.loaderContainer}>
           <OmegaLoader />
         </View>
       ) : (
@@ -116,10 +103,10 @@ export default function HistoryScreen() {
           data={sessions}
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}
+          contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <View className="flex-1 justify-center items-center mt-20">
-              <Text className="text-ancient text-lg italic">No scrolls found.</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No scrolls found.</Text>
             </View>
           }
         />
@@ -127,3 +114,83 @@ export default function HistoryScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerTitle: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontWeight: 'bold',
+    color: '#E3DCCB',
+    marginLeft: 4,
+  },
+  listContent: {
+    paddingBottom: 24,
+    paddingTop: 8,
+  },
+  item: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 5, 24, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.2)',
+    // Shadow iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  itemPressed: {
+    opacity: 0.7,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  itemText: {
+    flex: 1,
+    marginRight: 8,
+  },
+  itemTitle: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#E3DCCB',
+    marginBottom: 4,
+  },
+  itemDate: {
+    fontFamily: 'NeueHaasGrotesk-Text',
+    fontSize: 12,
+    color: 'rgba(197, 160, 89, 0.7)',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 80,
+  },
+  emptyText: {
+    fontFamily: 'GFSDidot',
+    fontSize: 16,
+    color: 'rgba(197, 160, 89, 0.6)',
+    fontStyle: 'italic',
+  },
+});
