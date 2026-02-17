@@ -4,12 +4,12 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import PhilologyCard from '../components/PhilologyCard';
-import ConstellationMap from '../screens/ConstellationMap';
 import { Token } from '../components/WordChip';
+import ConstellationMap from '../screens/ConstellationMap';
 
-import { ConstellationGraph, ConstellationLink, ConstellationNode } from '../src/types';
-import { useInspectorStore } from '../src/store/inspectorStore';
 import { API_BASE_URL } from '../src/services/apiConfig';
+import { useInspectorStore } from '../src/store/inspectorStore';
+import { ConstellationLink, ConstellationNode } from '../src/types';
 
 
 export default function ConstellationScreen() {
@@ -26,22 +26,17 @@ export default function ConstellationScreen() {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [goldenPath, setGoldenPath] = useState<string[]>([]);
 
-  // 1. Hydrate the Universe from route params
+
+  // 1. AUTO-TRIGGER WEAVE SENTENCES
   useEffect(() => {
-    if (typeof graph === 'string') {
-      try {
-        const parsedGraph = JSON.parse(graph) as ConstellationGraph;
-        if (Array.isArray(parsedGraph.nodes)) {
-          setNodes(parsedGraph.nodes);
-          setLinks(parsedGraph.links || []);
-          setGoldenPath(parsedGraph.golden_path || []);
-        }
-      } catch (e) {
-        console.error("Universe Parse Error:", e);
+    if (nodes.length > 0 && !isWeaving) {
+      // Check if we already have sentences (mastered). If not, trigger AI.
+      const needsWeaving = nodes.some(n => n.status !== 'mastered' && n.type !== 'theme');
+      if (needsWeaving) {
+        handleWeaveSentences();
       }
     }
-  }, [graph]);
-
+  }, [nodes]);
   // 2. AI Fill (Weave Sentences)
   const handleWeaveSentences = async () => {
     if (isWeaving) return;
@@ -112,15 +107,17 @@ export default function ConstellationScreen() {
   };
 
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <View style={styles.scene}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Transparent background so Global Cosmos shows through */}
+      <View style={{ flex: 1, backgroundColor: 'transparent' }}>
         <Stack.Screen options={{ headerShown: false }} />
 
-        {/* The Map fills the screen; CosmicBackground is rendered globally in _layout.tsx */}
+        {/* DO NOT RENDER <CosmicBackground /> HERE. IT IS IN _LAYOUT. */}
+
         <ConstellationMap
           nodes={nodes}
           links={links}
-          goldenPath={goldenPath}
+          goldenPath={[]}
           onNodePress={onNodePress}
         />
 
@@ -146,13 +143,14 @@ export default function ConstellationScreen() {
           </Pressable>
         )}
 
-        {/* Loader */}
+        {/* LOADING INDICATOR (Instead of Button) */}
         {isWeaving && (
           <View style={styles.loader}>
             <ActivityIndicator size="large" color="#C5A059" />
-            <Text style={styles.loaderText}>Transmuting...</Text>
+            <Text style={styles.loaderText}>Transmuting Knowledge...</Text>
           </View>
         )}
+
       </View>
     </GestureHandlerRootView>
   );

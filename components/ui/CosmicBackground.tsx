@@ -1,131 +1,99 @@
 import { Canvas, Rect, Shader, Skia } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import {
-  Easing,
-  useDerivedValue,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
-/**
- * THE COSMIC BACKGROUND — Obsidian Encore Palette
- *
- * SkSL Compliance Rules (hard-won lessons):
- *   - No #define macros. Use const declarations.
- *   - No non-const loop bounds. Loops are fully unrolled (5 octaves → 5 explicit steps).
- *   - All colors are vec3, not hex strings.
- *   - Shader is guarded: if Make() returns null, we fall back to a solid View.
- *
- * Palette:
- *   Obsidian Void  #0f0518  → vec3(0.059, 0.020, 0.094)
- *   Oxblood Ink    #3e0a15  → vec3(0.243, 0.039, 0.082)
- *   Deep Plum      #1a0b2e  → vec3(0.102, 0.043, 0.180)
- *   Liquid Gold    #C5A059  → vec3(0.773, 0.627, 0.349)
- */
 const COSMIC_SHADER = `
 uniform vec2 resolution;
 uniform float time;
 
-// ── Palette (Sacred Pigments) ─────────────────────────────────────────────────
-const vec3 C_VOID = vec3(0.059, 0.020, 0.094);
-const vec3 C_INK  = vec3(0.243, 0.039, 0.082);
-const vec3 C_PLUM = vec3(0.102, 0.043, 0.180);
-const vec3 C_GOLD = vec3(0.773, 0.627, 0.349);
+// --- PALETTE 1: ROYAL PURPLE (The Throne) ---
+const vec3 r_base = vec3(0.165, 0.039, 0.180); // #2a0a2e (Deep Purple)
+const vec3 r_mid  = vec3(0.290, 0.102, 0.369); // #4a1a5e (Plum)
+const vec3 r_high = vec3(0.831, 0.686, 0.216); // #d4af37 (Byzantine Gold)
 
-// ── Value Noise ───────────────────────────────────────────────────────────────
-float random(vec2 st) {
-    return fract(sin(dot(st, vec2(12.9898, 78.233))) * 43758.5453123);
+// --- PALETTE 2: BURNING LIBRARY (The Catastrophe) ---
+const vec3 f_base = vec3(0.110, 0.020, 0.020); // #1c0505 (Charcoal/Ember)
+const vec3 f_mid  = vec3(0.600, 0.100, 0.050); // #99190d (Oxblood Red)
+const vec3 f_high = vec3(1.000, 0.500, 0.000); // #ff8000 (Fire Orange)
+
+// --- PALETTE 3: AEGEAN SEA (The Rebirth) ---
+const vec3 w_base = vec3(0.000, 0.129, 0.255); // #002141 (Deep Sea)
+const vec3 w_mid  = vec3(0.000, 0.412, 0.580); // #006994 (Aegean Blue)
+const vec3 w_high = vec3(0.400, 0.900, 0.900); // #66e6e6 (Seafoam)
+
+float random (in vec2 _st) {
+    return fract(sin(dot(_st.xy, vec2(12.9898,78.233)))*43758.5453123);
 }
 
-float noise(vec2 st) {
-    vec2 i = floor(st);
-    vec2 f = fract(st);
-    float a = random(i);
-    float b = random(i + vec2(1.0, 0.0));
-    float c = random(i + vec2(0.0, 1.0));
-    float d = random(i + vec2(1.0, 1.0));
+float noise (in vec2 _st) {
+    vec2 i = floor(_st);
+    vec2 f = fract(_st);
+    float a = random(i); float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0));
     vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(a, b, u.x)
-         + (c - a) * u.y * (1.0 - u.x)
-         + (d - b) * u.x * u.y;
+    return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
-// ── FBM — 5 octaves, fully unrolled (no dynamic loop bound) ──────────────────
-float fbm(vec2 st) {
-    // Rotation matrix to reduce axial bias
-    float ca = cos(0.5);
-    float sa = sin(0.5);
-    mat2 rot = mat2(ca, sa, -sa, ca);
-    vec2 shift = vec2(100.0);
-
+float fbm ( vec2 st ) {
     float v = 0.0;
     float a = 0.5;
-
-    // Octave 1
-    v  += a * noise(st);
-    st  = rot * st * 2.0 + shift;
-    a  *= 0.5;
-
-    // Octave 2
-    v  += a * noise(st);
-    st  = rot * st * 2.0 + shift;
-    a  *= 0.5;
-
-    // Octave 3
-    v  += a * noise(st);
-    st  = rot * st * 2.0 + shift;
-    a  *= 0.5;
-
-    // Octave 4
-    v  += a * noise(st);
-    st  = rot * st * 2.0 + shift;
-    a  *= 0.5;
-
-    // Octave 5
-    v  += a * noise(st);
-
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.50));
+    for (int i = 0; i < 4; ++i) {
+        v += a * noise(st);
+        st = rot * st * 2.0;
+        a *= 0.5;
+    }
     return v;
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
 vec4 main(vec2 xy) {
-    vec2 st = xy / resolution;
-    st.x *= resolution.x / resolution.y;
+    vec2 st = xy / resolution.xy;
+    st.x *= resolution.x/resolution.y;
 
-    float t = time * 0.05;
+    // MACRO CYCLE: 0 -> 3 -> 0
+    // Controls the shift between Palettes
+    float cycle = mod(time * 0.1, 3.0); 
+    
+    vec3 c1, c2, c3;
 
-    // Domain warping: two layers of warp
-    vec2 q;
-    q.x = fbm(st + 0.01 * t);
-    q.y = fbm(st + vec2(1.0, 0.0));
+    // Interpolate Palettes based on cycle
+    // We use mix() to bleed one era into the next
+    if (cycle < 1.0) {
+        float t = smoothstep(0.0, 1.0, cycle);
+        c1 = mix(r_base, f_base, t);
+        c2 = mix(r_mid,  f_mid,  t);
+        c3 = mix(r_high, f_high, t);
+    } else if (cycle < 2.0) {
+        float t = smoothstep(0.0, 1.0, cycle - 1.0);
+        c1 = mix(f_base, w_base, t);
+        c2 = mix(f_mid,  w_mid,  t);
+        c3 = mix(f_high, w_high, t);
+    } else {
+        float t = smoothstep(0.0, 1.0, cycle - 2.0);
+        c1 = mix(w_base, r_base, t);
+        c2 = mix(w_mid,  r_mid,  t);
+        c3 = mix(w_high, r_high, t);
+    }
 
-    vec2 r;
-    r.x = fbm(st + 4.0 * q + vec2(1.7, 9.2) + 0.15 * t);
-    r.y = fbm(st + 4.0 * q + vec2(8.3, 2.8) + 0.126 * t);
+    // FLUID DYNAMICS (The Paint)
+    float t_flow = time * 0.5;
+    vec2 flow = vec2((st.x + st.y) * 2.0 + t_flow);
+    float n = fbm(st * 3.0 - t_flow * 0.2);
+    float pos = flow.x + n;
 
-    float f = fbm(st + 4.0 * r);
+    // Apply the Dynamic Palette
+    vec3 color = mix(c1, c2, sin(pos * 1.5) * 0.5 + 0.5);
+    // Add the Highlights (Gold/Fire/Foam) sparingly
+    color = mix(color, c3, smoothstep(0.6, 1.0, sin(pos * 2.0 + n)));
 
-    // ── Color mixing ──────────────────────────────────────────────────────────
-    // Base: deep void blended toward oxblood on high warp
-    vec3 color = mix(C_VOID, C_INK, clamp(f * f * 4.0, 0.0, 1.0));
+    // Deep Grain
+    float grain = random(st * 150.0 + time) * 0.04;
+    color += vec3(grain);
 
-    // Add plum warmth from intermediate warp magnitude
-    color = mix(color, C_PLUM, clamp(length(q), 0.0, 1.0));
-
-    // Sparse liquid-gold highlights: only where all warp channels converge
-    float goldMask = smoothstep(0.8, 1.0, r.x * r.y * f);
-    color = mix(color, C_GOLD, goldMask * 0.4);
-
-    // Dithering: breaks up colour banding — "pigmented paper" texture
-    float dither = (random(xy + time) - 0.5) * 0.03;
-    color += dither;
-
-    // Vignette: draws the eye to centre
-    vec2 uv = xy / resolution;
-    float vig = uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y) * 15.0;
-    color *= mix(0.7, 1.0, pow(vig, 0.2));
+    // Vignette
+    vec2 centred = (xy / resolution.xy) * 2.0 - 1.0;
+    color *= (1.0 - smoothstep(0.4, 1.5, length(centred)));
 
     return vec4(color, 1.0);
 }
@@ -136,58 +104,30 @@ const CosmicBackground = () => {
   const time = useSharedValue(0);
 
   useEffect(() => {
-    time.value = withRepeat(
-      withTiming(120, { duration: 120000, easing: Easing.linear }),
-      -1,
-      true, // reverse for seamless loop
-    );
-  }, [time]);
+    // 600s loop allows for slow, imperceptible color shifts
+    time.value = withRepeat(withTiming(600, { duration: 600000, easing: Easing.linear }), -1);
+  }, []);
 
   const uniforms = useDerivedValue(() => ({
     resolution: [width, height],
-    time: time.value,
+    time: time.value
   }));
 
-  // Guarded: Make() can return null if the SkSL fails to compile.
-  // Fallback to solid void colour — never a red screen.
-  const shader = useMemo(() => {
-    if (Platform.OS === 'web') return null;
-    try {
-      const effect = Skia.RuntimeEffect.Make(COSMIC_SHADER);
-      return effect ?? null;
-    } catch {
-      return null;
-    }
-  }, []);
+  const shader = useMemo(() => (Platform.OS === 'web' ? null : Skia.RuntimeEffect.Make(COSMIC_SHADER)), []);
 
-  if (Platform.OS === 'web') {
-    return <View style={styles.fallback} />;
-  }
-
-  if (!shader) {
-    // Shader failed to compile — show the void colour so layout still works
-    return <View style={styles.fallback} />;
+  if (Platform.OS === 'web' || !shader) {
+    return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1a0b2e' }]} />;
   }
 
   return (
-    <Canvas style={styles.canvas} pointerEvents="none">
-      <Rect x={0} y={0} width={width} height={height}>
-        <Shader source={shader} uniforms={uniforms} />
-      </Rect>
-    </Canvas>
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Canvas style={{ flex: 1 }}>
+        <Rect x={0} y={0} width={width} height={height}>
+          <Shader source={shader} uniforms={uniforms} />
+        </Rect>
+      </Canvas>
+    </View>
   );
 };
 
 export default CosmicBackground;
-
-const styles = StyleSheet.create({
-  canvas: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: -1,
-  },
-  fallback: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0f0518',
-    zIndex: -1,
-  },
-});

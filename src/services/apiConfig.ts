@@ -6,7 +6,7 @@ const API_PORT = '8000';
 const getBaseUrl = () => {
     // 1. Check for explicit environment variable override
     const explicitUrl = process.env.EXPO_PUBLIC_API_URL;
-
+/*
     // In production, we enforce usage of the environment variable
     if (!__DEV__) {
         if (!explicitUrl) {
@@ -22,7 +22,7 @@ const getBaseUrl = () => {
     if (explicitUrl) {
         return explicitUrl;
     }
-
+*/
     if (Platform.OS === 'web') return `http://localhost:${API_PORT}`;
 
     // AUTOMATIC IP DETECTION

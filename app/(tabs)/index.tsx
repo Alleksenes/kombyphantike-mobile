@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import OmegaLoader from '../../components/OmegaLoader';
-import AetherButton from '../../components/ui/AetherButton';
+import MonolithButton from '../../components/ui/MonolithButton';
 import WeaverControls from '../../components/ui/WeaverControls';
 import { API_BASE_URL } from '../../src/services/apiConfig';
 
@@ -137,7 +137,7 @@ export default function WeaverScreen() {
               />
 
               {/* ── CTA Button ──────────────────────────────────────── */}
-              <AetherButton
+              <MonolithButton
                 label="Weave Curriculum"
                 onPress={handleWeave}
                 disabled={isLoading || !theme.trim()}
