@@ -39,11 +39,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="history"
+        name="shipyard"
         options={{
-          title: 'Archives',
+          title: 'Shipyard',
           tabBarIcon: ({ color, size }) => (
-            <IconButton icon="history" iconColor={color} size={24} />
+            <IconButton icon="map" iconColor={color} size={24} />
           ),
         }}
       />
