@@ -122,7 +122,7 @@ export default function IslandWorkbench() {
   const router = useRouter();
   const islandId = typeof id === 'string' ? id : '1';
 
-  const { island, loading, error, isMock } = useIslandData(islandId);
+  const { island, loading, error } = useIslandData(islandId);
   const { knot: activeKnot, openInspector } = usePhilologicalInspectorStore();
 
   const handleKnotPress = useCallback((knot: Knot) => {
@@ -185,7 +185,7 @@ export default function IslandWorkbench() {
           <Text style={styles.title} numberOfLines={1}>{island.title}</Text>
           <View style={styles.headerMeta}>
             <Text style={styles.levelText}>{island.level}</Text>
-            {isMock && <Text style={styles.mockBadge}>MOCK</Text>}
+
           </View>
           <View style={styles.progressContainer}>
             <View style={[styles.progressFill, { width: progress }]} />

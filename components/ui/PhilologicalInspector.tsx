@@ -7,7 +7,7 @@
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { AudioPlayer } from '../../src/services/AudioPlayer';
 import { usePhilologicalInspectorStore } from '../../src/store/philologicalInspectorStore';
@@ -41,7 +41,7 @@ const Badge = ({ label, variant = 'default' }: { label: string; variant?: 'defau
 // ── Main component ───────────────────────────────────────────────────────────
 export default function PhilologicalInspector() {
   const sheetRef = useRef<BottomSheet>(null);
-  const { knot, isOpen, activeTab, closeInspector, setActiveTab } = usePhilologicalInspectorStore();
+  const { knot, isOpen, isLoading, activeTab, closeInspector, setActiveTab } = usePhilologicalInspectorStore();
 
   const snapPoints = useMemo(() => ['50%', '88%'], []);
 
@@ -136,7 +136,15 @@ export default function PhilologicalInspector() {
             </View>
             <Text style={styles.noteCardLabel}>Davidian Note</Text>
           </View>
-          <Text style={styles.noteCardBody}>{knot.david_note}</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color={GOLD} />
+          ) : (
+            <Text style={styles.noteCardBody}>
+              {knot.david_note === 'Diachronic link undetermined.'
+                ? 'The diachronic bridge is currently under construction.'
+                : knot.david_note}
+            </Text>
+          )}
         </View>
       </View>
     );
@@ -158,7 +166,11 @@ export default function PhilologicalInspector() {
             <Text style={styles.scholiaSubtitle}>Greek: A Comprehensive Grammar</Text>
           </View>
           <View style={styles.scholiaDivider} />
-          <Text style={styles.scholiaBody}>{knot.rag_scholia}</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#C0A062" />
+          ) : (
+            <Text style={styles.scholiaBody}>{knot.rag_scholia}</Text>
+          )}
         </View>
       </View>
     );
@@ -173,7 +185,11 @@ export default function PhilologicalInspector() {
 
         <View style={styles.sectionDivider} />
 
-        {knot.has_paradigm && knot.paradigm ? (
+        {isLoading ? (
+          <View style={styles.emptyCard}>
+            <ActivityIndicator size="small" color={GOLD} />
+          </View>
+        ) : knot.has_paradigm && knot.paradigm ? (
           <ParadigmGrid
             paradigm={knot.paradigm}
             highlightForm={knot.text}

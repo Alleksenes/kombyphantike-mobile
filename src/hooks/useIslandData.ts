@@ -1,18 +1,13 @@
 // ── useIslandData ─────────────────────────────────────────────────────────────
-// Returns island data from the API if reachable, otherwise falls back to mock
-// data. This ensures the UI remains fully functional for design and refinement
-// while we battle the Supabase network war.
-
+// Returns island data from the API.
 import { useCallback, useEffect, useState } from 'react';
 import { IslandDTO } from '../types';
-import { MOCK_ISLANDS_MAP } from '../services/mock_data';
 import { API_BASE_URL } from '../services/apiConfig';
 
 interface UseIslandDataResult {
   island: IslandDTO | null;
   loading: boolean;
   error: string | null;
-  isMock: boolean;
   refetch: () => void;
 }
 
@@ -20,7 +15,6 @@ export function useIslandData(islandId: string): UseIslandDataResult {
   const [island, setIsland] = useState<IslandDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMock, setIsMock] = useState(false);
 
   const fetchIsland = useCallback(async () => {
     setLoading(true);
@@ -41,17 +35,8 @@ export function useIslandData(islandId: string): UseIslandDataResult {
 
       const data: IslandDTO = await response.json();
       setIsland(data);
-      setIsMock(false);
-    } catch (_e) {
-      // API unreachable — fall back to mock data
-      const mockIsland = MOCK_ISLANDS_MAP[islandId];
-      if (mockIsland) {
-        setIsland(mockIsland);
-        setIsMock(true);
-        setError(null);
-      } else {
-        setError(`Island "${islandId}" not found in mock data`);
-      }
+    } catch (e: any) {
+      setError(e.message || 'Failed to fetch island data.');
     } finally {
       setLoading(false);
     }
@@ -61,5 +46,5 @@ export function useIslandData(islandId: string): UseIslandDataResult {
     fetchIsland();
   }, [fetchIsland]);
 
-  return { island, loading, error, isMock, refetch: fetchIsland };
+  return { island, loading, error, refetch: fetchIsland };
 }
