@@ -1,49 +1,178 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+// ── THE ISLAND WORKBENCH ──────────────────────────────────────────────────────
+// Renders the CuratedSentenceDTO structure as a reader-first, glassmorphic
+// philological workspace. Each sentence is a PhilologyCard whose knots are
+// tappable, opening the PhilologicalInspector.
+
+import React, { useCallback, useMemo } from 'react';
+import { ActivityIndicator, Dimensions, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconButton } from 'react-native-paper';
-import PhilologyCard from '../../components/PhilologyCard';
+import { useIslandData } from '../../src/hooks/useIslandData';
+import { usePhilologicalInspectorStore } from '../../src/store/philologicalInspectorStore';
+import type { CuratedSentenceDTO, Knot } from '../../src/types';
 
-// Dummy data for sentences
-const MOCK_SENTENCES = [
-  { id: 's1', sentence: 'ἡ γὰρ φύσις ἅπαντα ποιεῖ.', translation: 'For nature makes all things.' },
-  { id: 's2', sentence: 'πάντα ῥεῖ καὶ οὐδὲν μένει.', translation: 'Everything flows and nothing stays.' },
-  { id: 's3', sentence: 'γνῶθι σεαυτόν.', translation: 'Know thyself.' },
-];
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH * 0.92;
 
-export default function WorkbenchScreen() {
-  const { id } = useLocalSearchParams();
-  const router = useRouter();
+// ── Knot Chip ────────────────────────────────────────────────────────────────
+// A tappable word within a sentence. "Heavy" POS types get an underline hint.
+function KnotChip({ knot, isActive, onPress }: { knot: Knot; isActive: boolean; onPress: (k: Knot) => void }) {
+  const isHeavy = ['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(knot.pos);
 
-  // Find mocked island title, or fallback
-  const title = useMemo(() => {
-    const titles: Record<string, string> = {
-      '1': 'The Elements of Fire',
-      '2': 'Justice and Law',
-      '3': 'The Whispering Woods',
-      '4': 'Athenian Democracy'
-    };
-    return typeof id === 'string' && titles[id] ? titles[id] : 'Unknown Island';
-  }, [id]);
+  return (
+    <Pressable
+      onPress={() => onPress(knot)}
+      style={[
+        styles.knotChip,
+        isActive ? styles.knotChipActive : styles.knotChipNormal,
+        !isActive && isHeavy && styles.knotChipHeavy,
+      ]}
+    >
+      <Text style={[styles.knotText, isActive ? styles.knotTextActive : styles.knotTextNormal]}>
+        {knot.text}
+      </Text>
+      {knot.transliteration && (
+        <Text style={[styles.knotTranslit, isActive ? styles.knotTranslitActive : styles.knotTranslitNormal]}>
+          {knot.transliteration}
+        </Text>
+      )}
+    </Pressable>
+  );
+}
 
-  // Handle token press
-  const handleTokenPress = (token: any) => {
-    console.log('Token pressed:', token);
-  };
+// ── Sentence Card ────────────────────────────────────────────────────────────
+// A glassmorphic container rendering the greek_text as tappable KnotChips.
+function SentenceCard({ sentence, activeKnotId, onKnotPress }: {
+  sentence: CuratedSentenceDTO;
+  activeKnotId: string | null;
+  onKnotPress: (knot: Knot) => void;
+}) {
+  // Build a set of knot texts for quick lookup
+  const knotMap = useMemo(() => {
+    const map = new Map<string, Knot>();
+    sentence.knots.forEach(k => map.set(k.text, k));
+    return map;
+  }, [sentence.knots]);
 
-  const renderItem = ({ item }: { item: typeof MOCK_SENTENCES[0] }) => (
-    <View style={styles.cardContainer}>
-      <PhilologyCard
-        sentence={item.sentence}
-        translation={item.translation}
-        onTokenPress={handleTokenPress}
-      />
+  // Split the greek_text into words, matching them to knots where possible
+  const tokens = useMemo(() => {
+    const words = sentence.greek_text.split(/\s+/);
+    return words.map((word, idx) => {
+      // Strip trailing punctuation for matching
+      const stripped = word.replace(/[.,;·;:!?()]+$/, '');
+      const knot = knotMap.get(stripped) || knotMap.get(word);
+      const trailingPunct = word.slice(stripped.length);
+      return { word, stripped, knot, trailingPunct, idx };
+    });
+  }, [sentence.greek_text, knotMap]);
+
+  return (
+    <View style={styles.sentenceCard}>
+      {/* Header */}
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardHeaderLabel}>Active Node</Text>
+        {sentence.source && (
+          <Text style={styles.cardSource} numberOfLines={1}>{sentence.source}</Text>
+        )}
+      </View>
+
+      {/* Knot Row */}
+      <View style={styles.knotRow}>
+        {tokens.map(({ word, knot, trailingPunct, idx }) => {
+          if (knot) {
+            return (
+              <View key={`${word}-${idx}`} style={styles.knotWrapper}>
+                <KnotChip
+                  knot={knot}
+                  isActive={activeKnotId === knot.id}
+                  onPress={onKnotPress}
+                />
+                {trailingPunct ? (
+                  <Text style={styles.punctuation}>{trailingPunct}</Text>
+                ) : null}
+              </View>
+            );
+          }
+          // Non-knot word — render as plain text
+          return (
+            <Text key={`${word}-${idx}`} style={styles.plainWord}>{word}</Text>
+          );
+        })}
+      </View>
+
+      {/* Translation */}
+      <View style={styles.translationContainer}>
+        <Text style={styles.translationText}>{sentence.translation}</Text>
+      </View>
+
+      {/* Level badge */}
+      {sentence.level && (
+        <View style={styles.levelBadge}>
+          <Text style={styles.levelBadgeText}>{sentence.level}</Text>
+        </View>
+      )}
     </View>
   );
+}
+
+// ── Main Screen ──────────────────────────────────────────────────────────────
+export default function IslandWorkbench() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const islandId = typeof id === 'string' ? id : '1';
+
+  const { island, loading, error, isMock } = useIslandData(islandId);
+  const { knot: activeKnot, openInspector } = usePhilologicalInspectorStore();
+
+  const handleKnotPress = useCallback((knot: Knot) => {
+    openInspector(knot, 'knot');
+  }, [openInspector]);
+
+  const renderSentence = useCallback(({ item }: { item: CuratedSentenceDTO }) => (
+    <View style={styles.cardContainer}>
+      <SentenceCard
+        sentence={item}
+        activeKnotId={activeKnot?.id ?? null}
+        onKnotPress={handleKnotPress}
+      />
+    </View>
+  ), [activeKnot, handleKnotPress]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#C5A059" />
+          <Text style={styles.loadingText}>Assembling the island...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (error || !island) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>{error || 'Island not found.'}</Text>
+          <IconButton
+            icon="chevron-left"
+            iconColor="#C5A059"
+            size={32}
+            onPress={() => router.back()}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const progress = `${island.progress}%` as const;
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <IconButton
           icon="chevron-left"
@@ -53,35 +182,71 @@ export default function WorkbenchScreen() {
           style={styles.backButton}
         />
         <View style={styles.headerContent}>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <Text style={styles.title} numberOfLines={1}>{island.title}</Text>
+          <View style={styles.headerMeta}>
+            <Text style={styles.levelText}>{island.level}</Text>
+            {isMock && <Text style={styles.mockBadge}>MOCK</Text>}
+          </View>
           <View style={styles.progressContainer}>
-            <View style={[styles.progressFill, { width: '45%' }]} />
+            <View style={[styles.progressFill, { width: progress }]} />
           </View>
         </View>
       </View>
 
+      {/* ── Sentence List ───────────────────────────────────────────────── */}
       <FlatList
-        data={MOCK_SENTENCES}
-        renderItem={renderItem}
+        data={island.sentences}
+        renderItem={renderSentence}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
+
     </SafeAreaView>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const GOLD = '#C5A059';
+const GOLD_DIM = 'rgba(197, 160, 89, 0.2)';
+const PARCHMENT = '#E3DCCB';
+const GRAY_TEXT = '#9CA3AF';
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
   },
+
+  // ── Loading / Error ────────────────────────────────────────────────────
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontFamily: 'GFSDidot',
+    fontSize: 16,
+    color: 'rgba(197, 160, 89, 0.6)',
+    fontStyle: 'italic',
+  },
+  errorText: {
+    fontFamily: 'NeueHaasGrotesk-Text',
+    fontSize: 14,
+    color: '#EF4444',
+    textAlign: 'center',
+    paddingHorizontal: 40,
+  },
+
+  // ── Header ─────────────────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(197, 160, 89, 0.2)', // Dim gold
+    borderBottomColor: GOLD_DIM,
   },
   backButton: {
     margin: 0,
@@ -94,8 +259,34 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'GFSDidot',
     fontSize: 24,
-    color: '#E3DCCB',
+    color: PARCHMENT,
+    marginBottom: 4,
+  },
+  headerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 8,
+  },
+  levelText: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: GOLD,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  mockBadge: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#EF4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+    letterSpacing: 1,
   },
   progressContainer: {
     height: 4,
@@ -106,13 +297,158 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#C5A059', // Gold progress
+    backgroundColor: GOLD,
     borderRadius: 2,
   },
+
+  // ── Sentence list ──────────────────────────────────────────────────────
   listContent: {
     paddingVertical: 24,
+    paddingBottom: 120, // Extra space for bottom sheet
   },
   cardContainer: {
     marginBottom: 24,
+    alignItems: 'center',
+  },
+
+  // ── Sentence Card (glassmorphic) ───────────────────────────────────────
+  sentenceCard: {
+    width: CARD_WIDTH,
+    backgroundColor: 'rgba(15, 5, 24, 0.6)',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(55, 65, 81, 0.6)',
+    // Shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cardHeaderLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    color: GOLD,
+    textTransform: 'uppercase',
+    fontFamily: 'NeueHaasGrotesk-Display',
+  },
+  cardSource: {
+    fontFamily: 'NeueHaasGrotesk-Text',
+    fontSize: 10,
+    color: GRAY_TEXT,
+    fontStyle: 'italic',
+    maxWidth: '50%',
+  },
+
+  // ── Knot Row ───────────────────────────────────────────────────────────
+  knotRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  knotWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  knotChip: {
+    marginRight: 6,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  knotChipActive: {
+    backgroundColor: '#C0A062',
+    borderRadius: 8,
+  },
+  knotChipNormal: {
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
+  },
+  knotChipHeavy: {
+    borderBottomColor: 'rgba(227, 220, 203, 0.2)',
+  },
+  knotText: {
+    fontSize: 20,
+    fontFamily: 'GFSDidot',
+    textAlign: 'center',
+  },
+  knotTextActive: {
+    color: '#1a1918',
+  },
+  knotTextNormal: {
+    color: PARCHMENT,
+  },
+  knotTranslit: {
+    fontSize: 10,
+    fontStyle: 'italic',
+    marginTop: -2,
+    fontFamily: 'NeueHaasGrotesk-Text',
+    textAlign: 'center',
+  },
+  knotTranslitActive: {
+    color: 'rgba(26, 25, 24, 0.6)',
+  },
+  knotTranslitNormal: {
+    color: '#6B7280',
+  },
+  punctuation: {
+    fontSize: 20,
+    color: PARCHMENT,
+    fontFamily: 'GFSDidot',
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+    marginRight: 4,
+  },
+  plainWord: {
+    fontSize: 20,
+    color: 'rgba(227, 220, 203, 0.5)',
+    fontFamily: 'GFSDidot',
+    marginRight: 6,
+    marginBottom: 8,
+    alignSelf: 'flex-end',
+  },
+
+  // ── Translation ────────────────────────────────────────────────────────
+  translationContainer: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(31, 41, 55, 0.6)',
+  },
+  translationText: {
+    fontSize: 14,
+    color: GRAY_TEXT,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 20,
+    fontFamily: 'GFSDidot',
+  },
+
+  // ── Level badge ────────────────────────────────────────────────────────
+  levelBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: GOLD_DIM,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  levelBadgeText: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: GOLD,
+    letterSpacing: 1,
   },
 });

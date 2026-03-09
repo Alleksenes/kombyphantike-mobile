@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import OmegaLoader from '../components/OmegaLoader';
 import CosmicBackground from '../components/ui/CosmicBackground';
+import PhilologicalInspector from '../components/ui/PhilologicalInspector';
 import TheInspector from '../components/ui/TheInspector';
 import { initDatabase } from '../src/services/Database';
 import { ScriptoriumTheme } from '../src/theme';
@@ -80,10 +81,12 @@ export default function RootLayout() {
             >
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="constellation" />
+              <Stack.Screen name="island/[id]" />
             </Stack>
 
-            {/* LAYER 2: THE INSPECTOR (Global Overlay) */}
+            {/* LAYER 2: GLOBAL OVERLAYS */}
             <TheInspector />
+            <PhilologicalInspector />
 
           </PaperProvider>
         </GestureHandlerRootView>
