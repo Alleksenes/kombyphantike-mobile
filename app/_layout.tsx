@@ -62,7 +62,7 @@ export default function RootLayout() {
 
         {/* LAYER 0: THE COSMOS (Pinned to Back) */}
         {/* We wrap this to ensure it sits behind everything else */}
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <View style={[StyleSheet.absoluteFill, { zIndex: -1 }]} pointerEvents="none">
           <CosmicBackground />
         </View>
 

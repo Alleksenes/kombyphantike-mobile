@@ -1,5 +1,6 @@
 import { BackdropBlur, Canvas, Fill, RoundedRect } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import {
   Keyboard,
@@ -188,6 +189,7 @@ const overlay = StyleSheet.create({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function WeaverScreen() {
+  const isFocused = useIsFocused();
   const router = useRouter();
   const [theme, setTheme] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -262,6 +264,8 @@ export default function WeaverScreen() {
     const { width, height } = event.nativeEvent.layout;
     setInputLayout({ width, height });
   };
+
+  if (!isFocused) return <View />;
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react';
+import re
+
+content = """import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -92,7 +94,6 @@ function PhilologyCard({ sentence, activeKnotId, onKnotPress }: {
 
 // ── Main Screen ──────────────────────────────────────────────────────────────
 export default function ShipyardScreen() {
-  const isFocused = useIsFocused();
   const [sentences, setSentences] = useState<CuratedSentenceDTO[]>([]);
   const [isForging, setIsForging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,8 +127,6 @@ export default function ShipyardScreen() {
       setIsForging(false);
     }
   };
-
-  if (!isFocused) return <View style={{flex: 1}} />;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -355,3 +354,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 });
+"""
+
+with open('app/(tabs)/shipyard.tsx', 'w') as f:
+    f.write(content)

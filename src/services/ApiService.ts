@@ -64,6 +64,13 @@ export interface SpeakPayload {
   text: string;
 }
 
+
+export interface InspectLemmaResponse {
+  david_note: string;
+  rag_scholia: string;
+  paradigm: any[];
+}
+
 export interface SpeakResponse {
   audio: string;
 }
@@ -92,6 +99,30 @@ export const ApiService = {
       body: JSON.stringify(payload),
     });
 
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server Error: ${response.status} ${errorText}`);
+    }
+    return response.json();
+  },
+
+
+  synthesizeIsland: async (): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/islands/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server Error: ${response.status} ${errorText}`);
+    }
+    return response.json();
+  },
+
+  inspectLemma: async (lemma: string): Promise<InspectLemmaResponse> => {
+    const response = await fetch(`${API_BASE_URL}/inspect/${lemma}`, {
+      method: 'GET',
+    });
     if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Server Error: ${response.status} ${errorText}`);
