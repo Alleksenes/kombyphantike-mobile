@@ -1,39 +1,95 @@
-// ── THE ISLAND WORKBENCH ──────────────────────────────────────────────────────
-// Renders the CuratedSentenceDTO structure as a reader-first, glassmorphic
-// philological workspace. Each sentence is a PhilologyCard whose knots are
-// tappable, opening the PhilologicalInspector.
+// ── THE ISLAND READER ────────────────────────────────────────────────────────
+// A distraction-free, glassmorphic reading pane for CuratedSentenceDTOs.
+// Tappable knot-words glow Byzantine Gold and open the Philological Inspector.
 
 import React, { useCallback, useMemo } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconButton } from 'react-native-paper';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { useIslandData } from '../../src/hooks/useIslandData';
 import { usePhilologicalInspectorStore } from '../../src/store/philologicalInspectorStore';
+import { MOCK_ISLAND } from '../../src/data/mockPayload';
 import type { CuratedSentenceDTO, Knot } from '../../src/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.92;
 
-// ── Knot Chip ────────────────────────────────────────────────────────────────
-// A tappable word within a sentence. "Heavy" POS types get an underline hint.
-function KnotChip({ knot, isActive, onPress }: { knot: Knot; isActive: boolean; onPress: (k: Knot) => void }) {
-  const isHeavy = ['NOUN', 'VERB', 'ADJ', 'PROPN'].includes(knot.pos);
+// ── Design Tokens ────────────────────────────────────────────────────────────
+const GOLD = '#C5A059';
+const GOLD_DIM = 'rgba(197, 160, 89, 0.2)';
+const GOLD_GLOW = 'rgba(197, 160, 89, 0.35)';
+const PARCHMENT = '#E3DCCB';
+const GRAY_TEXT = '#9CA3AF';
+
+// ── Animated Knot Word ──────────────────────────────────────────────────────
+// A tappable word with a subtle Byzantine Gold underline glow when it's a knot.
+function KnotWord({
+  knot,
+  isActive,
+  onPress,
+}: {
+  knot: Knot;
+  isActive: boolean;
+  onPress: (k: Knot) => void;
+}) {
+  // Subtle pulsing glow for knot words at rest
+  const glowOpacity = useSharedValue(0.4);
+
+  React.useEffect(() => {
+    glowOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.4, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1, // infinite
+      false,
+    );
+  }, [glowOpacity]);
+
+  const underlineStyle = useAnimatedStyle(() => ({
+    opacity: isActive ? 1 : glowOpacity.value,
+    backgroundColor: isActive ? GOLD : GOLD_GLOW,
+  }));
 
   return (
     <Pressable
       onPress={() => onPress(knot)}
-      style={[
-        styles.knotChip,
-        isActive ? styles.knotChipActive : styles.knotChipNormal,
-        !isActive && isHeavy && styles.knotChipHeavy,
-      ]}
+      style={[styles.knotChip, isActive && styles.knotChipActive]}
     >
-      <Text style={[styles.knotText, isActive ? styles.knotTextActive : styles.knotTextNormal]}>
+      <Text
+        style={[
+          styles.knotText,
+          isActive ? styles.knotTextActive : styles.knotTextNormal,
+        ]}
+      >
         {knot.text}
       </Text>
+      {/* The Byzantine Gold underline */}
+      <Animated.View style={[styles.knotUnderline, underlineStyle]} />
       {knot.transliteration && (
-        <Text style={[styles.knotTranslit, isActive ? styles.knotTranslitActive : styles.knotTranslitNormal]}>
+        <Text
+          style={[
+            styles.knotTranslit,
+            isActive ? styles.knotTranslitActive : styles.knotTranslitNormal,
+          ]}
+        >
           {knot.transliteration}
         </Text>
       )}
@@ -41,26 +97,30 @@ function KnotChip({ knot, isActive, onPress }: { knot: Knot; isActive: boolean; 
   );
 }
 
-// ── Sentence Card ────────────────────────────────────────────────────────────
-// A glassmorphic container rendering the greek_text as tappable KnotChips.
-function SentenceCard({ sentence, activeKnotId, onKnotPress }: {
+// ── Sentence Card ───────────────────────────────────────────────────────────
+// A glassmorphic container. Parses greek_text and cross-references with knots.
+function SentenceCard({
+  sentence,
+  activeKnotId,
+  onKnotPress,
+}: {
   sentence: CuratedSentenceDTO;
   activeKnotId: string | null;
   onKnotPress: (knot: Knot) => void;
 }) {
-  // Build a set of knot texts for quick lookup
+  // Build a lookup: stripped word → Knot
   const knotMap = useMemo(() => {
     const map = new Map<string, Knot>();
-    sentence.knots.forEach(k => map.set(k.text, k));
+    sentence.knots.forEach((k) => map.set(k.text, k));
     return map;
   }, [sentence.knots]);
 
-  // Split the greek_text into words, matching them to knots where possible
+  // Parse the sentence into tokens, matching words to knots
   const tokens = useMemo(() => {
     const words = sentence.greek_text.split(/\s+/);
     return words.map((word, idx) => {
       // Strip trailing punctuation for matching
-      const stripped = word.replace(/[.,;·;:!?()]+$/, '');
+      const stripped = word.replace(/[.,;·;:!?()«»]+$/, '');
       const knot = knotMap.get(stripped) || knotMap.get(word);
       const trailingPunct = word.slice(stripped.length);
       return { word, stripped, knot, trailingPunct, idx };
@@ -73,17 +133,19 @@ function SentenceCard({ sentence, activeKnotId, onKnotPress }: {
       <View style={styles.cardHeader}>
         <Text style={styles.cardHeaderLabel}>Active Node</Text>
         {sentence.source && (
-          <Text style={styles.cardSource} numberOfLines={1}>{sentence.source}</Text>
+          <Text style={styles.cardSource} numberOfLines={1}>
+            {sentence.source}
+          </Text>
         )}
       </View>
 
-      {/* Knot Row */}
+      {/* The Interactive Text */}
       <View style={styles.knotRow}>
         {tokens.map(({ word, knot, trailingPunct, idx }) => {
           if (knot) {
             return (
               <View key={`${word}-${idx}`} style={styles.knotWrapper}>
-                <KnotChip
+                <KnotWord
                   knot={knot}
                   isActive={activeKnotId === knot.id}
                   onPress={onKnotPress}
@@ -94,9 +156,11 @@ function SentenceCard({ sentence, activeKnotId, onKnotPress }: {
               </View>
             );
           }
-          // Non-knot word — render as plain text
+          // Non-knot word — plain, dimmed text
           return (
-            <Text key={`${word}-${idx}`} style={styles.plainWord}>{word}</Text>
+            <Text key={`${word}-${idx}`} style={styles.plainWord}>
+              {word}
+            </Text>
           );
         })}
       </View>
@@ -122,44 +186,56 @@ export default function IslandWorkbench() {
   const router = useRouter();
   const islandId = typeof id === 'string' ? id : '1';
 
-  const { island, loading, error } = useIslandData(islandId);
+  const { island: apiIsland, loading, error } = useIslandData(islandId);
   const { knot: activeKnot, openInspector } = usePhilologicalInspectorStore();
 
-  const handleKnotPress = useCallback((knot: Knot) => {
-    openInspector(knot, 'knot');
-  }, [openInspector]);
+  // Fall back to mock data when the API is unavailable
+  const island = apiIsland ?? (loading ? null : MOCK_ISLAND);
+  const isMock = !apiIsland && !loading;
 
-  const renderSentence = useCallback(({ item }: { item: CuratedSentenceDTO }) => (
-    <View style={styles.cardContainer}>
-      <SentenceCard
-        sentence={item}
-        activeKnotId={activeKnot?.id ?? null}
-        onKnotPress={handleKnotPress}
-      />
-    </View>
-  ), [activeKnot, handleKnotPress]);
+  const handleKnotPress = useCallback(
+    (knot: Knot) => {
+      openInspector(knot, 'knot');
+    },
+    [openInspector],
+  );
+
+  const renderSentence = useCallback(
+    ({ item }: { item: CuratedSentenceDTO }) => (
+      <View style={styles.cardContainer}>
+        <SentenceCard
+          sentence={item}
+          activeKnotId={activeKnot?.id ?? null}
+          onKnotPress={handleKnotPress}
+        />
+      </View>
+    ),
+    [activeKnot, handleKnotPress],
+  );
 
   // Loading state
-  if (loading) {
+  if (loading && !island) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#C5A059" />
+          <ActivityIndicator size="large" color={GOLD} />
           <Text style={styles.loadingText}>Assembling the island...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Error state
-  if (error || !island) {
+  // Error state (with no fallback)
+  if (!island) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>{error || 'Island not found.'}</Text>
+          <Text style={styles.errorText}>
+            {error || 'Island not found.'}
+          </Text>
           <IconButton
             icon="chevron-left"
-            iconColor="#C5A059"
+            iconColor={GOLD}
             size={32}
             onPress={() => router.back()}
           />
@@ -172,20 +248,22 @@ export default function IslandWorkbench() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ── Header ──────────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <IconButton
           icon="chevron-left"
-          iconColor="#C5A059"
+          iconColor={GOLD}
           size={32}
           onPress={() => router.back()}
           style={styles.backButton}
         />
         <View style={styles.headerContent}>
-          <Text style={styles.title} numberOfLines={1}>{island.title}</Text>
+          <Text style={styles.title} numberOfLines={1}>
+            {island.title}
+          </Text>
           <View style={styles.headerMeta}>
             <Text style={styles.levelText}>{island.level}</Text>
-
+            {isMock && <Text style={styles.mockBadge}>MOCK</Text>}
           </View>
           <View style={styles.progressContainer}>
             <View style={[styles.progressFill, { width: progress }]} />
@@ -193,7 +271,7 @@ export default function IslandWorkbench() {
         </View>
       </View>
 
-      {/* ── Sentence List ───────────────────────────────────────────────── */}
+      {/* ── Sentence List ──────────────────────────────────────────────────── */}
       <FlatList
         data={island.sentences}
         renderItem={renderSentence}
@@ -201,24 +279,18 @@ export default function IslandWorkbench() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
-
     </SafeAreaView>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-const GOLD = '#C5A059';
-const GOLD_DIM = 'rgba(197, 160, 89, 0.2)';
-const PARCHMENT = '#E3DCCB';
-const GRAY_TEXT = '#9CA3AF';
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
   },
 
-  // ── Loading / Error ────────────────────────────────────────────────────
+  // ── Loading / Error ─────────────────────────────────────────────────────
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -239,7 +311,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
 
-  // ── Header ─────────────────────────────────────────────────────────────
+  // ── Header ──────────────────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -301,7 +373,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
 
-  // ── Sentence list ──────────────────────────────────────────────────────
+  // ── Sentence list ───────────────────────────────────────────────────────
   listContent: {
     paddingVertical: 24,
     paddingBottom: 120, // Extra space for bottom sheet
@@ -311,7 +383,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // ── Sentence Card (glassmorphic) ───────────────────────────────────────
+  // ── Sentence Card (glassmorphic) ────────────────────────────────────────
   sentenceCard: {
     width: CARD_WIDTH,
     backgroundColor: 'rgba(15, 5, 24, 0.6)',
@@ -319,7 +391,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(55, 65, 81, 0.6)',
-    // Shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -348,7 +419,7 @@ const styles = StyleSheet.create({
     maxWidth: '50%',
   },
 
-  // ── Knot Row ───────────────────────────────────────────────────────────
+  // ── Knot Row ────────────────────────────────────────────────────────────
   knotRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -365,21 +436,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 4,
     paddingVertical: 4,
+    alignItems: 'center',
   },
   knotChipActive: {
-    backgroundColor: '#C0A062',
+    backgroundColor: GOLD,
     borderRadius: 8,
   },
-  knotChipNormal: {
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderBottomColor: 'transparent',
-  },
-  knotChipHeavy: {
-    borderBottomColor: 'rgba(227, 220, 203, 0.2)',
-  },
   knotText: {
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: 'GFSDidot',
     textAlign: 'center',
   },
@@ -389,10 +453,17 @@ const styles = StyleSheet.create({
   knotTextNormal: {
     color: PARCHMENT,
   },
+  // The Byzantine Gold underline beneath each knot word
+  knotUnderline: {
+    height: 2,
+    width: '100%',
+    borderRadius: 1,
+    marginTop: 2,
+  },
   knotTranslit: {
     fontSize: 10,
     fontStyle: 'italic',
-    marginTop: -2,
+    marginTop: 1,
     fontFamily: 'NeueHaasGrotesk-Text',
     textAlign: 'center',
   },
@@ -403,7 +474,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   punctuation: {
-    fontSize: 20,
+    fontSize: 22,
     color: PARCHMENT,
     fontFamily: 'GFSDidot',
     alignSelf: 'flex-end',
@@ -411,15 +482,15 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   plainWord: {
-    fontSize: 20,
-    color: 'rgba(227, 220, 203, 0.5)',
+    fontSize: 22,
+    color: 'rgba(227, 220, 203, 0.45)',
     fontFamily: 'GFSDidot',
     marginRight: 6,
     marginBottom: 8,
     alignSelf: 'flex-end',
   },
 
-  // ── Translation ────────────────────────────────────────────────────────
+  // ── Translation ─────────────────────────────────────────────────────────
   translationContainer: {
     paddingTop: 16,
     borderTopWidth: 1,
@@ -434,7 +505,7 @@ const styles = StyleSheet.create({
     fontFamily: 'GFSDidot',
   },
 
-  // ── Level badge ────────────────────────────────────────────────────────
+  // ── Level badge ─────────────────────────────────────────────────────────
   levelBadge: {
     position: 'absolute',
     top: 12,

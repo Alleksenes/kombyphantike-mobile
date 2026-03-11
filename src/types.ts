@@ -3,6 +3,51 @@
 
 import type { Token, AncientContext } from '../components/WordChip';
 
+// ── RAW BACKEND DTOs ────────────────────────────────────────────────────────
+// These mirror the Python backend's JSON shape exactly.
+// The frontend Knot/CuratedSentenceDTO types below are the normalized forms
+// used by UI components — mappers convert between the two.
+
+export interface KnotDTO {
+  target_word_mg: string;   // The Modern Greek word form in context
+  lexis_ag: string;         // The Ancient Greek lexical ancestor
+  knot_type: string;        // Classification (NOUN, VERB, ADJ, etc.)
+  david_note: string;       // AI-compiled diachronic evolutionary note
+  rag_scholia: string;      // Raw academic citation from Holton et al.
+}
+
+export interface CuratedSentenceBackendDTO {
+  greek_text: string;
+  english_translation: string;
+  audio_url: string | null;
+  knots: KnotDTO[];
+}
+
+/** Map a raw backend KnotDTO into the frontend Knot shape. */
+export function mapKnotDTO(dto: KnotDTO, index: number): Knot {
+  return {
+    id: `knot-${index}`,
+    text: dto.target_word_mg,
+    lemma: dto.lexis_ag,
+    pos: dto.knot_type,
+    david_note: dto.david_note,
+    rag_scholia: dto.rag_scholia,
+  };
+}
+
+/** Map a raw backend CuratedSentenceBackendDTO into the frontend shape. */
+export function mapCuratedSentenceDTO(
+  dto: CuratedSentenceBackendDTO,
+  index: number,
+): CuratedSentenceDTO {
+  return {
+    id: `sentence-${index}`,
+    greek_text: dto.greek_text,
+    translation: dto.english_translation,
+    knots: dto.knots.map(mapKnotDTO),
+  };
+}
+
 export interface NodeData {
   knot_id?: string;
   hero?: string;
