@@ -1,9 +1,18 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { Dimensions, View, Text, StyleSheet } from 'react-native';
 import { IconButton } from 'react-native-paper';
-import WordChip, { Token, AncientContext } from './WordChip';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
+import WordChip, { Token } from './WordChip';
 import { AudioPlayer } from '../src/services/AudioPlayer';
 import OmegaLoader from './OmegaLoader';
+import { Knot } from '../src/types';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.9;
@@ -11,14 +20,54 @@ const CARD_WIDTH = width * 0.9;
 interface PhilologyCardProps {
   sentence: string;
   tokens?: Token[];
+  knots?: Knot[];
   translation: string;
-  onTokenPress: (token: Token) => void;
+  onTokenPress?: (token: Token) => void;
   selectedToken?: Token | null;
+}
+
+// ── The Highlight: KnotWord ──────────────────────────────────────────────────
+function KnotWord({ token, onPress, onLongPress, isFocused }: {
+  token: Token;
+  onPress: (token: Token) => void;
+  onLongPress: (token: Token) => void;
+  isFocused: boolean
+}) {
+  const pulse = useSharedValue(0.3);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.3, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1, // infinite
+      true // reverse
+    );
+  }, [pulse]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    borderBottomColor: `rgba(197, 160, 89, ${pulse.value})`, // Byzantine Gold #C5A059 with opacity
+    borderBottomWidth: 2,
+    borderStyle: 'solid',
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <WordChip
+        token={token}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        isFocused={isFocused}
+      />
+    </Animated.View>
+  );
 }
 
 function PhilologyCard({
   sentence,
   tokens,
+  knots,
   translation,
   onTokenPress,
   selectedToken
@@ -54,6 +103,12 @@ function PhilologyCard({
     }
   }, []);
 
+  const handlePress = useCallback((token: Token) => {
+    if (onTokenPress) {
+      onTokenPress(token);
+    }
+  }, [onTokenPress]);
+
   return (
     <View style={styles.card}>
       {/* Header */}
@@ -81,11 +136,25 @@ function PhilologyCard({
             ? (selectedToken === token || selectedToken.text === token.text)
             : false;
 
+          const isKnot = knots?.some(k => k.text === token.text);
+
+          if (isKnot) {
+            return (
+              <KnotWord
+                key={`${token.text}-${idx}`}
+                token={token}
+                onPress={handlePress}
+                onLongPress={handleLongPress}
+                isFocused={isFocused}
+              />
+            );
+          }
+
           return (
             <WordChip
               key={`${token.text}-${idx}`}
               token={token}
-              onPress={onTokenPress}
+              onPress={handlePress}
               onLongPress={handleLongPress}
               isFocused={isFocused}
             />
@@ -132,7 +201,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     color: '#C0A062',
     textTransform: 'uppercase',
-    fontFamily: 'NeueHaasGrotesk-Display',
+    fontFamily: 'NeueHaasGrotesk',
   },
   audioButton: {
     height: 24,
@@ -158,6 +227,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     lineHeight: 20,
-    fontFamily: 'GFSDidot',
+    fontFamily: 'NeueHaasGrotesk',
   },
 });

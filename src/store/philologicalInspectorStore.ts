@@ -24,6 +24,12 @@ export const usePhilologicalInspectorStore = create<PhilologicalInspectorState>(
   isLoading: false,
   activeTab: 'knot',
   openInspector: async (knot, tab = 'knot') => {
+    // Zero API Calls if already loaded
+    if (knot.david_note && knot.rag_scholia) {
+      set({ knot, isOpen: true, activeTab: tab, isLoading: false });
+      return;
+    }
+
     set({ knot, isOpen: true, activeTab: tab, isLoading: true });
     try {
       if (knot.lemma) {

@@ -32,7 +32,7 @@ const PARCHMENT = '#E3DCCB';
 const GRAY_TEXT = '#9CA3AF';
 const GLASS_BG = 'rgba(20, 20, 25, 0.85)';
 const BORDER_DIM = 'rgba(197, 160, 89, 0.2)';
-const SCHOLIA_BORDER = 'rgba(197, 160, 89, 0.4)';
+const SCHOLIA_BORDER = '#C5A059';
 
 // ── Custom frosted-glass background ─────────────────────────────────────────
 function SheetBackground({ style }: { style?: any }) {
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     color: PARCHMENT,
   },
   headerArrow: {
-    fontFamily: 'NeueHaasGrotesk-Text',
+    fontFamily: 'NeueHaasGrotesk',
     fontSize: 18,
     color: GOLD,
     marginHorizontal: 4,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(55, 65, 81, 0.8)',
   },
   badgeText: {
-    fontFamily: 'NeueHaasGrotesk-Display',
+    fontFamily: 'NeueHaasGrotesk',
     fontSize: 10,
     fontWeight: 'bold',
     color: GRAY_TEXT,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   definitionText: {
-    fontFamily: 'NeueHaasGrotesk-Text',
+    fontFamily: 'NeueHaasGrotesk',
     fontSize: 13,
     color: PARCHMENT,
     flex: 1,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   sectionLabel: {
-    fontFamily: 'NeueHaasGrotesk-Display',
+    fontFamily: 'NeueHaasGrotesk',
     fontSize: 10,
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   noteBody: {
-    fontFamily: 'NeueHaasGrotesk-Text',
+    fontFamily: 'NeueHaasGrotesk',
     fontSize: 14,
     color: PARCHMENT,
     lineHeight: 22,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   scholiaSource: {
-    fontFamily: 'NeueHaasGrotesk-Display',
+    fontFamily: 'NeueHaasGrotesk',
     fontSize: 9,
     fontWeight: 'bold',
     color: 'rgba(197, 160, 89, 0.6)',
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   scholiaBody: {
-    fontFamily: 'NeueHaasGrotesk-Text',
+    fontFamily: 'NeueHaasGrotesk',
     fontSize: 13,
     color: 'rgba(227, 220, 203, 0.8)',
     lineHeight: 21,
