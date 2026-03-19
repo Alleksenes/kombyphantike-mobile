@@ -207,6 +207,7 @@ export const MOCK_ISLAND: IslandDTO = {
   title: 'The Governor\'s Quill',
   level: 'B1',
   progress: 35,
+  locked: false,
   sentences: [SENTENCE_1, SENTENCE_2],
 };
 

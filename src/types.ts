@@ -1,7 +1,45 @@
 // THE CANONICAL DATA CONTRACT
 // This file rules them all. Backend and Frontend must agree on this!
+// v0.7.0 — Supabase Auth, Paywall, ContrastiveProfile
 
 import type { Token, AncientContext } from '../components/WordChip';
+
+// ── USER & AUTH ──────────────────────────────────────────────────────────────
+
+export type UserTier = 'initiate' | 'scholar';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  tier: UserTier;
+}
+
+// ── CONTRASTIVE PROFILE (from GET /inspect/{lemma}) ──────────────────────────
+// The diachronic fingerprint of a word: LSJ roots, KDS distance, merged scholia.
+
+export interface ContrastiveProfile {
+  david_note: string;                            // AI-compiled diachronic note
+  rag_scholia: string;                           // Raw academic citation
+  grammar_scholia: string;                       // Merged RAG + Davidian synthesis
+  lsj_definitions: string[];                     // LSJ dictionary entries
+  kds_score: number;                             // Diachronic distance score (0–1)
+  paradigm: { form: string; tags: string[] }[];  // Declension/conjugation table
+}
+
+// ── API ERROR TYPING ─────────────────────────────────────────────────────────
+
+export type ApiErrorKind = 'void' | 'unauthorized' | 'network' | 'server';
+
+export class ApiError extends Error {
+  constructor(
+    public kind: ApiErrorKind,
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 // ── RAW BACKEND DTOs ────────────────────────────────────────────────────────
 // These mirror the Python backend's JSON shape exactly.
@@ -78,6 +116,11 @@ export interface Knot {
   // THE SCHOLIA: RAG — raw academic citation from Holton et al.
   rag_scholia: string;
 
+  // v0.7.0 — ContrastiveProfile fields (populated by GET /inspect/{lemma})
+  grammar_scholia?: string;    // Merged RAG + Davidian synthesis
+  lsj_definitions?: string[];  // LSJ dictionary entries
+  kds_score?: number;           // Diachronic distance score (0–1)
+
   // THE PARADIGM: Declension/conjugation table data
   has_paradigm?: boolean;
   paradigm?: { form: string; tags: string[] }[];
@@ -97,6 +140,7 @@ export interface IslandDTO {
   title: string;
   level: string;
   progress: number;
+  locked: boolean;             // v0.7.0 — Paywall: true for free users on B1+
   sentences: CuratedSentenceDTO[];
 }
 
