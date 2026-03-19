@@ -1,8 +1,8 @@
 // ── useIslandData ─────────────────────────────────────────────────────────────
-// Returns island data from the API.
+// Returns island data from the API via ApiService (auth-aware).
 import { useCallback, useEffect, useState } from 'react';
-import { IslandDTO } from '../types';
-import { API_BASE_URL } from '../services/apiConfig';
+import { IslandDTO, ApiError } from '../types';
+import { ApiService } from '../services/ApiService';
 
 interface UseIslandDataResult {
   island: IslandDTO | null;
@@ -21,22 +21,14 @@ export function useIslandData(islandId: string): UseIslandDataResult {
     setError(null);
 
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(`${API_BASE_URL}/island/${islandId}`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
-
-      const data: IslandDTO = await response.json();
+      const data = await ApiService.getIsland(islandId);
       setIsland(data);
     } catch (e: any) {
-      setError(e.message || 'Failed to fetch island data.');
+      if (e instanceof ApiError) {
+        setError(e.kind === 'unauthorized' ? 'Please sign in to access this island.' : e.message);
+      } else {
+        setError(e.message || 'Failed to fetch island data.');
+      }
     } finally {
       setLoading(false);
     }

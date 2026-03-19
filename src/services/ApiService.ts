@@ -1,6 +1,18 @@
-import { API_BASE_URL } from './apiConfig';
+// ── API Service ──────────────────────────────────────────────────────────────
+// All data queries go through this service → FastAPI backend.
+// Supabase is used for JWT extraction ONLY — never for direct DB queries.
+// v0.7.0: authFetch wrapper, typed errors, new GET endpoints.
 
-// Define types for payloads and responses
+import { API_BASE_URL } from './apiConfig';
+import { supabase } from './supabaseClient';
+import {
+  ApiError,
+  ContrastiveProfile,
+  IslandDTO,
+  UserProfile,
+} from '../types';
+
+// ── Payload & Response Types ─────────────────────────────────────────────────
 
 export interface NodeData {
   knot_id?: string;
@@ -10,7 +22,6 @@ export interface NodeData {
   target_sentence?: string;
   source_sentence?: string;
   target_tokens?: any[];
-  // ... any other fields
   [key: string]: any;
 }
 
@@ -18,12 +29,12 @@ export interface ConstellationNode {
   id: string;
   label: string;
   type: string;
-  status: string; // 'locked' | 'unlocked' | 'mastered' | 'active'
-  data?: NodeData; // <-- DATA IS A STRUCTURED OBJECT
-  x?: number; // Added by D3
-  y?: number; // Added by D3
-  vx?: number; // Added by D3
-  vy?: number; // Added by D3
+  status: string;
+  data?: NodeData;
+  x?: number;
+  y?: number;
+  vx?: number;
+  vy?: number;
 }
 
 export interface ConstellationLink {
@@ -64,83 +75,137 @@ export interface SpeakPayload {
   text: string;
 }
 
-
-export interface InspectLemmaResponse {
-  david_note: string;
-  rag_scholia: string;
-  paradigm: any[];
-}
-
 export interface SpeakResponse {
   audio: string;
 }
 
-export const ApiService = {
-  draftCurriculum: async (payload: DraftCurriculumPayload): Promise<DraftCurriculumResponse> => {
-    const response = await fetch(`${API_BASE_URL}/draft_curriculum`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+// ── Auth-Aware Fetch Wrapper ─────────────────────────────────────────────────
+// Reads the Supabase session JWT and injects it as a Bearer token.
+// Handles 401 (refresh + retry once), 404 (ApiError 'void'), 5xx (ApiError 'server').
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Error: ${response.status} ${errorText}`);
-    }
-    return response.json();
-  },
+async function getAccessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
 
-  fillCurriculum: async (payload: FillCurriculumPayload): Promise<FillCurriculumResponse> => {
-    const response = await fetch(`${API_BASE_URL}/fill_curriculum`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+async function authFetch(
+  url: string,
+  options: RequestInit = {},
+  retry = true,
+): Promise<Response> {
+  const token = await getAccessToken();
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Error: ${response.status} ${errorText}`);
-    }
-    return response.json();
-  },
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
 
-
-  synthesizeIsland: async (): Promise<any> => {
-    const response = await fetch(`${API_BASE_URL}/islands/synthesize`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Error: ${response.status} ${errorText}`);
-    }
-    return response.json();
-  },
-
-  inspectLemma: async (lemma: string): Promise<InspectLemmaResponse> => {
-    const response = await fetch(`${API_BASE_URL}/inspect/${lemma}`, {
-      method: 'GET',
-    });
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Error: ${response.status} ${errorText}`);
-    }
-    return response.json();
-  },
-
-  speak: async (payload: SpeakPayload): Promise<SpeakResponse> => {
-    const response = await fetch(`${API_BASE_URL}/speak`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Audio fetch failed: ${response.status}`);
-      }
-
-      return response.json();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
+
+  const response = await fetch(url, { ...options, headers });
+
+  // 401: attempt a single token refresh + retry
+  if (response.status === 401 && retry) {
+    const { error } = await supabase.auth.refreshSession();
+    if (!error) {
+      return authFetch(url, options, false);
+    }
+    throw new ApiError('unauthorized', 401, 'Session expired. Please sign in again.');
+  }
+
+  return response;
+}
+
+/** Throw a typed ApiError from a failed response. */
+async function throwApiError(response: Response): Promise<never> {
+  const body = await response.text().catch(() => '');
+
+  if (response.status === 404) {
+    throw new ApiError('void', 404, body || 'Resource not found.');
+  }
+  if (response.status === 401) {
+    throw new ApiError('unauthorized', 401, body || 'Unauthorized.');
+  }
+  throw new ApiError('server', response.status, body || `Server Error: ${response.status}`);
+}
+
+// ── The Service ──────────────────────────────────────────────────────────────
+
+export const ApiService = {
+
+  // ── v0.7.0 GET Endpoints ─────────────────────────────────────────────────
+
+  /** GET /me — Returns the authenticated user's profile and tier. */
+  getMe: async (): Promise<UserProfile> => {
+    const response = await authFetch(`${API_BASE_URL}/me`);
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
+
+  /** GET /curriculum/islands — Returns all islands; backend applies paywall (locked=true, sentences=[] for free B1+). */
+  getCurriculumIslands: async (): Promise<IslandDTO[]> => {
+    const response = await authFetch(`${API_BASE_URL}/curriculum/islands`);
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
+
+  /** GET /islands/{id} — Returns full CuratedSentenceDTO with nested PhilologicalKnotDTOs. */
+  getIsland: async (id: string): Promise<IslandDTO> => {
+    const response = await authFetch(`${API_BASE_URL}/islands/${encodeURIComponent(id)}`);
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
+
+  /** GET /inspect/{lemma} — Returns ContrastiveProfile, or null on 404 (Philological Void). */
+  inspectLemma: async (lemma: string): Promise<ContrastiveProfile | null> => {
+    const response = await authFetch(`${API_BASE_URL}/inspect/${encodeURIComponent(lemma)}`);
+    if (response.status === 404) {
+      return null; // Philological Void — the diachronic link is lost to time
+    }
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
+
+  // ── Legacy POST Endpoints (unchanged contract, now auth-aware) ───────────
+
+  /** POST /draft_curriculum — Generate curriculum graph nodes/links. */
+  draftCurriculum: async (payload: DraftCurriculumPayload): Promise<DraftCurriculumResponse> => {
+    const response = await authFetch(`${API_BASE_URL}/draft_curriculum`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
+
+  /** POST /fill_curriculum — Enrich draft curriculum with sentence data. */
+  fillCurriculum: async (payload: FillCurriculumPayload): Promise<FillCurriculumResponse> => {
+    const response = await authFetch(`${API_BASE_URL}/fill_curriculum`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
+
+  /** POST /islands/synthesize — Synthesize island data. */
+  synthesizeIsland: async (): Promise<any> => {
+    const response = await authFetch(`${API_BASE_URL}/islands/synthesize`, {
+      method: 'POST',
+    });
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
+
+  /** POST /speak — Generate audio for text. */
+  speak: async (payload: SpeakPayload): Promise<SpeakResponse> => {
+    const response = await authFetch(`${API_BASE_URL}/speak`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) await throwApiError(response);
+    return response.json();
+  },
 };
