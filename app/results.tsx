@@ -6,7 +6,6 @@ import { Token } from '../components/WordChip';
 import ConstellationMap from '../screens/ConstellationMap';
 import { ApiService } from '../src/services/ApiService';
 import { ConstellationLink, ConstellationNode } from '../src/types';
-import { SessionStore } from '../services/SessionStore';
 import { useInspectorStore } from '../src/store/inspectorStore';
 
 export default function ResultsScreen() {
@@ -23,30 +22,23 @@ export default function ResultsScreen() {
   const { openInspector, closeInspector, token: selectedToken } = useInspectorStore();
 
   useEffect(() => {
-    const draft = SessionStore.getDraft();
+    // TODO: migrate draft loading to Zustand store (SessionStore purged in Phase 2)
+    const draft: any = null;
+    if (!draft) return;
 
-    if (draft) {
-      let data = draft;
-      if (typeof draft === 'string') {
-        try {
-          data = JSON.parse(draft);
-        } catch (e) {
-          // Silent failure
-        }
-      }
+    let data = draft;
+    if (typeof draft === 'string') {
+      try { data = JSON.parse(draft); } catch { /* Silent failure */ }
+    }
 
-      if (data) {
-        // Case 1: Full Constellation Graph (nodes + links)
-        if (Array.isArray(data.nodes)) {
-          setNodes(data.nodes);
-          setLinks(data.links || []);
-          setGoldenPath(data.golden_path || []);
-        }
-        // Case 2: Just Nodes (e.g. initial draft)
-        else if (Array.isArray(data)) {
-           setNodes(data);
-           setLinks([]);
-        }
+    if (data) {
+      if (Array.isArray(data.nodes)) {
+        setNodes(data.nodes);
+        setLinks(data.links || []);
+        setGoldenPath(data.golden_path || []);
+      } else if (Array.isArray(data)) {
+        setNodes(data);
+        setLinks([]);
       }
     }
   }, []);
