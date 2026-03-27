@@ -1,9 +1,10 @@
-const { withNativeWind } = require("nativewind/metro");
+// Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config');
 
+/** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-config.resolver.assetExts.push('wasm');
-config.resolver.assetExts.push('sksl');
+// Add .mjs and .cjs to resolver extensions (Crucial for Modern Libs)
+config.resolver.sourceExts.push('mjs', 'cjs');
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+module.exports = config;

@@ -2,32 +2,26 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-// A "No-Op" storage for Server-Side Rendering
-const serverStorage = {
-  getItem: () => null,
-  setItem: () => {},
-  removeItem: () => {},
+// Module-level browser detection — resolved once at import time.
+// This is the single source of truth: if there is no window, we are NOT in a browser.
+const isBrowser = typeof window !== 'undefined';
+const isWeb = Platform.OS === 'web';
+
+// A "No-Op" storage for any non-browser context (SSR, Node, tests)
+const noopStorage = {
+  getItem: (_key: string) => null,
+  setItem: (_key: string, _value: string) => {},
+  removeItem: (_key: string) => {},
 };
 
-// The Web Storage (guarded for SSR)
-const webStorage = {
-  getItem: (key: string) => {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      return localStorage.getItem(key);
+// The Web Storage — only touches localStorage when we are certain we're in a browser
+const webStorage = isBrowser
+  ? {
+      getItem: (key: string) => localStorage.getItem(key),
+      setItem: (key: string, value: string) => localStorage.setItem(key, value),
+      removeItem: (key: string) => localStorage.removeItem(key),
     }
-    return null;
-  },
-  setItem: (key: string, value: string) => {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      localStorage.setItem(key, value);
-    }
-  },
-  removeItem: (key: string) => {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      localStorage.removeItem(key);
-    }
-  },
-};
+  : noopStorage;
 
 // The Mobile Storage
 const mobileStorage = {
@@ -36,8 +30,8 @@ const mobileStorage = {
   removeItem: (key: string) => SecureStore.deleteItemAsync(key),
 };
 
-// Select the correct adapter
-const storageAdapter = Platform.OS === 'web' ? webStorage : mobileStorage;
+// Select the correct adapter: web+browser → localStorage, web+no-browser → noop, native → SecureStore
+const storageAdapter = isWeb ? webStorage : mobileStorage;
 
 export const supabase = createClient(
   process.env.EXPO_PUBLIC_SUPABASE_URL!,
