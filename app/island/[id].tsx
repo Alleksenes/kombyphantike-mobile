@@ -24,7 +24,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useIslandData } from '../../src/hooks/useIslandData';
-import { usePhilologicalInspectorStore } from '../../src/store/philologicalInspectorStore';
+import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
+import { AudioPlayer } from '../../src/services/AudioPlayer';
 import { MOCK_ISLAND } from '../../src/data/mockPayload';
 import type { CuratedSentenceDTO, Knot } from '../../src/types';
 
@@ -127,16 +128,34 @@ function SentenceCard({
     });
   }, [sentence.greek_text, knotMap]);
 
+  // Find the first knot with grammar_scholia for the teaser
+  const grammarTeaser = useMemo(() => {
+    for (const k of sentence.knots) {
+      if (k.grammar_scholia) return k.grammar_scholia;
+    }
+    return null;
+  }, [sentence.knots]);
+
   return (
     <View style={styles.sentenceCard}>
       {/* Header */}
       <View style={styles.cardHeader}>
         <Text style={styles.cardHeaderLabel}>Active Node</Text>
-        {sentence.source && (
-          <Text style={styles.cardSource} numberOfLines={1}>
-            {sentence.source}
-          </Text>
-        )}
+        <View style={styles.cardHeaderRight}>
+          {/* Pneuma: Audio Play Icon */}
+          <Pressable
+            onPress={() => AudioPlayer.playSentence(sentence.greek_text)}
+            style={styles.pneumaButton}
+          >
+            <Text style={styles.pneumaIcon}>♫</Text>
+            <Text style={styles.pneumaLabel}>Pneuma</Text>
+          </Pressable>
+          {sentence.source && (
+            <Text style={styles.cardSource} numberOfLines={1}>
+              {sentence.source}
+            </Text>
+          )}
+        </View>
       </View>
 
       {/* The Interactive Text */}
@@ -170,6 +189,16 @@ function SentenceCard({
         <Text style={styles.translationText}>{sentence.translation}</Text>
       </View>
 
+      {/* Rationale: Grammar Scholia Teaser */}
+      {grammarTeaser && (
+        <View style={styles.rationaleContainer}>
+          <Text style={styles.rationaleLabel}>Rationale</Text>
+          <Text style={styles.rationaleText} numberOfLines={2}>
+            {grammarTeaser}
+          </Text>
+        </View>
+      )}
+
       {/* Level badge */}
       {sentence.level && (
         <View style={styles.levelBadge}>
@@ -187,7 +216,7 @@ export default function IslandWorkbench() {
   const islandId = typeof id === 'string' ? id : '1';
 
   const { island: apiIsland, loading, error } = useIslandData(islandId);
-  const { knot: activeKnot, openInspector } = usePhilologicalInspectorStore();
+  const { knot: activeKnot, openInspector } = useInspectorStore();
 
   // Fall back to mock data when the API is unavailable
   const island = apiIsland ?? (loading ? null : MOCK_ISLAND);
@@ -411,6 +440,32 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     fontFamily: 'NeueHaasGrotesk-Display',
   },
+  cardHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  pneumaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(197, 160, 89, 0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  pneumaIcon: {
+    fontSize: 12,
+    color: GOLD,
+  },
+  pneumaLabel: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: GOLD,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   cardSource: {
     fontFamily: 'NeueHaasGrotesk-Text',
     fontSize: 10,
@@ -503,6 +558,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     fontFamily: 'GFSDidot',
+  },
+
+  // ── Rationale (Grammar Scholia Teaser) ──────────────────────────────────
+  rationaleContainer: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(31, 41, 55, 0.4)',
+  },
+  rationaleLabel: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: GOLD,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  rationaleText: {
+    fontFamily: 'NeueHaasGrotesk-Text',
+    fontSize: 12,
+    color: 'rgba(227, 220, 203, 0.55)',
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
 
   // ── Level badge ─────────────────────────────────────────────────────────

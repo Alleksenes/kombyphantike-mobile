@@ -2,7 +2,6 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,7 +10,6 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
-  SharedValue,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
@@ -21,30 +19,9 @@ import { Token } from '../components/WordChip';
 import ConstellationMap from '../screens/ConstellationMap';
 
 import { API_BASE_URL } from '../src/services/apiConfig';
-import { useInspectorStore } from '../src/store/inspectorStore';
+import { useInspectorStore, toKnot } from '../src/store/unifiedInspectorStore';
 import { ConstellationGraph, ConstellationLink, ConstellationNode } from '../src/types';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CENTER_X = SCREEN_WIDTH / 2;
-
-// ─── Focus camera toward a node ───────────────────────────────────────────────
-// Given a node's x/y in simulation space, computes the translateX/Y/scale
-// values to bring that node close to center with a gentle zoom.
-function focusOnNode(
-  nodeX: number,
-  nodeY: number,
-  translateX: SharedValue<number>,
-  translateY: SharedValue<number>,
-  scale: SharedValue<number>,
-) {
-  const targetScale = 1.4;
-  const targetTx = CENTER_X - nodeX * targetScale;
-  const targetTy = CENTER_Y - nodeY * targetScale;
-
-  scale.value = withSpring(targetScale, { damping: 18, stiffness: 120 });
-  translateX.value = withSpring(targetTx, { damping: 18, stiffness: 120 });
-  translateY.value = withSpring(targetTy, { damping: 18, stiffness: 120 });
-}
 
 export default function ConstellationScreen() {
   const { graph: graphParam } = useLocalSearchParams();
@@ -145,10 +122,6 @@ export default function ConstellationScreen() {
   //    Token tap → TheInspector opens (via Zustand)
   const onNodePress = (node: ConstellationNode) => {
     if (node.type === 'rule' && node.status === 'mastered') {
-      // Animate camera to focus on this node
-      if (node.x !== undefined && node.y !== undefined) {
-        focusOnNode(node.x, node.y, cameraTranslateX, cameraTranslateY, cameraScale);
-      }
       setActiveSentenceNode(node);
       setSelectedToken(null);
     }

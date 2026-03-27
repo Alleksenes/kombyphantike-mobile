@@ -1,8 +1,14 @@
 // THE CANONICAL DATA CONTRACT
 // This file rules them all. Backend and Frontend must agree on this!
-// v0.7.0 — Supabase Auth, Paywall, ContrastiveProfile
+// v0.8.2 — Supabase Auth, Paywall, ContrastiveProfile, Voyage, Progressive Disclosure
 
 import type { Token, AncientContext } from '../components/WordChip';
+
+// ── CEFR & MASTERY ───────────────────────────────────────────────────────────
+
+export type CefrLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+export type MasteryState = 'unseen' | 'seen' | 'practiced' | 'mastered';
+export type DisclosureLevel = 'translation' | 'audio' | 'knot' | 'etymology';
 
 // ── USER & AUTH ──────────────────────────────────────────────────────────────
 
@@ -17,6 +23,17 @@ export interface UserProfile {
 // ── CONTRASTIVE PROFILE (from GET /inspect/{lemma}) ──────────────────────────
 // The diachronic fingerprint of a word: LSJ roots, KDS distance, merged scholia.
 
+export interface Idiom {
+  expression: string;
+  translation: string;
+  source?: string;
+}
+
+export interface Collocation {
+  text: string;
+  frequency: number;
+}
+
 export interface ContrastiveProfile {
   david_note: string;                            // AI-compiled diachronic note
   rag_scholia: string;                           // Raw academic citation
@@ -24,6 +41,9 @@ export interface ContrastiveProfile {
   lsj_definitions: string[];                     // LSJ dictionary entries
   kds_score: number;                             // Diachronic distance score (0–1)
   paradigm: { form: string; tags: string[] }[];  // Declension/conjugation table
+  ancient_ancestor?: string;                     // Deep etymon (Homeric/Classical root)
+  idioms?: Idiom[];                              // METIS idiom data
+  collocations?: Collocation[];                  // HNC collocational data
 }
 
 // ── API ERROR TYPING ─────────────────────────────────────────────────────────
@@ -47,11 +67,12 @@ export class ApiError extends Error {
 // used by UI components — mappers convert between the two.
 
 export interface KnotDTO {
-  target_word_mg: string;   // The Modern Greek word form in context
-  lexis_ag: string;         // The Ancient Greek lexical ancestor
-  knot_type: string;        // Classification (NOUN, VERB, ADJ, etc.)
-  david_note: string;       // AI-compiled diachronic evolutionary note
-  rag_scholia: string;      // Raw academic citation from Holton et al.
+  target_word_mg: string;       // The Modern Greek word form in context
+  lexis_ag: string;             // The Ancient Greek lexical ancestor
+  knot_type: string;            // Classification (NOUN, VERB, ADJ, etc.)
+  david_note: string;           // AI-compiled diachronic evolutionary note
+  rag_scholia: string;          // Raw academic citation from Holton et al.
+  ancient_ancestor?: string;    // Deep etymon (if present in backend response)
 }
 
 export interface CuratedSentenceBackendDTO {
@@ -70,6 +91,7 @@ export function mapKnotDTO(dto: KnotDTO, index: number): Knot {
     pos: dto.knot_type,
     david_note: dto.david_note,
     rag_scholia: dto.rag_scholia,
+    ancient_ancestor: dto.ancient_ancestor,
   };
 }
 
@@ -121,6 +143,13 @@ export interface Knot {
   lsj_definitions?: string[];  // LSJ dictionary entries
   kds_score?: number;           // Diachronic distance score (0–1)
 
+  // v0.8.2 — Extended philological fields
+  ancient_ancestor?: string;           // Deep etymon (Homeric/Classical root)
+  cefr_level?: CefrLevel;             // CEFR proficiency level
+  ngrams?: string[];                   // HNC collocational phrases
+  kelly_rank?: number;                 // Kelly Core frequency rank
+  idioms?: Idiom[];                    // METIS idiom data
+
   // THE PARADIGM: Declension/conjugation table data
   has_paradigm?: boolean;
   paradigm?: { form: string; tags: string[] }[];
@@ -132,7 +161,7 @@ export interface CuratedSentenceDTO {
   translation: string;       // English translation
   knots: Knot[];             // Annotated words — the philological treasure
   source?: string;           // Attribution (e.g., "Heraclitus, Fragment 91")
-  level?: string;            // CEFR level (A1, A2, B1, B2)
+  level?: CefrLevel;          // CEFR level (A1, A2, B1, B2)
 }
 
 export interface IslandDTO {
@@ -166,4 +195,28 @@ export interface ConstellationGraph {
   nodes: ConstellationNode[];
   links: ConstellationLink[];
   golden_path: string[];
+}
+
+// ── THE VOYAGE (Client-Side Sentence Sequencer) ─────────────────────────────
+// Built entirely from IslandDTO.sentences — no new backend endpoint.
+
+export interface VoyageSentence extends CuratedSentenceDTO {
+  sequence_index: number;
+  mastery: MasteryState;
+}
+
+export interface VoyageManifest {
+  island_id: string;
+  sentences: VoyageSentence[];
+  current_index: number;
+  started_at: string;
+}
+
+// ── THE LAPIDARY'S TABLE (Morphological Challenge) ──────────────────────────
+
+export interface LapidaryChallenge {
+  sentence_id: string;
+  blanked_knot: Knot;
+  options: { form: string; tags: string[] }[];
+  correct_form: string;
 }

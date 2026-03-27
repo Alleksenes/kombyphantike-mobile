@@ -6,7 +6,7 @@ import { Token } from '../components/WordChip';
 import ConstellationMap from '../screens/ConstellationMap';
 import { ApiService } from '../src/services/ApiService';
 import { ConstellationLink, ConstellationNode } from '../src/types';
-import { useInspectorStore } from '../src/store/inspectorStore';
+import { useInspectorStore, toKnot } from '../src/store/unifiedInspectorStore';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function ResultsScreen() {
   const [activeNode, setActiveNode] = useState<ConstellationNode | null>(null);
 
   // Global Inspector Store
-  const { openInspector, closeInspector, token: selectedToken } = useInspectorStore();
+  const { openInspector, closeInspector, knot: selectedToken } = useInspectorStore();
 
   useEffect(() => {
     // TODO: migrate draft loading to Zustand store (SessionStore purged in Phase 2)

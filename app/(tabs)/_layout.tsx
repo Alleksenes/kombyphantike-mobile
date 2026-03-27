@@ -1,53 +1,7 @@
-import { Tabs } from 'expo-router';
-import { IconButton } from 'react-native-paper';
+import { Slot } from 'expo-router';
 
-// Default export for Tabs Layout
+// Single-screen group — Shipyard is the sole home tab.
+// Tab bar removed as part of Sprint 2 Palimpsest transition.
 export default function TabLayout() {
-  return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        // Fixed: sceneContainerStyle is not a valid prop on Tabs.
-        // Using sceneStyle in screenOptions for transparent background.
-        sceneStyle: { backgroundColor: 'transparent' },
-        unmountOnBlur: true,
-        // @ts-ignore: Ensuring transparency on web
-        sceneContainerStyle: { backgroundColor: 'transparent' },
-        tabBarStyle: {
-          backgroundColor: '#1a1918', // Fallback for Android
-          borderTopColor: '#3e0a15',
-          borderTopWidth: 1,
-          elevation: 0,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: '#C5A059', // Gold
-        tabBarInactiveTintColor: 'rgba(227, 220, 203, 0.5)', // Dim Parchment
-        tabBarLabelStyle: {
-          fontFamily: 'NeueHaasGrotesk-Display',
-          fontSize: 12,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Weaver',
-          tabBarIcon: ({ color, size }) => (
-            <IconButton icon="feather" iconColor={color} size={24} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="shipyard"
-        options={{
-          title: 'Shipyard',
-          tabBarIcon: ({ color, size }) => (
-            <IconButton icon="map" iconColor={color} size={24} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
+  return <Slot />;
 }

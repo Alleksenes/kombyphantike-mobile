@@ -1,5 +1,36 @@
 import { MD3DarkTheme, configureFonts } from 'react-native-paper';
 
+// ── Philological Design Tokens (Aesthetic Sovereignty) ──────────────────────
+// Centralized here to eliminate scattered re-declarations across components.
+// Every component should import from this file instead of declaring its own.
+
+export const PhilologicalColors = {
+  VOID: '#0f0518',
+  GOLD: '#C5A059',
+  GOLD_DIM: 'rgba(197, 160, 89, 0.15)',
+  GOLD_GLOW: 'rgba(197, 160, 89, 0.35)',
+  PARCHMENT: '#E3DCCB',
+  INK: '#1a1918',
+  SURFACE: 'rgba(15, 5, 24, 0.4)',
+  SURFACE_HEAVY: 'rgba(15, 5, 24, 0.6)',
+  GRAY_TEXT: '#9CA3AF',
+  GRAY_BORDER: 'rgba(55, 65, 81, 0.6)',
+  MORPH_BG: 'rgba(120, 53, 15, 0.3)',
+  MORPH_BORDER: 'rgba(180, 83, 9, 0.6)',
+  MORPH_TEXT: '#FCD34D',
+  SCHOLIA_BG: '#f4f1ea',
+  SCHOLIA_BORDER: '#d6cfc0',
+  SCHOLIA_TEXT: '#5D4037',
+  ERROR: '#EF4444',
+  SUCCESS: '#34D399',
+} as const;
+
+export const PhilologicalFonts = {
+  DISPLAY: 'GFSDidot',
+  BODY: 'NeueHaasGrotesk-Text',
+  LABEL: 'NeueHaasGrotesk-Display',
+} as const;
+
 const fontConfig = {
   displayLarge: { fontFamily: 'GFSDidot' },
   displayMedium: { fontFamily: 'GFSDidot' },

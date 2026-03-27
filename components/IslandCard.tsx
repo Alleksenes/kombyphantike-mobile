@@ -7,36 +7,50 @@ export interface IslandCardProps {
   level: string;
   progress: number;
   status: 'Draft' | 'Mastered';
+  locked?: boolean;
   onPress?: (id: string) => void;
 }
 
-function IslandCard({ id, title, level, progress, status, onPress }: IslandCardProps) {
+function IslandCard({ id, title, level, progress, status, locked = false, onPress }: IslandCardProps) {
   const isMastered = status === 'Mastered';
-  const borderColor = isMastered ? '#C5A059' : '#9CA3AF'; // Gold for Mastered, Grey for Draft
+  const borderColor = locked ? '#4B5563' : isMastered ? '#C5A059' : '#9CA3AF';
 
   return (
     <Pressable
-      onPress={() => onPress && onPress(id)}
+      onPress={() => !locked && onPress && onPress(id)}
       style={({ pressed }) => [
         styles.card,
         { borderColor },
-        pressed && styles.pressed,
+        locked && styles.cardLocked,
+        pressed && !locked && styles.pressed,
       ]}
     >
-      <View style={styles.header}>
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        <View style={[styles.badge, { borderColor }]}>
-          <Text style={[styles.badgeText, { color: borderColor }]}>{level}</Text>
+      {/* Lock Overlay */}
+      {locked && (
+        <View style={styles.lockOverlay}>
+          <View style={styles.lockIconCircle}>
+            <Text style={styles.lockIcon}>🔒</Text>
+          </View>
+          <Text style={styles.lockText}>Scholar Tier</Text>
         </View>
-      </View>
+      )}
 
-      <View style={styles.details}>
-        <Text style={styles.statusText}>{status}</Text>
-        <Text style={styles.progressText}>{Math.round(progress)}%</Text>
-      </View>
+      <View style={[locked && styles.dimmed]}>
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <View style={[styles.badge, { borderColor }]}>
+            <Text style={[styles.badgeText, { color: borderColor }]}>{level}</Text>
+          </View>
+        </View>
 
-      <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: borderColor }]} />
+        <View style={styles.details}>
+          <Text style={styles.statusText}>{status}</Text>
+          <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+        </View>
+
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: borderColor }]} />
+        </View>
       </View>
     </Pressable>
   );
@@ -46,23 +60,55 @@ export default memo(IslandCard);
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(15, 5, 24, 0.6)', // Glassmorphous dark theme
+    backgroundColor: 'rgba(15, 5, 24, 0.6)',
     borderRadius: 12,
     borderWidth: 1,
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 16,
-    // Shadow for iOS
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    // Elevation for Android
     elevation: 4,
     zIndex: 1,
   },
+  cardLocked: {
+    backgroundColor: 'rgba(15, 5, 24, 0.8)',
+  },
   pressed: {
     opacity: 0.7,
+  },
+  dimmed: {
+    opacity: 0.35,
+  },
+  lockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 5, 24, 0.5)',
+  },
+  lockIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(75, 85, 99, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  lockIcon: {
+    fontSize: 18,
+  },
+  lockText: {
+    fontFamily: 'NeueHaasGrotesk-Display',
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#C5A059',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
   header: {
     flexDirection: 'row',
