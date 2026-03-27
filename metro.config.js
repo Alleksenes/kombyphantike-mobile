@@ -4,7 +4,9 @@ const { getDefaultConfig } = require('expo/metro-config');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// Add .mjs and .cjs to resolver extensions (Crucial for Modern Libs)
-config.resolver.sourceExts.push('mjs', 'cjs');
+// NOTE: Do NOT add 'mjs' to sourceExts — it causes Metro to resolve ESM builds
+// (e.g. zustand/esm/middleware.mjs) that contain un-transpiled import.meta syntax,
+// which crashes the web bundle. CJS builds are resolved by default and work fine.
+config.resolver.sourceExts.push('cjs');
 
 module.exports = config;

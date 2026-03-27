@@ -1,9 +1,23 @@
-// ── ROOT ENTRY ────────────────────────────────────────────────────────────────
-// Hard-redirect to the UI Sandbox while the backend is offline.
-// Swap the href to '/(tabs)' when the Shipyard is ready to ship.
-
-import { Redirect } from 'expo-router';
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function Index() {
-  return <Redirect href="/dev/gallery" />;
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>HELLO WORLD</Text>
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1918',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    color: '#FFD700',
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+});
