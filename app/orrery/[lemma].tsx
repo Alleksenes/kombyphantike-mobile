@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 16,
-    backgroundColor: 'rgba(6, 10, 8, 0.8)',
+    backgroundColor: 'transparent',
     overflow: 'hidden',
   },
 

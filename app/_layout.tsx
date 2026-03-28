@@ -17,7 +17,7 @@ import OmegaLoader from '../components/OmegaLoader';
 import CosmicBackground from '../components/ui/CosmicBackground';
 import PhilologicalInspector from '../components/ui/PhilologicalInspector';
 import { initDatabase } from '../src/services/Database';
-import { ScriptoriumTheme } from '../src/theme';
+import { PhilologicalColors, ScriptoriumTheme } from '../src/theme';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -60,7 +60,7 @@ export default function RootLayout() {
   return (
     <GlobalErrorBoundary>
       <SafeAreaProvider>
-        <View style={{ flex: 1, backgroundColor: '#0f0518' }}>
+        <View style={{ flex: 1, backgroundColor: PhilologicalColors.VOID }}>
 
           {/* LAYER 0: THE COSMOS (pinned behind everything) */}
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -85,7 +85,6 @@ export default function RootLayout() {
                 <Stack.Screen name="voyage/[id]" />
                 <Stack.Screen name="orrery/[lemma]" />
                 <Stack.Screen name="lapidary/[sentenceId]" />
-                <Stack.Screen name="constellation" />
               </Stack>
 
               {/* LAYER 2: GLOBAL OVERLAY */}
@@ -104,6 +103,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a0b2e',
+    backgroundColor: PhilologicalColors.VOID,
   },
 });

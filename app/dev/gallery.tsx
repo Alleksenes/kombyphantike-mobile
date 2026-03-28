@@ -164,7 +164,7 @@ export default function GalleryScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: C.VOID,
+    backgroundColor: 'transparent',
   },
   scroll: {
     paddingBottom: 60,
