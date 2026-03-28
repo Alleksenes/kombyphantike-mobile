@@ -5,7 +5,9 @@
 // Used standalone by SentenceReader. Also defined inline in PhilologyCard for
 // legacy compatibility — both render identically.
 
+import * as Haptics from 'expo-haptics';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -43,12 +45,26 @@ export default function KnotWord({ token, onPress, onLongPress, isFocused }: Kno
     borderStyle: 'solid',
   }));
 
+  const handlePress = (t: Token) => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    onPress(t);
+  };
+
+  const handleLongPress = (t: Token) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    onLongPress(t);
+  };
+
   return (
     <Animated.View style={animatedStyle}>
       <WordChip
         token={token}
-        onPress={onPress}
-        onLongPress={onLongPress}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
         isFocused={isFocused}
       />
     </Animated.View>

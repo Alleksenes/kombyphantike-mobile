@@ -4,9 +4,10 @@
 // Uses pure React Native + react-native-svg (no Skia, no D3).
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
+import Svg, { Circle, Defs, Line, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { ApiService } from '../../src/services/ApiService';
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
@@ -182,32 +183,34 @@ function buildKosmosGraph(): { nodes: OrreryNode[]; edges: OrreryEdge[] } {
   return { nodes, edges };
 }
 
-// ── Edge Colors ─────────────────────────────────────────────────────────────
+// ── Edge Colors (Muted Constellation) ───────────────────────────────────────
+// Obsidian-style: all edges fade into the void. Differentiated only by dash.
 
 const EDGE_COLORS: Record<OrreryEdge['relation'], string> = {
-  synonym: '#64A0FF',
-  antonym: '#EF4444',
-  derived: C.GOLD,
-  mwe: '#B464FF',
-  ancestor: '#FFD700',
+  synonym: 'rgba(255, 255, 255, 0.15)',
+  antonym: 'rgba(255, 255, 255, 0.15)',
+  derived: 'rgba(255, 255, 255, 0.12)',
+  mwe: 'rgba(255, 255, 255, 0.10)',
+  ancestor: 'rgba(255, 255, 255, 0.18)',
 };
 
 const EDGE_DASH: Record<OrreryEdge['relation'], string> = {
   synonym: '',
-  antonym: '',
+  antonym: '4,4',
   derived: '6,4',
-  mwe: '4,6',
+  mwe: '3,5',
   ancestor: '8,4',
 };
 
-// ── Node Colors ─────────────────────────────────────────────────────────────
+// ── Node Colors (Jewel Tones) ───────────────────────────────────────────────
+// Muted, sophisticated: gold for ancient, teal for synonyms, rust for idioms.
 
-const NODE_CONFIG: Record<OrreryNode['type'], { fill: string; stroke: string; r: number }> = {
-  center: { fill: C.INK, stroke: C.GOLD, r: 42 },
-  synonym: { fill: C.INK, stroke: '#64A0FF', r: 32 },
-  root: { fill: C.INK, stroke: C.GOLD, r: 32 },
-  derived: { fill: 'rgba(15, 5, 24, 0.8)', stroke: 'rgba(197, 160, 89, 0.7)', r: 28 },
-  idiom: { fill: 'rgba(15, 5, 24, 0.8)', stroke: C.GRAY_TEXT, r: 36 },
+const NODE_CONFIG: Record<OrreryNode['type'], { fill: string; stroke: string; r: number; glow: string }> = {
+  center:  { fill: C.INK, stroke: C.GOLD,       r: 42, glow: 'rgba(197, 160, 89, 0.15)' },
+  synonym: { fill: C.INK, stroke: C.JEWEL_TEAL, r: 32, glow: 'rgba(74, 140, 130, 0.12)' },
+  root:    { fill: C.INK, stroke: C.JEWEL_GOLD, r: 32, glow: 'rgba(184, 155, 94, 0.12)' },
+  derived: { fill: C.INK, stroke: C.JEWEL_SLATE, r: 28, glow: 'rgba(107, 123, 141, 0.10)' },
+  idiom:   { fill: C.INK, stroke: C.JEWEL_RUST,  r: 36, glow: 'rgba(160, 100, 75, 0.12)' },
 };
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -284,20 +287,26 @@ export default function OrreryScreen() {
   const selectedNode = selectedId ? nodeMap[selectedId] : null;
 
   const handleNodePress = (node: OrreryNode) => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
     setSelectedId(node.id === selectedId ? null : node.id);
   };
 
   const handleInspect = (node: OrreryNode) => {
     if (!node.knot) return;
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     openInspector(node.knot as any, 'knot');
   };
 
-  // ── Legend items
+  // ── Legend items (jewel tones match node strokes)
   const legendItems = [
-    { color: '#64A0FF', label: 'Synonym', dash: false },
-    { color: '#FFD700', label: 'Ancestor', dash: true },
-    { color: C.GOLD, label: 'Derived', dash: true },
-    { color: '#B464FF', label: 'Idiom (MWE)', dash: true },
+    { color: C.JEWEL_TEAL, label: 'Synonym', dash: false },
+    { color: C.JEWEL_GOLD, label: 'Ancestor', dash: true },
+    { color: C.JEWEL_SLATE, label: 'Derived', dash: true },
+    { color: C.JEWEL_RUST, label: 'Idiom (MWE)', dash: true },
   ];
 
   return (
@@ -334,7 +343,20 @@ export default function OrreryScreen() {
         {/* ── The Constellation SVG ──────────────────────────────────── */}
         <View style={styles.graphContainer}>
           <Svg width={GRAPH_W} height={GRAPH_H}>
-            {/* Edges */}
+            <Defs>
+              {/* Radial glow gradients for each node */}
+              {nodes.map((node) => {
+                const cfg = NODE_CONFIG[node.type];
+                return (
+                  <RadialGradient key={`glow-${node.id}`} id={`glow-${node.id}`} cx="50%" cy="50%" r="50%">
+                    <Stop offset="0%" stopColor={cfg.glow} stopOpacity="1" />
+                    <Stop offset="100%" stopColor={cfg.glow} stopOpacity="0" />
+                  </RadialGradient>
+                );
+              })}
+            </Defs>
+
+            {/* Edges — muted, thin, fading into the void */}
             {edges.map((edge, i) => {
               const src = nodeMap[edge.source];
               const tgt = nodeMap[edge.target];
@@ -347,13 +369,30 @@ export default function OrreryScreen() {
                   x2={tgt.x}
                   y2={tgt.y}
                   stroke={EDGE_COLORS[edge.relation]}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   strokeDasharray={EDGE_DASH[edge.relation]}
+                  strokeLinecap="round"
                 />
               );
             })}
 
-            {/* Nodes */}
+            {/* Node Glow Halos */}
+            {nodes.map((node) => {
+              const cfg = NODE_CONFIG[node.type];
+              const isSelected = node.id === selectedId;
+              return (
+                <Circle
+                  key={`halo-${node.id}`}
+                  cx={node.x}
+                  cy={node.y}
+                  r={cfg.r + 12}
+                  fill={`url(#glow-${node.id})`}
+                  opacity={isSelected ? 0.8 : 0.4}
+                />
+              );
+            })}
+
+            {/* Nodes — solid jewel-tone circles */}
             {nodes.map((node) => {
               const cfg = NODE_CONFIG[node.type];
               const isSelected = node.id === selectedId;
@@ -362,24 +401,25 @@ export default function OrreryScreen() {
                   key={node.id}
                   cx={node.x}
                   cy={node.y}
-                  r={isSelected ? cfg.r + 4 : cfg.r}
+                  r={isSelected ? cfg.r + 3 : cfg.r}
                   fill={cfg.fill}
-                  stroke={isSelected ? C.GOLD : cfg.stroke}
-                  strokeWidth={isSelected ? 4 : 2}
+                  stroke={isSelected ? C.PARCHMENT : cfg.stroke}
+                  strokeWidth={isSelected ? 2.5 : 1.5}
                   fillOpacity={1}
                   onPress={() => handleNodePress(node)}
                 />
               );
             })}
 
-            {/* Node Labels */}
+            {/* Node Labels — crisp GFSDidot against the void */}
             {nodes.map((node) => {
+              const cfg = NODE_CONFIG[node.type];
               const lines = node.label.split('\n');
               return lines.map((line, li) => (
                 <SvgText
                   key={`${node.id}-label-${li}`}
                   x={node.x}
-                  y={node.y + (li * 14) - ((lines.length - 1) * 7)}
+                  y={node.y + (li * 15) - ((lines.length - 1) * 7.5)}
                   textAnchor="middle"
                   alignmentBaseline="central"
                   fill={node.type === 'center' ? C.GOLD : C.PARCHMENT}
@@ -505,9 +545,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(15, 5, 24, 0.7)',
+    backgroundColor: 'rgba(10, 15, 13, 0.7)',
     borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.5)',
+    borderColor: 'rgba(197, 160, 89, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -577,9 +617,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginHorizontal: 20,
     borderWidth: 1,
-    borderColor: C.GRAY_BORDER,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 16,
-    backgroundColor: C.VOID,
+    backgroundColor: 'rgba(6, 10, 8, 0.8)',
     overflow: 'hidden',
   },
 
@@ -688,11 +728,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   noteExcerpt: {
-    backgroundColor: 'rgba(15, 5, 24, 0.4)',
+    backgroundColor: 'rgba(10, 15, 13, 0.4)',
     borderWidth: 1,
-    borderColor: C.GRAY_BORDER,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 10,
-    padding: 14,
+    padding: 16,
   },
   noteExcerptLabel: {
     fontFamily: F.LABEL,
