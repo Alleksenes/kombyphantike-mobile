@@ -99,9 +99,11 @@ function KnotWord({
       <Text style={[styles.greekWord, styles.knotWordText, isActive && styles.knotWordTextActive]}>
         {token.text}
       </Text>
-      <View
-        style={[styles.knotUnderline, isActive && styles.knotUnderlineActive]}
-      />
+      <View style={[styles.knotUnderline, isActive && styles.knotUnderlineActive]} />
+      {/* Transliteration — shown beneath each knot */}
+      {knot.transliteration ? (
+        <Text style={styles.transliterationText}>{knot.transliteration}</Text>
+      ) : null}
       {/* CEFR micro-badge — only show for active knot with level data */}
       {isActive && knot.cefr_level ? (
         <Text style={styles.knotCefrBadge}>{knot.cefr_level}</Text>
@@ -227,9 +229,11 @@ export default function VoyageReader() {
                 }
                 return (
                   <View key={i} style={styles.tokenWrapper}>
-                    <Text style={[styles.greekWord, styles.plainWord]}>
-                      {token.text}
-                    </Text>
+                    <View style={styles.plainWordStack}>
+                      <Text style={[styles.greekWord, styles.plainWord]}>
+                        {token.text}
+                      </Text>
+                    </View>
                     {token.trailingPunct ? (
                       <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
                     ) : null}
@@ -237,11 +241,6 @@ export default function VoyageReader() {
                 );
               })}
             </View>
-
-            {/* Source attribution */}
-            {sentence.source ? (
-              <Text style={styles.sourceText}>{sentence.source}</Text>
-            ) : null}
 
             {/* English anchor translation */}
             <View style={styles.translationAnchor}>
@@ -387,13 +386,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    rowGap: 16,
+    columnGap: 8,
   },
   tokenWrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8,
-    marginBottom: 4,
+    alignItems: 'flex-end',
   },
   greekWord: {
     fontFamily: F.DISPLAY,
@@ -414,6 +413,10 @@ const styles = StyleSheet.create({
 
   // KnotWord
   knotWord: {
+    alignItems: 'center',
+    paddingBottom: 2,
+  },
+  plainWordStack: {
     alignItems: 'center',
   },
   knotWordActive: {
@@ -437,6 +440,14 @@ const styles = StyleSheet.create({
   knotUnderlineActive: {
     backgroundColor: C.GOLD,
   },
+  transliterationText: {
+    fontFamily: F.BODY,
+    fontSize: 12,
+    color: C.GRAY_TEXT,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 3,
+  },
   knotCefrBadge: {
     fontFamily: F.LABEL,
     fontSize: 8,
@@ -446,15 +457,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Source + Translation
-  sourceText: {
-    fontFamily: F.BODY,
-    fontSize: 11,
-    color: 'rgba(156, 163, 175, 0.5)',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
+  // Translation
   translationAnchor: {
     alignItems: 'center',
     gap: 12,

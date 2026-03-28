@@ -5,14 +5,17 @@ import { MD3DarkTheme, configureFonts } from 'react-native-paper';
 // Every component should import from this file instead of declaring its own.
 
 export const PhilologicalColors = {
-  VOID: '#0f0518',
+  // ── Tactile Void Palette ────────────────────────────────────────────────
+  VOID: '#0a0f0d',              // Deep emerald-black (was purple-black)
+  VOID_DEEP: '#060a08',        // Near-true black with green undertone
+  VOID_WARM: '#0d0907',        // Warm rust-black for gradient mixing
   GOLD: '#C5A059',
   GOLD_DIM: 'rgba(197, 160, 89, 0.15)',
   GOLD_GLOW: 'rgba(197, 160, 89, 0.35)',
   PARCHMENT: '#E3DCCB',
-  INK: '#1a1918',
-  SURFACE: 'rgba(15, 5, 24, 0.4)',
-  SURFACE_HEAVY: 'rgba(15, 5, 24, 0.6)',
+  INK: '#111413',              // Deep ink with green-charcoal undertone
+  SURFACE: 'rgba(10, 15, 13, 0.4)',
+  SURFACE_HEAVY: 'rgba(10, 15, 13, 0.65)',
   GRAY_TEXT: '#9CA3AF',
   GRAY_BORDER: 'rgba(55, 65, 81, 0.6)',
   MORPH_BG: 'rgba(120, 53, 15, 0.3)',
@@ -23,12 +26,19 @@ export const PhilologicalColors = {
   SCHOLIA_TEXT: '#5D4037',
   ERROR: '#EF4444',
   SUCCESS: '#34D399',
+
+  // ── Orrery Jewel Tones ──────────────────────────────────────────────────
+  JEWEL_TEAL: '#4A8C82',       // Muted teal — synonyms
+  JEWEL_RUST: '#A0644B',       // Muted rust — idioms, MWE
+  JEWEL_GOLD: '#B89B5E',       // Antique gold — root/ancestor
+  JEWEL_SLATE: '#6B7B8D',      // Cool slate — derived
+  EDGE_MUTED: 'rgba(255, 255, 255, 0.12)',
 } as const;
 
 export const PhilologicalFonts = {
   DISPLAY: 'GFSDidot',
-  BODY: 'NeueHaasGrotesk-Text',
-  LABEL: 'NeueHaasGrotesk-Display',
+  BODY: 'NeueHaasGrotesk',
+  LABEL: 'NeueHaasGrotesk',
 } as const;
 
 const fontConfig = {
@@ -41,12 +51,12 @@ const fontConfig = {
   titleLarge: { fontFamily: 'GFSDidot' },
   titleMedium: { fontFamily: 'GFSDidot' },
   titleSmall: { fontFamily: 'GFSDidot' },
-  labelLarge: { fontFamily: 'NeueHaasGrotesk-Text' },
-  labelMedium: { fontFamily: 'NeueHaasGrotesk-Text' },
-  labelSmall: { fontFamily: 'NeueHaasGrotesk-Text' },
-  bodyLarge: { fontFamily: 'NeueHaasGrotesk-Text' },
-  bodyMedium: { fontFamily: 'NeueHaasGrotesk-Text' },
-  bodySmall: { fontFamily: 'NeueHaasGrotesk-Text' },
+  labelLarge: { fontFamily: 'NeueHaasGrotesk' },
+  labelMedium: { fontFamily: 'NeueHaasGrotesk' },
+  labelSmall: { fontFamily: 'NeueHaasGrotesk' },
+  bodyLarge: { fontFamily: 'NeueHaasGrotesk' },
+  bodyMedium: { fontFamily: 'NeueHaasGrotesk' },
+  bodySmall: { fontFamily: 'NeueHaasGrotesk' },
 };
 
 export const ScriptoriumTheme = {
@@ -60,17 +70,17 @@ export const ScriptoriumTheme = {
     onSecondary: '#1a1918',
     tertiary: '#C0A062',
     onTertiary: '#1a1918',
-    background: '#1a1918', // Deep Ink - Global App Background
+    background: '#111413', // Deep Ink - Global App Background
     onBackground: '#e3dccb', // Warm Parchment
-    surface: '#252422', // Slightly lighter Ink - Card Background
+    surface: '#181c1a', // Slightly lighter Ink with emerald undertone
     onSurface: '#e3dccb',
     onSurfaceVariant: 'rgba(227, 220, 203, 0.6)',
     elevation: {
-      level1: '#252422',
-      level2: '#252422',
-      level3: '#252422',
-      level4: '#252422',
-      level5: '#252422',
+      level1: '#181c1a',
+      level2: '#181c1a',
+      level3: '#181c1a',
+      level4: '#181c1a',
+      level5: '#181c1a',
     },
   },
 };
@@ -88,16 +98,16 @@ export const Colors = {
     text: '#11181C',
     background: '#fff',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#2b4050',
+    tabIconDefault: '#85a5c2',
     tabIconSelected: tintColorLight,
   },
   dark: {
     text: '#ECEDEE',
     background: '#151718',
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: '#4e363e',
+    tabIconDefault: '#3b2b34',
     tabIconSelected: tintColorDark,
   },
 };
