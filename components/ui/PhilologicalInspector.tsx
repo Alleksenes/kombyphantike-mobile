@@ -1,16 +1,19 @@
 // ── THE PHILOLOGICAL INSPECTOR ────────────────────────────────────────────────
 // A bottom sheet with Progressive Disclosure layers for deep word inspection.
+// Fully wired to GET /inspect/{lemma} via unifiedInspectorStore.
 //
-// LAYER MODEL (replaces the old 3-tab flat bar):
-//   Level 'translation' (35%) — Word header + definition + audio
-//   Level 'knot'        (50%) — + Davidian Note + LSJ Definitions
-//   Level 'etymology'   (88%) — + Scholia + Paradigm + Ancient Ancestor + Idioms
+// LAYER MODEL:
+//   Level 'translation' (35%) — Word header + METIS definition + audio
+//   Level 'knot'        (55%) — + Davidian Note + RAG Scholia + Grammar Scholia + LSJ
+//   Level 'etymology'   (88%) — + Ancient Ancestor + Paradigm Matrix + HNC N-Grams
+//                                + Idioms (METIS) + Explore Constellation
 //
 // SHALLOW KNOT RESILIENCE:
 //   Every field render is guarded with optional chaining.
 //   If the API returns 'void' (404), the frosted-glass Void card renders gracefully.
 
 import { BlurView } from 'expo-blur';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { IconButton } from 'react-native-paper';
@@ -110,6 +113,7 @@ function DepthIndicator({
 // ── Main component ───────────────────────────────────────────────────────────
 export default function PhilologicalInspector() {
   const sheetRef = useRef<any>(null);
+  const router = useRouter();
   const {
     knot,
     isOpen,
@@ -211,7 +215,7 @@ export default function PhilologicalInspector() {
   // ── The Philological Void (404 / missing diachronic link) ──────────────────
   const renderVoidCard = () => (
     <View style={styles.voidCard}>
-      <Text style={styles.voidSymbol}>{'\u2205'}</Text>
+      <Text style={styles.voidSymbol}>Ψ</Text>
       <Text style={styles.voidTitle}>Philological Void</Text>
       <View style={styles.voidDivider} />
       <Text style={styles.voidBody}>
@@ -251,6 +255,35 @@ export default function PhilologicalInspector() {
           )}
         </View>
 
+        {/* The RAG Scholia — Holton citation (the Witness beside the Synthesis) */}
+        {knot.rag_scholia ? (
+          <View style={styles.scholiaCard}>
+            <View style={styles.scholiaCardHeader}>
+              <Text style={styles.scholiaSource}>Holton et al.</Text>
+              <Text style={styles.scholiaSubtitle}>Greek: A Comprehensive Grammar</Text>
+            </View>
+            <View style={styles.scholiaDivider} />
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#C0A062" />
+            ) : (
+              <Text style={styles.scholiaBody}>{knot.rag_scholia}</Text>
+            )}
+          </View>
+        ) : null}
+
+        {/* Grammar Scholia (merged RAG + Davidian synthesis) */}
+        {knot.grammar_scholia ? (
+          <View style={styles.noteCard}>
+            <View style={styles.noteCardHeader}>
+              <View style={styles.noteCardIcon}>
+                <Text style={styles.noteCardIconText}>G</Text>
+              </View>
+              <Text style={styles.noteCardLabel}>Grammar Scholia</Text>
+            </View>
+            <Text style={styles.noteCardBody}>{knot.grammar_scholia}</Text>
+          </View>
+        ) : null}
+
         {/* LSJ Definitions */}
         {!isLoading && knot.lsj_definitions && knot.lsj_definitions.length > 0 ? (
           <View style={styles.lsjCard}>
@@ -284,35 +317,6 @@ export default function PhilologicalInspector() {
           <View style={styles.ancestorCard}>
             <Text style={styles.ancestorLabel}>Ancient Ancestor</Text>
             <Text style={styles.ancestorText}>{knot.ancient_ancestor}</Text>
-          </View>
-        ) : null}
-
-        {/* The RAG Scholia */}
-        {knot.rag_scholia ? (
-          <View style={styles.scholiaCard}>
-            <View style={styles.scholiaCardHeader}>
-              <Text style={styles.scholiaSource}>Holton et al.</Text>
-              <Text style={styles.scholiaSubtitle}>Greek: A Comprehensive Grammar</Text>
-            </View>
-            <View style={styles.scholiaDivider} />
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#C0A062" />
-            ) : (
-              <Text style={styles.scholiaBody}>{knot.rag_scholia}</Text>
-            )}
-          </View>
-        ) : null}
-
-        {/* Grammar Scholia (merged synthesis) */}
-        {knot.grammar_scholia ? (
-          <View style={styles.noteCard}>
-            <View style={styles.noteCardHeader}>
-              <View style={styles.noteCardIcon}>
-                <Text style={styles.noteCardIconText}>G</Text>
-              </View>
-              <Text style={styles.noteCardLabel}>Grammar Scholia</Text>
-            </View>
-            <Text style={styles.noteCardBody}>{knot.grammar_scholia}</Text>
           </View>
         ) : null}
 
@@ -368,10 +372,12 @@ export default function PhilologicalInspector() {
         ) : null}
 
         {/* ── THE ORRERY HOOK ────────────────────────────────────────────── */}
-        {/* Ghost button: launches Constellation view in the next phase.       */}
         <TouchableOpacity
           style={styles.orreryButton}
-          onPress={() => console.log('Routing to Orrery...')}
+          onPress={() => {
+            closeInspector();
+            router.push({ pathname: '/orrery/[lemma]', params: { lemma: knot.lemma } } as any);
+          }}
           activeOpacity={0.6}
         >
           <Text style={styles.orreryButtonIcon}>✦</Text>

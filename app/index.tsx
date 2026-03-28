@@ -1,23 +1,9 @@
-import { View, Text, StyleSheet } from 'react-native';
+// ── Index Route ──────────────────────────────────────────────────────────────
+// DEV_MODE: redirect straight to the Sandbox (/dev/gallery).
+// PROD: redirect to (tabs) which handles auth gating.
+
+import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>HELLO WORLD</Text>
-    </View>
-  );
+  return <Redirect href="/dev/gallery" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1918',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    color: '#FFD700',
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-});

@@ -16,10 +16,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconButton } from 'react-native-paper';
-import { useIslandData } from '../../src/hooks/useIslandData';
 import { useVoyageStore, getCurrentSentence, getSentenceCount } from '../../src/store/voyageStore';
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
-import { MOCK_ISLAND } from '../../src/data/mockPayload';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 import type { Knot } from '../../src/types';
 
@@ -104,6 +102,10 @@ function KnotWord({
       <View
         style={[styles.knotUnderline, isActive && styles.knotUnderlineActive]}
       />
+      {/* CEFR micro-badge — only show for active knot with level data */}
+      {isActive && knot.cefr_level ? (
+        <Text style={styles.knotCefrBadge}>{knot.cefr_level}</Text>
+      ) : null}
     </Pressable>
   );
 }
@@ -114,24 +116,15 @@ export default function VoyageReader() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  // ── Data: fetch island, init voyage ─────────────────────────────────────
-  const { island, loading, error } = useIslandData(id ?? '');
-  const { manifest, loadVoyage, nextSentence, previousSentence } = useVoyageStore();
+  // ── Data: fetch island via store (API with mock fallback) ───────────────
+  const { manifest, isLoading: loading, error, loadVoyageById, nextSentence, previousSentence } = useVoyageStore();
   const { knot: activeKnot, openInspector } = useInspectorStore();
 
   useEffect(() => {
-    if (island) {
-      loadVoyage(island);
+    if (id) {
+      loadVoyageById(id);
     }
-  }, [island, loadVoyage]);
-
-  // Fallback to mock in dev when API is unreachable
-  const effectiveIsland = island ?? (error ? MOCK_ISLAND : null);
-  useEffect(() => {
-    if (!island && error && effectiveIsland) {
-      loadVoyage(effectiveIsland);
-    }
-  }, [island, error, effectiveIsland, loadVoyage]);
+  }, [id, loadVoyageById]);
 
   // ── Derived state ────────────────────────────────────────────────────────
   const sentence = getCurrentSentence(manifest);
@@ -148,9 +141,11 @@ export default function VoyageReader() {
   );
 
   // ── Handlers ─────────────────────────────────────────────────────────────
+  // Open the inspector at 'knot' depth — triggers GET /inspect/{lemma}
+  // via unifiedInspectorStore to fetch the deep philological dossier
   const handleKnotPress = useCallback(
     (knot: Knot) => {
-      openInspector(knot, 'translation');
+      openInspector(knot, 'knot');
     },
     [openInspector],
   );
@@ -177,6 +172,13 @@ export default function VoyageReader() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safeArea}>
+
+      {/* ── API Status Banner (when using mock fallback) ─────────────── */}
+      {error ? (
+        <View style={styles.apiBanner}>
+          <Text style={styles.apiBannerText}>⚡ {error}</Text>
+        </View>
+      ) : null}
 
       {/* ── Header: back + progress ─────────────────────────────────── */}
       <View style={styles.header}>
@@ -249,7 +251,7 @@ export default function VoyageReader() {
           </>
         ) : (
           <View style={styles.voidContainer}>
-            <Text style={styles.voidSymbol}>∅</Text>
+            <Text style={styles.voidSymbol}>Ψ</Text>
             <Text style={styles.voidText}>No sentences found on this island.</Text>
           </View>
         )}
@@ -276,7 +278,7 @@ export default function VoyageReader() {
         {showPractice ? (
           <TouchableOpacity
             style={styles.practiceButton}
-            onPress={() => console.log('Routing to Lapidary\'s Table...')}
+            onPress={() => sentence && router.push(`/lapidary/${sentence.id}`)}
           >
             <IconButton icon="hammer" iconColor={C.GOLD} size={20} />
             <Text style={styles.practiceLabel}>Practice</Text>
@@ -315,6 +317,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // ── API Status Banner ──────────────────────────────────────────────────
+  apiBanner: {
+    backgroundColor: 'rgba(197, 160, 89, 0.1)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(197, 160, 89, 0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  apiBannerText: {
+    fontFamily: F.LABEL,
+    fontSize: 10,
+    color: C.GOLD,
+    letterSpacing: 0.5,
   },
 
   // ── Header ──────────────────────────────────────────────────────────────
@@ -369,16 +387,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    alignItems: 'flex-end',
-    gap: 4,
+    alignItems: 'center',
   },
   tokenWrapper: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    marginRight: 8,
+    marginBottom: 4,
   },
   greekWord: {
     fontFamily: F.DISPLAY,
     fontSize: 34,
+    lineHeight: 50,
     textAlign: 'center',
   },
   plainWord: {
@@ -387,6 +407,7 @@ const styles = StyleSheet.create({
   greekPunct: {
     fontFamily: F.DISPLAY,
     fontSize: 34,
+    lineHeight: 50,
     color: 'rgba(227, 220, 203, 0.5)',
     marginLeft: -2,
   },
@@ -415,6 +436,14 @@ const styles = StyleSheet.create({
   },
   knotUnderlineActive: {
     backgroundColor: C.GOLD,
+  },
+  knotCefrBadge: {
+    fontFamily: F.LABEL,
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: C.GOLD,
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
 
   // Source + Translation

@@ -15,6 +15,7 @@ import {
   VoyageManifest,
   VoyageSentence,
 } from '../types';
+import { ApiService } from '../services/ApiService';
 
 // ── State Interface ─────────────────────────────────────────────────────────
 
@@ -22,12 +23,14 @@ interface VoyageState {
   // The active voyage
   manifest: VoyageManifest | null;
 
-  // Loading (for future async hydration)
+  // Loading & error
   isLoading: boolean;
   error: string | null;
 
   // Actions
   loadVoyage: (island: IslandDTO) => void;
+  /** Fetch island from API by ID and initialize the voyage. Falls back to mock on failure. */
+  loadVoyageById: (islandId: string) => Promise<void>;
   nextSentence: () => void;
   previousSentence: () => void;
   goToSentence: (index: number) => void;
@@ -111,6 +114,33 @@ export const useVoyageStore = create<VoyageState>()(
           isLoading: false,
           error: null,
         });
+      },
+
+      loadVoyageById: async (islandId: string) => {
+        const { loadVoyage, manifest } = get();
+
+        // Skip fetch if we already have a manifest for this island
+        if (manifest && manifest.island_id === islandId) {
+          set({ isLoading: false, error: null });
+          return;
+        }
+
+        set({ isLoading: true, error: null });
+
+        try {
+          const island = await ApiService.getIsland(islandId);
+          loadVoyage(island);
+          set({ isLoading: false, error: null });
+        } catch (e: any) {
+          console.warn('[VoyageStore] API fetch failed, using mock fallback:', e.message);
+          // Import mock at runtime to avoid circular deps
+          const { MOCK_ISLAND } = require('../data/mockPayload');
+          loadVoyage(MOCK_ISLAND);
+          set({
+            isLoading: false,
+            error: `API unreachable — using mock data. (${e.message})`,
+          });
+        }
       },
 
       nextSentence: () => {

@@ -9,7 +9,11 @@
       "Bash(npx tsc:*)",
       "Bash(grep -E \"\\\\.\\(tsx|ts|json\\)$\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8081)",
-      "Bash(curl -s \"http://localhost:8081\")"
+      "Bash(curl -s \"http://localhost:8081\")",
+      "Bash(grep -E \"app/.*\\\\.\\(tsx|ts\\)$\")",
+      "Bash(ls -la /c/Users/alleksenes/kombyphantike-mobile/app/\\\\\\(tabs\\\\\\)/)",
+      "Bash(cat \"/c/Users/alleksenes/kombyphantike-mobile/app/\\(tabs\\)/_layout.tsx\")",
+      "Bash(cat \"/c/Users/alleksenes/kombyphantike-mobile/app/\\(tabs\\)/index.tsx\")"
     ]
   }
 }

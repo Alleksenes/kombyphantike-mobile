@@ -216,6 +216,11 @@ export const useInspectorStore = create<UnifiedInspectorState>()(
 
 /** Enrich a Knot with data from a ContrastiveProfile. */
 function enrichKnot(knot: Knot, profile: ContrastiveProfile): Knot {
+  // Map API collocations (text + frequency) → Knot ngrams (string[])
+  const ngrams = profile.collocations?.length
+    ? profile.collocations.map((c) => c.text)
+    : knot.ngrams;
+
   return {
     ...knot,
     david_note: profile.david_note || knot.david_note,
@@ -227,6 +232,7 @@ function enrichKnot(knot: Knot, profile: ContrastiveProfile): Knot {
     has_paradigm: Array.isArray(profile.paradigm) && profile.paradigm.length > 0,
     ancient_ancestor: profile.ancient_ancestor ?? knot.ancient_ancestor,
     idioms: profile.idioms ?? knot.idioms,
+    ngrams,
   };
 }
 

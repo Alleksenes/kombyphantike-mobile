@@ -1,14 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+import { Pressable, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { ParadigmEntry, parseNounParadigm, parseVerbParadigm } from '../utils/paradigm_utils';
 
 interface ParadigmGridProps {
   paradigm: ParadigmEntry[];
   highlightForm?: string;
   pos?: string;
+  /** Selection Mode: called when user taps a cell. Enables the Lapidary challenge flow. */
+  onCellPress?: (form: string) => void;
 }
 
-export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmGridProps) {
+export default function ParadigmGrid({ paradigm, highlightForm, pos, onCellPress }: ParadigmGridProps) {
   const isVerb = pos === 'VERB' || pos === 'AUX';
 
   const [activeTense, setActiveTense] = useState<'Present' | 'Imperfect' | 'Aorist' | 'Future' | 'Subjunctive'>('Present');
@@ -82,19 +84,27 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
                 </View>
 
                 <View style={styles.cellContainer}>
-                  <View style={[styles.cellInner, isSingularMatch && styles.cellHighlight]}>
+                  <Pressable
+                    disabled={!onCellPress || !forms.Singular || forms.Singular === '—'}
+                    onPress={() => onCellPress?.(forms.Singular)}
+                    style={({ pressed }) => [styles.cellInner, isSingularMatch && styles.cellHighlight, onCellPress && styles.cellSelectable, pressed && onCellPress && styles.cellPressed]}
+                  >
                     <Text style={[styles.cellText, isSingularMatch && styles.cellTextHighlight]}>
                       {forms.Singular}
                     </Text>
-                  </View>
+                  </Pressable>
                 </View>
 
                 <View style={styles.cellContainer}>
-                  <View style={[styles.cellInner, isPluralMatch && styles.cellHighlight]}>
+                  <Pressable
+                    disabled={!onCellPress || !forms.Plural || forms.Plural === '—'}
+                    onPress={() => onCellPress?.(forms.Plural)}
+                    style={({ pressed }) => [styles.cellInner, isPluralMatch && styles.cellHighlight, onCellPress && styles.cellSelectable, pressed && onCellPress && styles.cellPressed]}
+                  >
                     <Text style={[styles.cellText, isPluralMatch && styles.cellTextHighlight]}>
                       {forms.Plural}
                     </Text>
-                  </View>
+                  </Pressable>
                 </View>
               </View>
             );
@@ -129,19 +139,27 @@ export default function ParadigmGrid({ paradigm, highlightForm, pos }: ParadigmG
               </View>
 
               <View style={styles.cellContainer}>
-                <View style={[styles.cellInner, isSingularMatch && styles.cellHighlight]}>
+                <Pressable
+                  disabled={!onCellPress || !forms.Singular || forms.Singular === '—'}
+                  onPress={() => onCellPress?.(forms.Singular)}
+                  style={({ pressed }) => [styles.cellInner, isSingularMatch && styles.cellHighlight, onCellPress && styles.cellSelectable, pressed && onCellPress && styles.cellPressed]}
+                >
                   <Text style={[styles.cellText, isSingularMatch && styles.cellTextHighlight]}>
                     {forms.Singular}
                   </Text>
-                </View>
+                </Pressable>
               </View>
 
               <View style={styles.cellContainer}>
-                <View style={[styles.cellInner, isPluralMatch && styles.cellHighlight]}>
+                <Pressable
+                  disabled={!onCellPress || !forms.Plural || forms.Plural === '—'}
+                  onPress={() => onCellPress?.(forms.Plural)}
+                  style={({ pressed }) => [styles.cellInner, isPluralMatch && styles.cellHighlight, onCellPress && styles.cellSelectable, pressed && onCellPress && styles.cellPressed]}
+                >
                   <Text style={[styles.cellText, isPluralMatch && styles.cellTextHighlight]}>
                     {forms.Plural}
                   </Text>
-                </View>
+                </Pressable>
               </View>
             </View>
           );
@@ -291,5 +309,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'GFSDidot',
     textAlign: 'center',
+  },
+  cellSelectable: {
+    borderWidth: 1,
+    borderColor: 'rgba(55, 65, 81, 0.6)',
+    borderRadius: 6,
+  },
+  cellPressed: {
+    backgroundColor: 'rgba(197, 160, 89, 0.15)',
+    borderColor: 'rgba(197, 160, 89, 0.4)',
   },
 });

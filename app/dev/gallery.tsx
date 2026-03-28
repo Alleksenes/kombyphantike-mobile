@@ -6,16 +6,31 @@
 //   § PhilologyCard   — sentence display with KnotWord gold highlights
 //   § Mock Knots      — tap any knot row to open the Inspector at 'knot' depth
 
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ParadigmChallenge from '../../components/lapidary/ParadigmChallenge';
 import PhilologyCard from '../../components/PhilologyCard';
 import { mockCuratedSentence } from '../../src/services/mock_data';
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
 import type { Knot } from '../../src/types';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 
+// ── Mock Paradigm for the Workbench demo ────────────────────────────────────
+const MOCK_PARADIGM = [
+  { form: 'κόσμος', tags: ['Nom', 'Sg'] },
+  { form: 'κόσμου', tags: ['Gen', 'Sg'] },
+  { form: 'κόσμο', tags: ['Acc', 'Sg'] },
+  { form: 'κόσμε', tags: ['Voc', 'Sg'] },
+  { form: 'κόσμοι', tags: ['Nom', 'Pl'] },
+  { form: 'κόσμων', tags: ['Gen', 'Pl'] },
+  { form: 'κόσμους', tags: ['Acc', 'Pl'] },
+  { form: 'κόσμοι', tags: ['Voc', 'Pl'] },
+];
+
 export default function GalleryScreen() {
   const openInspector = useInspectorStore((s) => s.openInspector);
+  const router = useRouter();
 
   const handleKnotPress = (knot: Knot) => {
     openInspector(knot, 'translation');
@@ -89,13 +104,49 @@ export default function GalleryScreen() {
 
         <View style={styles.divider} />
 
+        {/* ── § Paradigm Challenge (Lapidary's Table) ──────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>§ Lapidary's Table</Text>
+          <Text style={styles.hint}>
+            Fill the blank with the correct form of κόσμος
+          </Text>
+          <ParadigmChallenge
+            sentence={'τον ________ και τον λόγος κατανοώ'}
+            blankedWord="κόσμον"
+            lemma="κόσμος"
+            paradigm={MOCK_PARADIGM}
+            pos="NOUN"
+            knotLabel="II.2.1.1 · Masculine -ος/-οι Declension"
+          />
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* ── § Orrery ──────────────────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>§ Diachronic Orrery</Text>
+          <Text style={styles.hint}>
+            Explore the semantic constellation of κόσμος
+          </Text>
+          <TouchableOpacity
+            style={styles.orreryLaunch}
+            onPress={() => router.push({ pathname: '/orrery/[lemma]', params: { lemma: 'κόσμος' } } as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.orreryLaunchIcon}>✦</Text>
+            <Text style={styles.orreryLaunchText}>Launch Orrery: κόσμος</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.divider} />
+
         {/* ── § Stubs ──────────────────────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>§ Upcoming Stubs</Text>
           {['SentenceReader', 'KnotWord'].map((name) => (
             <View key={name} style={styles.stubCard}>
               <Text style={styles.stubName}>{name}</Text>
-              <Text style={styles.stubStatus}>Sprint 2</Text>
+              <Text style={styles.stubStatus}>Sprint 3</Text>
             </View>
           ))}
         </View>
@@ -265,6 +316,33 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: 'rgba(156, 163, 175, 0.4)',
     letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+
+  // ── Orrery Launch ────────────────────────────────────────────────────────
+  orreryLaunch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: C.SURFACE,
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.3)',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  orreryLaunchIcon: {
+    fontFamily: F.DISPLAY,
+    fontSize: 16,
+    color: C.GOLD,
+  },
+  orreryLaunchText: {
+    fontFamily: F.LABEL,
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: C.GOLD,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
 
