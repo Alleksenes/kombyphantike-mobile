@@ -37,8 +37,8 @@ export const PhilologicalColors = {
 
 export const PhilologicalFonts = {
   DISPLAY: 'GFSDidot',
-  BODY: 'NeueHaasGrotesk-Text',
-  LABEL: 'NeueHaasGrotesk-Display',
+  BODY: 'NeueHaasGrotesk',
+  LABEL: 'NeueHaasGrotesk',
 } as const;
 
 const fontConfig = {
@@ -51,12 +51,12 @@ const fontConfig = {
   titleLarge: { fontFamily: 'GFSDidot' },
   titleMedium: { fontFamily: 'GFSDidot' },
   titleSmall: { fontFamily: 'GFSDidot' },
-  labelLarge: { fontFamily: 'NeueHaasGrotesk-Text' },
-  labelMedium: { fontFamily: 'NeueHaasGrotesk-Text' },
-  labelSmall: { fontFamily: 'NeueHaasGrotesk-Text' },
-  bodyLarge: { fontFamily: 'NeueHaasGrotesk-Text' },
-  bodyMedium: { fontFamily: 'NeueHaasGrotesk-Text' },
-  bodySmall: { fontFamily: 'NeueHaasGrotesk-Text' },
+  labelLarge: { fontFamily: 'NeueHaasGrotesk' },
+  labelMedium: { fontFamily: 'NeueHaasGrotesk' },
+  labelSmall: { fontFamily: 'NeueHaasGrotesk' },
+  bodyLarge: { fontFamily: 'NeueHaasGrotesk' },
+  bodyMedium: { fontFamily: 'NeueHaasGrotesk' },
+  bodySmall: { fontFamily: 'NeueHaasGrotesk' },
 };
 
 export const ScriptoriumTheme = {
@@ -98,16 +98,16 @@ export const Colors = {
     text: '#11181C',
     background: '#fff',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#2b4050',
+    tabIconDefault: '#85a5c2',
     tabIconSelected: tintColorLight,
   },
   dark: {
     text: '#ECEDEE',
     background: '#151718',
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: '#4e363e',
+    tabIconDefault: '#3b2b34',
     tabIconSelected: tintColorDark,
   },
 };
