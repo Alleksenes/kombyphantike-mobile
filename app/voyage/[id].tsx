@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconButton } from 'react-native-paper';
@@ -188,13 +189,13 @@ export default function VoyageReader() {
 
         <View style={styles.progressArea}>
           <Text style={styles.progressCounter}>
-            {currentIndex + 1} / {total}
+            {currentIndex} / {total}
           </Text>
           <View style={styles.progressBarTrack}>
             <View
               style={[
                 styles.progressBarFill,
-                { width: total > 0 ? `${((currentIndex + 1) / total) * 100}%` : '0%' },
+                { width: total > 0 ? `${(currentIndex / total) * 100}%` : '0%' },
               ]}
             />
           </View>
@@ -207,32 +208,48 @@ export default function VoyageReader() {
       {/* ── Sentence Stage ──────────────────────────────────────────── */}
       <View style={styles.stage}>
         {sentence ? (
-          <>
+          <Animated.View
+            key={sentence.id}
+            entering={FadeIn.duration(500)}
+            exiting={FadeOut.duration(300)}
+            style={styles.animatedStage}
+          >
             {/* Greek text with KnotWords */}
             <View style={styles.greekTextRow}>
               {tokens.map((token, i) => {
                 if (token.knot) {
                   return (
                     <View key={i} style={styles.tokenWrapper}>
-                      <KnotWord
-                        token={token}
-                        isActive={activeKnot?.id === token.knot.id}
-                        onPress={handleKnotPress}
-                      />
-                      {token.trailingPunct ? (
-                        <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
-                      ) : null}
+                      <View style={styles.wordAndTransliteration}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <KnotWord
+                            token={token}
+                            isActive={activeKnot?.id === token.knot.id}
+                            onPress={handleKnotPress}
+                          />
+                          {token.trailingPunct ? (
+                            <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
+                          ) : null}
+                        </View>
+                        {token.knot.transliteration ? (
+                          <Text style={styles.transliterationText}>{token.knot.transliteration}</Text>
+                        ) : null}
+                      </View>
                     </View>
                   );
                 }
                 return (
                   <View key={i} style={styles.tokenWrapper}>
-                    <Text style={[styles.greekWord, styles.plainWord]}>
-                      {token.text}
-                    </Text>
-                    {token.trailingPunct ? (
-                      <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
-                    ) : null}
+                    <View style={styles.wordAndTransliteration}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={[styles.greekWord, styles.plainWord]}>
+                          {token.text}
+                        </Text>
+                        {token.trailingPunct ? (
+                          <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
+                        ) : null}
+                      </View>
+                    </View>
                   </View>
                 );
               })}
@@ -248,7 +265,7 @@ export default function VoyageReader() {
               <View style={styles.translationDivider} />
               <Text style={styles.translationText}>{sentence.translation}</Text>
             </View>
-          </>
+          </Animated.View>
         ) : (
           <View style={styles.voidContainer}>
             <Text style={styles.voidSymbol}>Ψ</Text>
@@ -395,10 +412,25 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 4,
   },
+  animatedStage: {
+    alignItems: 'center',
+    gap: 24,
+  },
+  wordAndTransliteration: {
+    alignItems: 'center',
+  },
+  transliterationText: {
+    fontFamily: F.LABEL,
+    fontSize: 12,
+    color: C.GRAY_TEXT,
+    opacity: 0.5,
+    textAlign: 'center',
+    marginTop: 2,
+  },
   greekWord: {
     fontFamily: F.DISPLAY,
-    fontSize: 34,
-    lineHeight: 50,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: 'center',
   },
   plainWord: {
@@ -406,8 +438,8 @@ const styles = StyleSheet.create({
   },
   greekPunct: {
     fontFamily: F.DISPLAY,
-    fontSize: 34,
-    lineHeight: 50,
+    fontSize: 16,
+    lineHeight: 24,
     color: 'rgba(227, 220, 203, 0.5)',
     marginLeft: -2,
   },

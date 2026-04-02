@@ -153,6 +153,53 @@ export default function LapidaryScreen() {
 
   const hasParadigm = challengeKnot.paradigm && challengeKnot.paradigm.length > 0;
 
+  // ── Semantic Challenge Options (if no paradigm) ──────────
+  const semanticOptions = useMemo(() => {
+    if (hasParadigm || !sentence || !challengeKnot) return [];
+
+    const correctDef = challengeKnot.definition || 'Unknown meaning';
+
+    // Collect dummy definitions from other knots in the sentence
+    const dummyDefs = sentence.knots
+      .filter((k) => k.id !== challengeKnot.id && k.definition)
+      .map((k) => k.definition as string);
+
+    // If not enough dummies, add hardcoded fallbacks
+    if (dummyDefs.length < 2) {
+      dummyDefs.push('to speak', 'the people', 'city state');
+    }
+
+    // Pick 2 random dummies
+    const shuffledDummies = dummyDefs.sort(() => 0.5 - Math.random()).slice(0, 2);
+
+    // Combine and shuffle the 3 options
+    return [correctDef, ...shuffledDummies].sort(() => 0.5 - Math.random());
+  }, [hasParadigm, sentence, challengeKnot]);
+
+  // Handle tap for Semantic Challenge mode
+  const handleSemanticOptionPress = useCallback((option: string) => {
+    if (feedback === 'correct') return;
+
+    setSelectedForm(option);
+    setAttempts((a) => a + 1);
+
+    const correctDef = challengeKnot?.definition || 'Unknown meaning';
+    const isCorrect = option === correctDef;
+
+    if (isCorrect) {
+      setFeedback('correct');
+      if (sentence) markPracticed(sentence.id);
+      setTimeout(() => router.back(), 1200);
+    } else {
+      setFeedback('incorrect');
+      triggerShake();
+      setTimeout(() => {
+        setFeedback('idle');
+        setSelectedForm(null);
+      }, 800);
+    }
+  }, [feedback, challengeKnot, sentence, markPracticed, router, triggerShake]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* ── Header ─────────────────────────────────────────────────────── */}
@@ -225,35 +272,68 @@ export default function LapidaryScreen() {
 
         {/* ── MIDDLE: Paradigm Grid in Selection Mode ───────────────── */}
         {hasParadigm ? (
+          <>
+            <View style={styles.gridSection}>
+              <Text style={styles.gridLabel}>
+                Tap the correct form of{' '}
+                <Text style={styles.gridLemma}>{challengeKnot.lemma}</Text>
+              </Text>
+              <ParadigmGrid
+                paradigm={challengeKnot.paradigm!}
+                pos={challengeKnot.pos}
+                highlightForm={feedback === 'correct' ? correctForm : undefined}
+                onCellPress={feedback !== 'correct' ? handleCellPress : undefined}
+              />
+            </View>
+
+            {/* ── BOTTOM: Submit Button ─────────────────────────────────── */}
+            {selectedForm && feedback === 'idle' && (
+              <Pressable
+                style={({ pressed }) => [styles.submitButton, pressed && styles.submitButtonPressed]}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.submitButtonText}>Confirm: {selectedForm}</Text>
+              </Pressable>
+            )}
+          </>
+        ) : (
+          /* Semantic Challenge */
           <View style={styles.gridSection}>
             <Text style={styles.gridLabel}>
-              Tap the correct form of{' '}
+              Select the correct translation for{' '}
               <Text style={styles.gridLemma}>{challengeKnot.lemma}</Text>
             </Text>
-            <ParadigmGrid
-              paradigm={challengeKnot.paradigm!}
-              pos={challengeKnot.pos}
-              highlightForm={feedback === 'correct' ? correctForm : undefined}
-              onCellPress={feedback !== 'correct' ? handleCellPress : undefined}
-            />
-          </View>
-        ) : (
-          /* Fallback: flat cell grid from paradigm challenge component style */
-          <View style={styles.gridSection}>
-            <Text style={styles.gridLabel}>
-              No paradigm data available. Return to the Voyage to continue.
-            </Text>
-          </View>
-        )}
+            <View style={styles.semanticOptionsContainer}>
+              {semanticOptions.map((option, idx) => {
+                const isSelected = selectedForm === option;
+                const isOptionCorrect = option === (challengeKnot?.definition || 'Unknown meaning');
 
-        {/* ── BOTTOM: Submit Button ─────────────────────────────────── */}
-        {selectedForm && feedback === 'idle' && (
-          <Pressable
-            style={({ pressed }) => [styles.submitButton, pressed && styles.submitButtonPressed]}
-            onPress={handleSubmit}
-          >
-            <Text style={styles.submitButtonText}>Confirm: {selectedForm}</Text>
-          </Pressable>
+                let btnStyle = styles.semanticOption;
+                let textStyle = styles.semanticOptionText;
+
+                if (feedback === 'correct' && isOptionCorrect) {
+                  btnStyle = styles.semanticOptionCorrect;
+                  textStyle = styles.semanticOptionTextCorrect;
+                } else if (feedback === 'incorrect' && isSelected) {
+                  btnStyle = styles.semanticOptionIncorrect;
+                  textStyle = styles.semanticOptionTextIncorrect;
+                }
+
+                return (
+                  <Pressable
+                    key={`${option}-${idx}`}
+                    style={({ pressed }) => [
+                      btnStyle,
+                      pressed && feedback === 'idle' && styles.semanticOptionPressed
+                    ]}
+                    onPress={() => feedback !== 'correct' && handleSemanticOptionPress(option)}
+                  >
+                    <Text style={textStyle}>{option}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
         )}
 
         {/* Success: returning banner */}
@@ -399,6 +479,60 @@ const styles = StyleSheet.create({
   // ── Grid Section ──────────────────────────────────────────────────────
   gridSection: {
     gap: 12,
+  },
+  semanticOptionsContainer: {
+    gap: 12,
+    marginTop: 8,
+  },
+  semanticOption: {
+    backgroundColor: 'rgba(197, 160, 89, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.2)',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  semanticOptionPressed: {
+    backgroundColor: 'rgba(197, 160, 89, 0.1)',
+    borderColor: 'rgba(197, 160, 89, 0.4)',
+  },
+  semanticOptionCorrect: {
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    borderWidth: 1,
+    borderColor: C.SUCCESS,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  semanticOptionIncorrect: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: C.ERROR,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  semanticOptionText: {
+    fontFamily: F.DISPLAY,
+    fontSize: 16,
+    color: C.PARCHMENT,
+    textAlign: 'center',
+  },
+  semanticOptionTextCorrect: {
+    fontFamily: F.DISPLAY,
+    fontSize: 16,
+    color: C.SUCCESS,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  semanticOptionTextIncorrect: {
+    fontFamily: F.DISPLAY,
+    fontSize: 16,
+    color: C.ERROR,
+    textAlign: 'center',
   },
   gridLabel: {
     fontFamily: F.LABEL,
