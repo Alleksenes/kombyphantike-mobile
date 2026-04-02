@@ -31,9 +31,19 @@ function pickChallengeKnot(sentence: VoyageSentence): Knot | null {
   // First: a knot that has paradigm data
   const withParadigm = sentence.knots.find((k) => k.paradigm && k.paradigm.length > 0);
   if (withParadigm) return withParadigm;
-  // Fallback: first knot with a lemma
-  return sentence.knots.find((k) => k.lemma) ?? sentence.knots[0] ?? null;
+  // Fallback: first knot with a lemma and definition
+  return sentence.knots.find((k) => k.lemma && k.definition) ?? sentence.knots.find((k) => k.lemma) ?? sentence.knots[0] ?? null;
 }
+
+// ── Semantic Challenge Fallback Options ──────────────────────────────────────
+const FALLBACK_GLOSSES = [
+  'the inhabited world',
+  'universe, totality',
+  'to arrange, to adorn',
+  'cosmic, worldly, secular',
+  'to turn the world upside down',
+  'order, class, rank',
+];
 
 type FeedbackState = 'idle' | 'correct' | 'incorrect';
 
@@ -113,14 +123,62 @@ export default function LapidaryScreen() {
   }, [selectedForm, handleCellPress]);
 
   // ── Guard: no sentence / no knot ──────────────────────────────────────
-  const hasParadigm = challengeKnot?.paradigm && challengeKnot.paradigm.length > 0;
+  const hasParadigm = !!(challengeKnot?.paradigm && challengeKnot.paradigm.length > 0);
 
-  if (!sentence || !challengeKnot || !hasParadigm) {
+  // ── Semantic Challenge Options ───────────────────────────────────────────
+  const semanticOptions = useMemo(() => {
+    if (hasParadigm || !challengeKnot?.definition) return [];
+
+    // Pick 2 distractor definitions from the sentence itself, or fallback
+    const distractors = sentence?.knots
+      .filter((k) => k.definition && k.definition !== challengeKnot.definition)
+      .map((k) => k.definition as string) || [];
+
+    while (distractors.length < 2) {
+      const fallback = FALLBACK_GLOSSES[Math.floor(Math.random() * FALLBACK_GLOSSES.length)];
+      if (fallback !== challengeKnot.definition && !distractors.includes(fallback)) {
+        distractors.push(fallback);
+      }
+    }
+
+    const options = [challengeKnot.definition, distractors[0], distractors[1]];
+    // Shuffle options
+    return options.sort(() => Math.random() - 0.5);
+  }, [hasParadigm, challengeKnot, sentence]);
+
+  // Semantic challenge validation
+  const handleSemanticSelection = useCallback((gloss: string) => {
+    if (feedback === 'correct') return;
+
+    setSelectedForm(gloss);
+    setAttempts((a) => a + 1);
+
+    const isCorrect = gloss === challengeKnot?.definition;
+
+    if (isCorrect) {
+      setFeedback('correct');
+      if (sentence) {
+        markPracticed(sentence.id);
+      }
+      setTimeout(() => {
+        router.back();
+      }, 1200);
+    } else {
+      setFeedback('incorrect');
+      triggerShake();
+      setTimeout(() => {
+        setFeedback('idle');
+        setSelectedForm(null);
+      }, 800);
+    }
+  }, [feedback, sentence, challengeKnot, markPracticed, router, triggerShake]);
+
+  if (!sentence || !challengeKnot) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.voidContainer}>
           <Text style={styles.voidSymbol}>Ψ</Text>
-          <Text style={styles.voidText}>No morphological challenges in this passage. Swipe to next.</Text>
+          <Text style={styles.voidText}>No challenges in this passage. Swipe to next.</Text>
           <Pressable onPress={() => router.back()} style={styles.backLink}>
             <Text style={styles.backLinkText}>Return to Voyage</Text>
           </Pressable>
@@ -188,37 +246,60 @@ export default function LapidaryScreen() {
           )}
         </Animated.View>
 
-        {/* ── MIDDLE: Paradigm Grid in Selection Mode ───────────────── */}
+        {/* ── MIDDLE: Paradigm Grid or Semantic Challenge ───────────────── */}
         {hasParadigm ? (
+          <>
+            <View style={styles.gridSection}>
+              <Text style={styles.gridLabel}>
+                Tap the correct form of{' '}
+                <Text style={styles.gridLemma}>{challengeKnot.lemma}</Text>
+              </Text>
+              <ParadigmGrid
+                paradigm={challengeKnot.paradigm!}
+                pos={challengeKnot.pos}
+                highlightForm={feedback === 'correct' ? correctForm : undefined}
+                onCellPress={feedback !== 'correct' ? handleCellPress : undefined}
+              />
+            </View>
+
+            {/* ── BOTTOM: Submit Button for Paradigm ─────────────────────────────────── */}
+            {selectedForm && feedback === 'idle' && (
+              <Pressable
+                style={({ pressed }) => [styles.submitButton, pressed && styles.submitButtonPressed]}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.submitButtonText}>Confirm: {selectedForm}</Text>
+              </Pressable>
+            )}
+          </>
+        ) : (
           <View style={styles.gridSection}>
             <Text style={styles.gridLabel}>
-              Tap the correct form of{' '}
+              Semantic Challenge: Select the correct gloss (METIS / KAIKKI) for{' '}
               <Text style={styles.gridLemma}>{challengeKnot.lemma}</Text>
             </Text>
-            <ParadigmGrid
-              paradigm={challengeKnot.paradigm!}
-              pos={challengeKnot.pos}
-              highlightForm={feedback === 'correct' ? correctForm : undefined}
-              onCellPress={feedback !== 'correct' ? handleCellPress : undefined}
-            />
+            <View style={styles.semanticOptions}>
+              {semanticOptions.map((gloss, idx) => (
+                <Pressable
+                  key={idx}
+                  style={({ pressed }) => [
+                    styles.semanticButton,
+                    selectedForm === gloss && feedback === 'incorrect' && styles.semanticButtonIncorrect,
+                    feedback === 'correct' && gloss === challengeKnot.definition && styles.semanticButtonCorrect,
+                    pressed && styles.semanticButtonPressed,
+                  ]}
+                  onPress={() => feedback !== 'correct' && handleSemanticSelection(gloss)}
+                >
+                  <Text style={[
+                    styles.semanticButtonText,
+                    feedback === 'correct' && gloss === challengeKnot.definition && styles.semanticButtonTextCorrect
+                  ]}>
+                    {gloss}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
-        ) : (
-          /* Fallback: flat cell grid from paradigm challenge component style */
-          <View style={styles.gridSection}>
-            <Text style={styles.gridLabel}>
-              No paradigm data available. Return to the Voyage to continue.
-            </Text>
-          </View>
-        )}
-
-        {/* ── BOTTOM: Submit Button ─────────────────────────────────── */}
-        {selectedForm && feedback === 'idle' && (
-          <Pressable
-            style={({ pressed }) => [styles.submitButton, pressed && styles.submitButtonPressed]}
-            onPress={handleSubmit}
-          >
-            <Text style={styles.submitButtonText}>Confirm: {selectedForm}</Text>
-          </Pressable>
         )}
 
         {/* Success: returning banner */}
@@ -369,6 +450,43 @@ const styles = StyleSheet.create({
     color: C.GOLD,
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+
+  // ── Semantic Challenge ────────────────────────────────────────────────
+  semanticOptions: {
+    gap: 12,
+    marginTop: 8,
+  },
+  semanticButton: {
+    backgroundColor: C.SURFACE,
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.3)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  semanticButtonPressed: {
+    backgroundColor: 'rgba(197, 160, 89, 0.1)',
+    borderColor: C.GOLD,
+  },
+  semanticButtonCorrect: {
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    borderColor: C.SUCCESS,
+  },
+  semanticButtonIncorrect: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: C.ERROR,
+  },
+  semanticButtonText: {
+    fontFamily: F.BODY,
+    fontSize: 14,
+    color: C.PARCHMENT,
+    textAlign: 'center',
+  },
+  semanticButtonTextCorrect: {
+    color: C.SUCCESS,
+    fontWeight: 'bold',
   },
 
   // ── Success Banner ────────────────────────────────────────────────────

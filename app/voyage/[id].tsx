@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconButton } from 'react-native-paper';
@@ -113,7 +114,12 @@ export default function VoyageReader() {
       {/* ── Sentence Stage ──────────────────────────────────────────── */}
       <View style={styles.stage}>
         {sentence ? (
-          <>
+          <Animated.View
+            key={sentence.id}
+            entering={FadeIn.duration(500)}
+            exiting={FadeOut.duration(300)}
+            style={styles.sentenceStageInner}
+          >
             {/* Greek text with KnotWords */}
             <LexicalRenderer
               greek_text={sentence.greek_text}
@@ -127,7 +133,7 @@ export default function VoyageReader() {
               <View style={styles.translationDivider} />
               <Text style={styles.translationText}>{sentence.translation}</Text>
             </View>
-          </>
+          </Animated.View>
         ) : (
           <View style={styles.voidContainer}>
             <Text style={styles.voidSymbol}>Ψ</Text>
@@ -260,6 +266,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 28,
+  },
+  sentenceStageInner: {
+    alignItems: 'center',
     gap: 24,
   },
 
