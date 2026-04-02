@@ -83,6 +83,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="dev/gallery" />
                 <Stack.Screen name="voyage/[id]" />
+                <Stack.Screen name="orrery/index" />
                 <Stack.Screen name="orrery/[lemma]" />
                 <Stack.Screen name="lapidary/[sentenceId]" />
                 <Stack.Screen name="constellation" />
