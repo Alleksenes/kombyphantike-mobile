@@ -38,6 +38,7 @@ export interface ContrastiveProfile {
   david_note: string;                            // AI-compiled diachronic note
   rag_scholia: string;                           // Raw academic citation
   grammar_scholia: string;                       // Merged RAG + Davidian synthesis
+  definitions: { source: string; text: string }[]; // Modern Definitions
   lsj_definitions: string[];                     // LSJ dictionary entries
   kds_score: number;                             // Diachronic distance score (0–1)
   paradigm: { form: string; tags: string[] }[];  // Declension/conjugation table
@@ -140,6 +141,7 @@ export interface Knot {
 
   // v0.7.0 — ContrastiveProfile fields (populated by GET /inspect/{lemma})
   grammar_scholia?: string;    // Merged RAG + Davidian synthesis
+  definitions?: { source: string; text: string }[]; // Modern Definitions
   lsj_definitions?: string[];  // LSJ dictionary entries
   kds_score?: number;           // Diachronic distance score (0–1)
 

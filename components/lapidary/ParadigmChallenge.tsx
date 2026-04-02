@@ -136,13 +136,16 @@ export default function ParadigmChallenge({
         {/* Render paradigm cells as a selectable grid */}
         <View style={styles.cellGrid}>
           {paradigm.map((entry, i) => {
-            const isSelected = selectedForm === entry.form;
-            const isAnswer = entry.form.trim().toLowerCase() === blankedWord.trim().toLowerCase();
+            // Safely extract the text form
+            const formText = entry.form || (entry as any).word || (typeof entry === 'string' ? entry : '');
+
+            const isSelected = selectedForm === formText;
+            const isAnswer = formText.trim().toLowerCase() === blankedWord.trim().toLowerCase();
             const showAsCorrect = feedback === 'correct' && isAnswer;
 
             return (
               <View
-                key={`${entry.form}-${i}`}
+                key={`${formText}-${i}`}
                 style={[
                   styles.cell,
                   isSelected && feedback === 'incorrect' && styles.cellIncorrect,
@@ -155,9 +158,9 @@ export default function ParadigmChallenge({
                     showAsCorrect && styles.cellFormCorrect,
                     isSelected && feedback === 'incorrect' && styles.cellFormIncorrect,
                   ]}
-                  onPress={() => handleCellPress(entry.form)}
+                  onPress={() => handleCellPress(formText)}
                 >
-                  {entry.form}
+                  {formText}
                 </Text>
                 <Text style={styles.cellTags}>
                   {entry.tags.join(' · ')}

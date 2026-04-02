@@ -22,6 +22,7 @@ function buildMockProfile(knot: Knot): ContrastiveProfile {
     david_note: knot.david_note || `Diachronic note for '${knot.lemma}' — awaiting philological excavation.`,
     rag_scholia: knot.rag_scholia || 'Holton et al. — reference pending integration.',
     grammar_scholia: knot.grammar_scholia || `The morphological profile of '${knot.lemma}' (${knot.pos}) reflects standard Modern Greek inflection patterns.`,
+    definitions: knot.definitions ?? [{ source: 'SYSTEM', text: knot.definition ?? 'definition pending' }],
     lsj_definitions: knot.lsj_definitions ?? [`${knot.lemma}: ${knot.definition ?? 'definition pending'}`],
     kds_score: knot.kds_score ?? 0.42,
     paradigm: knot.paradigm ?? [],
@@ -44,6 +45,7 @@ interface ShallowWordlike {
   david_note?: string;
   rag_scholia?: string;
   grammar_scholia?: string;
+  definitions?: { source: string; text: string }[];
   lsj_definitions?: string[];
   kds_score?: number;
   ancient_ancestor?: string;
@@ -65,6 +67,7 @@ export function toKnot(word: ShallowWordlike, id?: string): Knot {
     david_note: word.david_note ?? '',
     rag_scholia: word.rag_scholia ?? '',
     grammar_scholia: word.grammar_scholia,
+    definitions: word.definitions,
     lsj_definitions: word.lsj_definitions,
     kds_score: word.kds_score,
     ancient_ancestor: word.ancient_ancestor,
@@ -226,6 +229,7 @@ function enrichKnot(knot: Knot, profile: ContrastiveProfile): Knot {
     david_note: profile.david_note || knot.david_note,
     rag_scholia: profile.rag_scholia || knot.rag_scholia,
     grammar_scholia: profile.grammar_scholia,
+    definitions: profile.definitions,
     lsj_definitions: profile.lsj_definitions,
     kds_score: profile.kds_score,
     paradigm: profile.paradigm,
