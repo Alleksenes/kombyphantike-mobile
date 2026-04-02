@@ -8,6 +8,8 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
 import Svg, { Circle, Defs, Line, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { ApiService } from '../../src/services/ApiService';
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
@@ -223,6 +225,42 @@ export default function OrreryScreen() {
   const [profile, setProfile] = useState<ContrastiveProfile | null>(null);
   const [apiLoading, setApiLoading] = useState(true);
 
+  // Gesture handling for the Orrery canvas
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((e) => {
+      scale.value = savedScale.value * e.scale;
+    })
+    .onEnd(() => {
+      savedScale.value = scale.value;
+    });
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      translateX.value = savedTranslateX.value + e.translationX;
+      translateY.value = savedTranslateY.value + e.translationY;
+    })
+    .onEnd(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    });
+
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
   // Fetch the ContrastiveProfile for this lemma to augment the graph
   useEffect(() => {
     let cancelled = false;
@@ -341,9 +379,11 @@ export default function OrreryScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── The Constellation SVG ──────────────────────────────────── */}
-        <View style={styles.graphContainer}>
-          <Svg width={GRAPH_W} height={GRAPH_H}>
-            <Defs>
+        <GestureHandlerRootView style={styles.graphContainer}>
+          <GestureDetector gesture={composedGesture}>
+            <Animated.View style={[styles.graphWrapper, animatedStyle]}>
+              <Svg width={GRAPH_W} height={GRAPH_H}>
+                <Defs>
               {/* Radial glow gradients for each node */}
               {nodes.map((node) => {
                 const cfg = NODE_CONFIG[node.type];
@@ -411,29 +451,31 @@ export default function OrreryScreen() {
               );
             })}
 
-            {/* Node Labels — crisp GFSDidot against the void */}
-            {nodes.map((node) => {
-              const cfg = NODE_CONFIG[node.type];
-              const lines = node.label.split('\n');
-              return lines.map((line, li) => (
-                <SvgText
-                  key={`${node.id}-label-${li}`}
-                  x={node.x}
-                  y={node.y + (li * 15) - ((lines.length - 1) * 7.5)}
-                  textAnchor="middle"
-                  alignmentBaseline="central"
-                  fill={node.type === 'center' ? C.GOLD : C.PARCHMENT}
-                  fontSize={node.type === 'center' ? 14 : 11}
-                  fontWeight={node.type === 'center' ? 'bold' : 'normal'}
-                  fontFamily={F.DISPLAY}
-                  onPress={() => handleNodePress(node)}
-                >
-                  {line}
-                </SvgText>
-              ));
-            })}
-          </Svg>
-        </View>
+                {/* Node Labels — crisp GFSDidot against the void */}
+                {nodes.map((node) => {
+                  const cfg = NODE_CONFIG[node.type];
+                  const lines = node.label.split('\n');
+                  return lines.map((line, li) => (
+                    <SvgText
+                      key={`${node.id}-label-${li}`}
+                      x={node.x}
+                      y={node.y + (li * 15) - ((lines.length - 1) * 7.5)}
+                      textAnchor="middle"
+                      alignmentBaseline="central"
+                      fill={node.type === 'center' ? C.GOLD : C.PARCHMENT}
+                      fontSize={node.type === 'center' ? 14 : 11}
+                      fontWeight={node.type === 'center' ? 'bold' : 'normal'}
+                      fontFamily={F.DISPLAY}
+                      onPress={() => handleNodePress(node)}
+                    >
+                      {line}
+                    </SvgText>
+                  ));
+                })}
+              </Svg>
+            </Animated.View>
+          </GestureDetector>
+        </GestureHandlerRootView>
 
         {/* ── Legend ──────────────────────────────────────────────────── */}
         <View style={styles.legend}>
@@ -621,6 +663,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'transparent',
     overflow: 'hidden',
+  },
+  graphWrapper: {
+    width: GRAPH_W,
+    height: GRAPH_H,
   },
 
   // ── Legend ────────────────────────────────────────────────────────────────

@@ -22,6 +22,7 @@ import { useVoyageStore } from '../../src/store/voyageStore';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 import ParadigmGrid from '../../components/ParadigmGrid';
 import type { Knot, VoyageSentence } from '../../src/types';
+import LexicalRenderer from '../../components/ui/LexicalRenderer';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,16 +33,6 @@ function pickChallengeKnot(sentence: VoyageSentence): Knot | null {
   if (withParadigm) return withParadigm;
   // Fallback: first knot with a lemma
   return sentence.knots.find((k) => k.lemma) ?? sentence.knots[0] ?? null;
-}
-
-/** Build the sentence display with the target knot blanked out. */
-function blankSentence(greekText: string, knotText: string): { before: string; after: string } {
-  const idx = greekText.indexOf(knotText);
-  if (idx === -1) return { before: greekText, after: '' };
-  return {
-    before: greekText.slice(0, idx),
-    after: greekText.slice(idx + knotText.length),
-  };
 }
 
 type FeedbackState = 'idle' | 'correct' | 'incorrect';
@@ -65,10 +56,6 @@ export default function LapidaryScreen() {
   );
 
   const correctForm = challengeKnot?.text ?? '';
-  const parts = useMemo(
-    () => (sentence && challengeKnot ? blankSentence(sentence.greek_text, challengeKnot.text) : null),
-    [sentence, challengeKnot],
-  );
 
   // ── State ──────────────────────────────────────────────────────────────
   const [feedback, setFeedback] = useState<FeedbackState>('idle');
@@ -125,24 +112,15 @@ export default function LapidaryScreen() {
     }
   }, [selectedForm, handleCellPress]);
 
-  // ── Feedback-dependent styling ────────────────────────────────────────
-  const blankBorderColor =
-    feedback === 'correct' ? C.SUCCESS :
-    feedback === 'incorrect' ? C.ERROR :
-    C.GOLD;
-
-  const blankBgColor =
-    feedback === 'correct' ? 'rgba(52, 211, 153, 0.15)' :
-    feedback === 'incorrect' ? 'rgba(239, 68, 68, 0.15)' :
-    'rgba(197, 160, 89, 0.06)';
-
   // ── Guard: no sentence / no knot ──────────────────────────────────────
-  if (!sentence || !challengeKnot || !parts) {
+  const hasParadigm = challengeKnot?.paradigm && challengeKnot.paradigm.length > 0;
+
+  if (!sentence || !challengeKnot || !hasParadigm) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.voidContainer}>
           <Text style={styles.voidSymbol}>Ψ</Text>
-          <Text style={styles.voidText}>Poseidon has struck this land; no mortal may practice here yet.</Text>
+          <Text style={styles.voidText}>No morphological challenges in this passage. Swipe to next.</Text>
           <Pressable onPress={() => router.back()} style={styles.backLink}>
             <Text style={styles.backLinkText}>Return to Voyage</Text>
           </Pressable>
@@ -150,8 +128,6 @@ export default function LapidaryScreen() {
       </SafeAreaView>
     );
   }
-
-  const hasParadigm = challengeKnot.paradigm && challengeKnot.paradigm.length > 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -178,26 +154,15 @@ export default function LapidaryScreen() {
             { transform: [{ translateX: shakeAnim }] },
           ]}
         >
-          <Text style={styles.sentenceText}>
-            <Text style={styles.sentenceGreek}>{parts.before}</Text>
-            <View
-              style={[
-                styles.blankBox,
-                { borderColor: blankBorderColor, backgroundColor: blankBgColor },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.blankText,
-                  feedback === 'correct' && styles.blankTextCorrect,
-                  feedback === 'incorrect' && styles.blankTextIncorrect,
-                ]}
-              >
-                {feedback === 'correct' ? correctForm : selectedForm || '_______'}
-              </Text>
-            </View>
-            <Text style={styles.sentenceGreek}>{parts.after}</Text>
-          </Text>
+          <View style={styles.sentenceTextContainer}>
+            <LexicalRenderer
+              greek_text={sentence.greek_text}
+              knots={sentence.knots}
+              blankedKnotText={challengeKnot.text}
+              selectedForm={feedback === 'correct' ? correctForm : selectedForm}
+              feedback={feedback}
+            />
+          </View>
 
           {/* Translation hint */}
           <View style={styles.translationRow}>
@@ -320,39 +285,10 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 16,
   },
-  sentenceText: {
-    fontFamily: F.DISPLAY,
-    fontSize: 22,
-    color: C.PARCHMENT,
-    lineHeight: 36,
-    textAlign: 'center',
-  },
-  sentenceGreek: {
-    fontFamily: F.DISPLAY,
-    fontSize: 22,
-    color: 'rgba(227, 220, 203, 0.7)',
-  },
-  blankBox: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    marginHorizontal: 4,
-  },
-  blankText: {
-    fontFamily: F.DISPLAY,
-    fontSize: 20,
-    color: C.GOLD,
-    fontStyle: 'italic',
-  },
-  blankTextCorrect: {
-    color: C.SUCCESS,
-    fontStyle: 'normal',
-    fontWeight: 'bold',
-  },
-  blankTextIncorrect: {
-    color: C.ERROR,
+  sentenceTextContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
   },
   translationRow: {
     alignItems: 'center',

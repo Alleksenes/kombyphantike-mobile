@@ -20,97 +20,7 @@ import { useVoyageStore, getCurrentSentence, getSentenceCount } from '../../src/
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 import type { Knot } from '../../src/types';
-
-// ── Token type for rendered sentence ─────────────────────────────────────────
-
-interface SentenceToken {
-  text: string;
-  knot?: Knot;
-  trailingPunct?: string;
-}
-
-// ── Multi-Word Tokenization ───────────────────────────────────────────────────
-// Greedy longest-match: checks multi-word knot phrases (MWEs) before falling
-// back to whitespace-delimited splitting. Handles trailing punctuation correctly.
-
-function tokenizeSentence(greekText: string, knots: Knot[]): SentenceToken[] {
-  if (!knots.length) {
-    return greekText.split(/\s+/).filter(Boolean).map((text) => ({ text }));
-  }
-
-  // Sort descending by text length so multi-word phrases match before single words
-  const sortedKnots = [...knots].sort((a, b) => b.text.length - a.text.length);
-  const PUNCT_RE = /^([.,;·;:!?()\[\]«»"]+)/;
-
-  const tokens: SentenceToken[] = [];
-  let remaining = greekText.trim();
-
-  while (remaining.length > 0) {
-    let matched = false;
-
-    for (const knot of sortedKnots) {
-      const knotText = knot.text.trim();
-      if (!knotText) continue;
-
-      if (remaining.startsWith(knotText)) {
-        const rest = remaining.slice(knotText.length);
-        const punctMatch = rest.match(PUNCT_RE);
-        const trailingPunct = punctMatch ? punctMatch[1] : '';
-        tokens.push({ text: knotText, knot, trailingPunct });
-        remaining = rest.slice(trailingPunct.length).replace(/^\s+/, '');
-        matched = true;
-        break;
-      }
-    }
-
-    if (!matched) {
-      // No knot matched — consume next whitespace-delimited word
-      const wordMatch = remaining.match(/^(\S+)/);
-      if (!wordMatch) break;
-      const word = wordMatch[1];
-      const stripped = word.replace(/[.,;·;:!?()\[\]«»"]+$/, '');
-      const trailingPunct = word.slice(stripped.length);
-      tokens.push({ text: stripped || word, trailingPunct });
-      remaining = remaining.slice(word.length).replace(/^\s+/, '');
-    }
-  }
-
-  return tokens;
-}
-
-// ── KnotWord component ────────────────────────────────────────────────────────
-
-function KnotWord({
-  token,
-  isActive,
-  onPress,
-}: {
-  token: SentenceToken;
-  isActive: boolean;
-  onPress: (knot: Knot) => void;
-}) {
-  const knot = token.knot!;
-
-  return (
-    <Pressable
-      onPress={() => onPress(knot)}
-      style={[styles.knotWord, isActive && styles.knotWordActive]}
-    >
-      <Text style={[styles.greekWord, styles.knotWordText, isActive && styles.knotWordTextActive]}>
-        {token.text}
-      </Text>
-      <View style={[styles.knotUnderline, isActive && styles.knotUnderlineActive]} />
-      {/* Transliteration — shown beneath each knot */}
-      {knot.transliteration ? (
-        <Text style={styles.transliterationText}>{knot.transliteration}</Text>
-      ) : null}
-      {/* CEFR micro-badge — only show for active knot with level data */}
-      {isActive && knot.cefr_level ? (
-        <Text style={styles.knotCefrBadge}>{knot.cefr_level}</Text>
-      ) : null}
-    </Pressable>
-  );
-}
+import LexicalRenderer from '../../components/ui/LexicalRenderer';
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
@@ -135,12 +45,6 @@ export default function VoyageReader() {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex >= total - 1;
   const showPractice = sentence?.mastery !== 'unseen';
-
-  // Tokenize current sentence for rendering
-  const tokens = useMemo(
-    () => (sentence ? tokenizeSentence(sentence.greek_text, sentence.knots) : []),
-    [sentence],
-  );
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   // Open the inspector at 'knot' depth — triggers GET /inspect/{lemma}
@@ -211,36 +115,12 @@ export default function VoyageReader() {
         {sentence ? (
           <>
             {/* Greek text with KnotWords */}
-            <View style={styles.greekTextRow}>
-              {tokens.map((token, i) => {
-                if (token.knot) {
-                  return (
-                    <View key={i} style={styles.tokenWrapper}>
-                      <KnotWord
-                        token={token}
-                        isActive={activeKnot?.id === token.knot.id}
-                        onPress={handleKnotPress}
-                      />
-                      {token.trailingPunct ? (
-                        <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
-                      ) : null}
-                    </View>
-                  );
-                }
-                return (
-                  <View key={i} style={styles.tokenWrapper}>
-                    <View style={styles.plainWordStack}>
-                      <Text style={[styles.greekWord, styles.plainWord]}>
-                        {token.text}
-                      </Text>
-                    </View>
-                    {token.trailingPunct ? (
-                      <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
-                    ) : null}
-                  </View>
-                );
-              })}
-            </View>
+            <LexicalRenderer
+              greek_text={sentence.greek_text}
+              knots={sentence.knots}
+              activeKnotId={activeKnot?.id}
+              onKnotPress={handleKnotPress}
+            />
 
             {/* English anchor translation */}
             <View style={styles.translationAnchor}>
@@ -381,80 +261,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 28,
     gap: 24,
-  },
-  greekTextRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    rowGap: 16,
-    columnGap: 8,
-  },
-  tokenWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-  },
-  greekWord: {
-    fontFamily: F.DISPLAY,
-    fontSize: 34,
-    lineHeight: 50,
-    textAlign: 'center',
-  },
-  plainWord: {
-    color: 'rgba(227, 220, 203, 0.7)',
-  },
-  greekPunct: {
-    fontFamily: F.DISPLAY,
-    fontSize: 34,
-    lineHeight: 50,
-    color: 'rgba(227, 220, 203, 0.5)',
-    marginLeft: -2,
-  },
-
-  // KnotWord
-  knotWord: {
-    alignItems: 'center',
-    paddingBottom: 2,
-  },
-  plainWordStack: {
-    alignItems: 'center',
-  },
-  knotWordActive: {
-    backgroundColor: 'rgba(197, 160, 89, 0.15)',
-    borderRadius: 6,
-    paddingHorizontal: 2,
-  },
-  knotWordText: {
-    color: C.GOLD,
-  },
-  knotWordTextActive: {
-    color: C.GOLD,
-  },
-  knotUnderline: {
-    height: 2,
-    width: '100%',
-    backgroundColor: 'rgba(197, 160, 89, 0.45)',
-    borderRadius: 1,
-    marginTop: 2,
-  },
-  knotUnderlineActive: {
-    backgroundColor: C.GOLD,
-  },
-  transliterationText: {
-    fontFamily: F.BODY,
-    fontSize: 12,
-    color: C.GRAY_TEXT,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 3,
-  },
-  knotCefrBadge: {
-    fontFamily: F.LABEL,
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: C.GOLD,
-    letterSpacing: 0.5,
-    marginTop: 2,
   },
 
   // Translation

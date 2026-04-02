@@ -292,6 +292,26 @@ export default function PhilologicalInspector() {
           </View>
         ) : null}
 
+        {/* Modern Definitions */}
+        {!isLoading && knot.definitions && knot.definitions.length > 0 ? (
+          <View style={styles.lsjCard}>
+            <View style={styles.noteCardHeader}>
+              <View style={[styles.lsjIcon, { backgroundColor: 'rgba(52, 211, 153, 0.12)' }]}>
+                <Text style={[styles.lsjIconText, { color: '#34D399' }]}>M</Text>
+              </View>
+              <Text style={[styles.lsjLabel, { color: '#34D399' }]}>Modern Definitions</Text>
+            </View>
+            {knot.definitions.map((def, i) => (
+              <View key={`mod-def-${i}`} style={styles.lsjRow}>
+                <Text style={[styles.lsjBullet, { color: '#34D399', width: 65, fontFamily: F.LABEL, fontSize: 10 }]}>
+                  [{def.source.toUpperCase()}]
+                </Text>
+                <Text style={styles.lsjText}>{def.text}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {/* LSJ Definitions */}
         {!isLoading && knot.lsj_definitions && knot.lsj_definitions.length > 0 ? (
           <View style={styles.lsjCard}>
@@ -299,10 +319,10 @@ export default function PhilologicalInspector() {
               <View style={styles.lsjIcon}>
                 <Text style={styles.lsjIconText}>L</Text>
               </View>
-              <Text style={styles.lsjLabel}>LSJ Definitions</Text>
+              <Text style={styles.lsjLabel}>Ancient Jewels / LSJ</Text>
             </View>
             {knot.lsj_definitions.map((def, i) => (
-              <View key={i} style={styles.lsjRow}>
+              <View key={`lsj-def-${i}`} style={styles.lsjRow}>
                 <Text style={styles.lsjBullet}>{'\u2022'}</Text>
                 <Text style={styles.lsjText}>{def}</Text>
               </View>
