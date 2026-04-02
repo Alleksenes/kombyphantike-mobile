@@ -243,8 +243,8 @@ const styles = StyleSheet.create({
   },
   greekWord: {
     fontFamily: F.DISPLAY,
-    fontSize: 34,
-    lineHeight: 50,
+    fontSize: 16,
+    lineHeight: 26,
     textAlign: 'center',
   },
   plainWord: {
@@ -252,8 +252,8 @@ const styles = StyleSheet.create({
   },
   greekPunct: {
     fontFamily: F.DISPLAY,
-    fontSize: 34,
-    lineHeight: 50,
+    fontSize: 16,
+    lineHeight: 26,
     color: 'rgba(227, 220, 203, 0.5)',
     marginLeft: -2,
   },
@@ -294,6 +294,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 3,
+    opacity: 0.5,
   },
   knotCefrBadge: {
     fontFamily: F.LABEL,
