@@ -4,10 +4,9 @@
 // Byzantine Gold. Tap a knot → PhilologicalInspector at Level 1 (Translation).
 // English translation anchors below. Prev/Next navigation in the footer.
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -21,95 +20,7 @@ import { useVoyageStore, getCurrentSentence, getSentenceCount } from '../../src/
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 import type { Knot } from '../../src/types';
-
-// ── Token type for rendered sentence ─────────────────────────────────────────
-
-interface SentenceToken {
-  text: string;
-  knot?: Knot;
-  trailingPunct?: string;
-}
-
-// ── Multi-Word Tokenization ───────────────────────────────────────────────────
-// Greedy longest-match: checks multi-word knot phrases (MWEs) before falling
-// back to whitespace-delimited splitting. Handles trailing punctuation correctly.
-
-function tokenizeSentence(greekText: string, knots: Knot[]): SentenceToken[] {
-  if (!knots.length) {
-    return greekText.split(/\s+/).filter(Boolean).map((text) => ({ text }));
-  }
-
-  // Sort descending by text length so multi-word phrases match before single words
-  const sortedKnots = [...knots].sort((a, b) => b.text.length - a.text.length);
-  const PUNCT_RE = /^([.,;·;:!?()\[\]«»"]+)/;
-
-  const tokens: SentenceToken[] = [];
-  let remaining = greekText.trim();
-
-  while (remaining.length > 0) {
-    let matched = false;
-
-    for (const knot of sortedKnots) {
-      const knotText = knot.text.trim();
-      if (!knotText) continue;
-
-      if (remaining.startsWith(knotText)) {
-        const rest = remaining.slice(knotText.length);
-        const punctMatch = rest.match(PUNCT_RE);
-        const trailingPunct = punctMatch ? punctMatch[1] : '';
-        tokens.push({ text: knotText, knot, trailingPunct });
-        remaining = rest.slice(trailingPunct.length).replace(/^\s+/, '');
-        matched = true;
-        break;
-      }
-    }
-
-    if (!matched) {
-      // No knot matched — consume next whitespace-delimited word
-      const wordMatch = remaining.match(/^(\S+)/);
-      if (!wordMatch) break;
-      const word = wordMatch[1];
-      const stripped = word.replace(/[.,;·;:!?()\[\]«»"]+$/, '');
-      const trailingPunct = word.slice(stripped.length);
-      tokens.push({ text: stripped || word, trailingPunct });
-      remaining = remaining.slice(word.length).replace(/^\s+/, '');
-    }
-  }
-
-  return tokens;
-}
-
-// ── KnotWord component ────────────────────────────────────────────────────────
-
-function KnotWord({
-  token,
-  isActive,
-  onPress,
-}: {
-  token: SentenceToken;
-  isActive: boolean;
-  onPress: (knot: Knot) => void;
-}) {
-  const knot = token.knot!;
-
-  return (
-    <Pressable
-      onPress={() => onPress(knot)}
-      style={[styles.knotWord, isActive && styles.knotWordActive]}
-    >
-      <Text style={[styles.greekWord, styles.knotWordText, isActive && styles.knotWordTextActive]}>
-        {token.text}
-      </Text>
-      <View
-        style={[styles.knotUnderline, isActive && styles.knotUnderlineActive]}
-      />
-      {/* CEFR micro-badge — only show for active knot with level data */}
-      {isActive && knot.cefr_level ? (
-        <Text style={styles.knotCefrBadge}>{knot.cefr_level}</Text>
-      ) : null}
-    </Pressable>
-  );
-}
+import LexicalRenderer from '../../components/ui/LexicalRenderer';
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
@@ -134,12 +45,6 @@ export default function VoyageReader() {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex >= total - 1;
   const showPractice = sentence?.mastery !== 'unseen';
-
-  // Tokenize current sentence for rendering
-  const tokens = useMemo(
-    () => (sentence ? tokenizeSentence(sentence.greek_text, sentence.knots) : []),
-    [sentence],
-  );
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   // Open the inspector at 'knot' depth — triggers GET /inspect/{lemma}
@@ -215,45 +120,12 @@ export default function VoyageReader() {
             style={styles.animatedStage}
           >
             {/* Greek text with KnotWords */}
-            <View style={styles.greekTextRow}>
-              {tokens.map((token, i) => {
-                if (token.knot) {
-                  return (
-                    <View key={i} style={styles.tokenWrapper}>
-                      <View style={styles.wordAndTransliteration}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <KnotWord
-                            token={token}
-                            isActive={activeKnot?.id === token.knot.id}
-                            onPress={handleKnotPress}
-                          />
-                          {token.trailingPunct ? (
-                            <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
-                          ) : null}
-                        </View>
-                        {token.knot.transliteration ? (
-                          <Text style={styles.transliterationText}>{token.knot.transliteration}</Text>
-                        ) : null}
-                      </View>
-                    </View>
-                  );
-                }
-                return (
-                  <View key={i} style={styles.tokenWrapper}>
-                    <View style={styles.wordAndTransliteration}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={[styles.greekWord, styles.plainWord]}>
-                          {token.text}
-                        </Text>
-                        {token.trailingPunct ? (
-                          <Text style={styles.greekPunct}>{token.trailingPunct}</Text>
-                        ) : null}
-                      </View>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
+            <LexicalRenderer
+              greek_text={sentence.greek_text}
+              knots={sentence.knots}
+              activeKnotId={activeKnot?.id}
+              onKnotPress={handleKnotPress}
+            />
 
             {/* Source attribution */}
             {sentence.source ? (
@@ -400,82 +272,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     gap: 24,
   },
-  greekTextRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tokenWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8,
-    marginBottom: 4,
-  },
   animatedStage: {
     alignItems: 'center',
     gap: 24,
-  },
-  wordAndTransliteration: {
-    alignItems: 'center',
-  },
-  transliterationText: {
-    fontFamily: F.LABEL,
-    fontSize: 12,
-    color: C.GRAY_TEXT,
-    opacity: 0.5,
-    textAlign: 'center',
-    marginTop: 2,
-  },
-  greekWord: {
-    fontFamily: F.DISPLAY,
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: 'center',
-  },
-  plainWord: {
-    color: 'rgba(227, 220, 203, 0.7)',
-  },
-  greekPunct: {
-    fontFamily: F.DISPLAY,
-    fontSize: 16,
-    lineHeight: 24,
-    color: 'rgba(227, 220, 203, 0.5)',
-    marginLeft: -2,
-  },
-
-  // KnotWord
-  knotWord: {
-    alignItems: 'center',
-  },
-  knotWordActive: {
-    backgroundColor: 'rgba(197, 160, 89, 0.15)',
-    borderRadius: 6,
-    paddingHorizontal: 2,
-  },
-  knotWordText: {
-    color: C.GOLD,
-  },
-  knotWordTextActive: {
-    color: C.GOLD,
-  },
-  knotUnderline: {
-    height: 2,
-    width: '100%',
-    backgroundColor: 'rgba(197, 160, 89, 0.45)',
-    borderRadius: 1,
-    marginTop: 2,
-  },
-  knotUnderlineActive: {
-    backgroundColor: C.GOLD,
-  },
-  knotCefrBadge: {
-    fontFamily: F.LABEL,
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: C.GOLD,
-    letterSpacing: 0.5,
-    marginTop: 2,
   },
 
   // Source + Translation
