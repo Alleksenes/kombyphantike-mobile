@@ -38,12 +38,14 @@ export interface ContrastiveProfile {
   david_note: string;                            // AI-compiled diachronic note
   rag_scholia: string;                           // Raw academic citation
   grammar_scholia: string;                       // Merged RAG + Davidian synthesis
-  lsj_definitions: string[];                     // LSJ dictionary entries
+  lsj_definitions: string[];                     // LSJ dictionary entries (Ancient)
+  definitions?: string[];                        // Modern definitions (METIS / Kaikki)
   kds_score: number;                             // Diachronic distance score (0–1)
   paradigm: { form: string; tags: string[] }[];  // Declension/conjugation table
   ancient_ancestor?: string;                     // Deep etymon (Homeric/Classical root)
-  idioms?: Idiom[];                              // METIS idiom data
-  collocations?: Collocation[];                  // HNC collocational data
+  idioms?: Idiom[];                              // METIS idiom data (MWE)
+  collocations?: Collocation[];                  // HNC collocational data (with frequency)
+  ngrams?: string[];                             // Top HNC n-gram collocates (plain strings)
 }
 
 // ── API ERROR TYPING ─────────────────────────────────────────────────────────

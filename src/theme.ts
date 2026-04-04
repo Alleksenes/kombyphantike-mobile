@@ -27,12 +27,23 @@ export const PhilologicalColors = {
   ERROR: '#EF4444',
   SUCCESS: '#34D399',
 
-  // ── Orrery Jewel Tones ──────────────────────────────────────────────────
-  JEWEL_TEAL: '#4A8C82',       // Muted teal — synonyms
-  JEWEL_RUST: '#A0644B',       // Muted rust — idioms, MWE
-  JEWEL_GOLD: '#B89B5E',       // Antique gold — root/ancestor
-  JEWEL_SLATE: '#6B7B8D',      // Cool slate — derived
-  EDGE_MUTED: 'rgba(255, 255, 255, 0.12)',
+  // ── Orrery Jewel Tones (DEPRECATED — use ORRERY_PIGMENTS) ──────────────
+  JEWEL_TEAL: '#4A8C82',       // @deprecated
+  JEWEL_RUST: '#A0644B',       // @deprecated
+  JEWEL_GOLD: '#B89B5E',       // @deprecated
+  JEWEL_SLATE: '#6B7B8D',      // @deprecated
+  EDGE_MUTED: 'rgba(255, 255, 255, 0.12)', // @deprecated
+} as const;
+
+// ── Orrery: Faded Antiquity Pigments ────────────────────────────────────────
+// Official palette derived from historical mineral/organic pigments.
+// Replaces the deprecated "jewel-tone" system entirely.
+export const ORRERY_PIGMENTS = {
+  ELECTRUM:        '#DFCE9F',  // Center — alloyed gold of antiquity
+  FADED_CINNABAR:  '#D5A096',  // LSJ / Ancient — oxidised red mercury pigment
+  MUREX_ASH:       '#B5A3C4',  // Modern / METIS·Kaikki — ash of the sea-snail dye
+  VERDIGRIS_CHALK: '#A1B8A0',  // Idiom / MWE — copper carbonate on limestone
+  EGYPTIAN_FRIT:   '#93A8BA',  // Collocation / HNC — the world's first synthetic pigment
 } as const;
 
 export const PhilologicalFonts = {

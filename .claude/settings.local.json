@@ -20,7 +20,12 @@
       "Bash(grep -r \"API_BASE_URL\\\\|apiConfig\" /c/Users/alleksenes/kombyphantike-mobile/src --include=*.ts --include=*.tsx)",
       "Bash(find /c/Users/alleksenes/kombyphantike-mobile -type f \\\\\\(-name README* -o -name *.md \\\\\\) ! -path */node_modules/* ! -path */.claude/worktrees/*)",
       "Bash(grep -r \"seed\\\\|Island.*Zero\\\\|KnotDTO\\\\|ContrastiveProfile\" /c/Users/alleksenes/kombyphantike-mobile/src --include=*.ts --include=*.tsx -n)",
-      "Bash(grep -vE \"^$\")"
+      "Bash(grep -vE \"^$\")",
+      "Bash(find C:Usersallekseneskombyphantike-mobile -type d -name *service* -o -type d -name *api*)",
+      "Bash(find C:Usersallekseneskombyphantike-mobile/src -type f -name *.ts)",
+      "Bash(ls -la \"C:\\\\Users\\\\alleksenes\\\\kombyphantike-mobile/app/\\(tabs\\)/\")",
+      "Bash(find C:Usersallekseneskombyphantike-mobile/app -type f -name *.tsx -o -name *.ts)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

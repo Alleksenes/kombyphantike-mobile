@@ -10,7 +10,7 @@ import { ActivityIndicator, Dimensions, Platform, Pressable, ScrollView, StyleSh
 import Svg, { Circle, Defs, Line, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { ApiService } from '../../src/services/ApiService';
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
-import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
+import { ORRERY_PIGMENTS as P, PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 import type { Collocation, ContrastiveProfile, Idiom, Knot } from '../../src/types';
 
 // ── Graph Types ─────────────────────────────────────────────────────────────
@@ -53,14 +53,15 @@ interface OrreryEdge {
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const GRAPH_W = Math.min(SCREEN_W - 40, 600);
-const GRAPH_H = 520;
+const GRAPH_H = 560;
 const CX = GRAPH_W / 2;
 const CY = GRAPH_H / 2;
 
-// Orbit radii
-const INNER_R = 120;  // definitions
-const MID_R = 170;    // collocations
-const OUTER_R = 200;  // idioms
+// Orbit radii — five concentric bands for five data types
+const INNER_R   = 105;  // LSJ definitions         (Faded Cinnabar)
+const MOD_R     = 155;  // Modern defs METIS/Kaikki (Murex Ash)
+const MID_R     = 195;  // Collocations / ngrams    (Egyptian Frit)
+const OUTER_R   = 235;  // Idioms / MWE             (Verdigris Chalk)
 
 // ── Build Graph from API Data ───────────────────────────────────────────────
 
@@ -71,17 +72,28 @@ function buildDynamicGraph(
   const nodes: OrreryNode[] = [];
   const edges: OrreryEdge[] = [];
 
-  // ── SAFE CONSTANTS — never touch profile.xxx directly below this line ──
-  const defs: string[]         = Array.isArray(profile?.lsj_definitions) ? profile.lsj_definitions.filter(Boolean) : [];
-  const collocs: Collocation[] = Array.isArray(profile?.collocations) ? profile.collocations.filter((c) => c && c.text) : [];
-  const idioms: Idiom[]        = Array.isArray(profile?.idioms) ? profile.idioms.filter((i) => i && i.expression) : [];
+  // ── SAFE CONSTANTS — defensive extraction from ContrastiveProfile ────────
+  const lsjDefs: string[]      = Array.isArray(profile?.lsj_definitions) ? profile.lsj_definitions.filter(Boolean) : [];
+  const modernDefs: string[]   = Array.isArray(profile?.definitions)     ? profile.definitions.filter(Boolean)     : [];
+  const idioms: Idiom[]        = Array.isArray(profile?.idioms)          ? profile.idioms.filter((i) => i?.expression) : [];
+  const collocs: Collocation[] = Array.isArray(profile?.collocations)    ? profile.collocations.filter((c) => c?.text) : [];
+  const ngrams: string[]       = Array.isArray(profile?.ngrams)          ? profile.ngrams.filter(Boolean)           : [];
   const ancestor: string       = profile?.ancient_ancestor ?? '';
   const davidNote: string      = profile?.david_note ?? '';
   const ragScholia: string     = profile?.rag_scholia ?? '';
   const kdsScore: number | undefined = profile?.kds_score;
 
-  // ── Center Star: the queried lemma ──────────────────────────────────────
-  const primaryDef = defs[0] ?? davidNote.slice(0, 60) ?? '';
+  // Collocation source: prefer typed ngrams (plain strings), fall back to Collocation objects
+  type CollocEntry = { label: string; gloss: string };
+  const collocEntries: CollocEntry[] = ngrams.length > 0
+    ? ngrams.slice(0, 5).map((ng) => ({ label: ng, gloss: ng }))
+    : collocs.slice(0, 5).map((c) => ({
+        label: c.text,
+        gloss: `${c.text} (${(c.frequency ?? 0).toLocaleString()}×)`,
+      }));
+
+  // ── Center Star: the searched lemma (Electrum) ──────────────────────────
+  const primaryDef = lsjDefs[0] ?? modernDefs[0] ?? davidNote.slice(0, 60) ?? '';
   nodes.push({
     id: 'center',
     label: lemma,
@@ -94,7 +106,7 @@ function buildDynamicGraph(
       text: lemma,
       lemma,
       pos: 'NOUN',
-      definition: defs.join('; '),
+      definition: [...lsjDefs, ...modernDefs].join('; '),
       david_note: davidNote,
       rag_scholia: ragScholia,
       ancient_ancestor: ancestor || undefined,
@@ -102,11 +114,10 @@ function buildDynamicGraph(
     },
   });
 
-  // ── Ancestor node (if present) ──────────────────────────────────────────
+  // ── Ancestor node — top of chart (shares Electrum) ──────────────────────
   if (ancestor) {
-    const id = 'ancestor';
     nodes.push({
-      id,
+      id: 'ancestor',
       label: ancestor,
       gloss: 'Ancient etymon',
       type: 'ancestor',
@@ -121,18 +132,20 @@ function buildDynamicGraph(
         david_note: davidNote,
       },
     });
-    edges.push({ source: 'center', target: id, relation: 'ancestor' });
+    edges.push({ source: 'center', target: 'ancestor', relation: 'ancestor' });
   }
 
-  // ── Definition nodes (inner orbit) ──────────────────────────────────────
-  const defCount = Math.min(defs.length, 5);
+  // ── LSJ definition nodes — inner orbit, RIGHT arc (Faded Cinnabar) ──────
+  // Arc from upper-right to lower-right, clearing space above for ancestor.
   const hasAncestor = !!ancestor;
-  const defStartAngle = hasAncestor ? -Math.PI * 0.3 : -Math.PI / 2;
+  const lsjCount = Math.min(lsjDefs.length, 5);
+  const lsjStart = hasAncestor ? -Math.PI * 0.38 : -Math.PI / 2;
+  const lsjSpan  = hasAncestor ? Math.PI * 1.0   : Math.PI * 2;
 
-  for (let i = 0; i < defCount; i++) {
-    const id = `def-${i}`;
-    const angle = defStartAngle + (i / Math.max(defCount - 1, 1)) * (hasAncestor ? Math.PI * 1.6 : Math.PI * 2);
-    const def = defs[i] || '';
+  for (let i = 0; i < lsjCount; i++) {
+    const id = `lsj-${i}`;
+    const angle = lsjStart + (i / Math.max(lsjCount - 1, 1)) * lsjSpan;
+    const def = lsjDefs[i];
     nodes.push({
       id,
       label: def,
@@ -140,48 +153,70 @@ function buildDynamicGraph(
       type: 'lsj',
       x: CX + Math.cos(angle) * INNER_R,
       y: CY + Math.sin(angle) * INNER_R,
-      knot: {
-        id: `orrery-def-${i}`,
-        text: def,
-        lemma,
-        pos: 'DEF',
-        definition: def,
-      },
+      knot: { id: `orrery-lsj-${i}`, text: def, lemma, pos: 'LSJ', definition: def },
     });
     edges.push({ source: 'center', target: id, relation: 'definition' });
   }
 
-  // ── Collocation nodes (mid orbit) ─────────────────────────────────────
-  const collocCount = Math.min(collocs.length, 6);
-  for (let i = 0; i < collocCount; i++) {
-    const id = `colloc-${i}`;
-    const angle = (Math.PI * 0.8) + (i / Math.max(collocCount, 1)) * Math.PI * 1.2;
-    const c = collocs[i];
-    const cText = c.text || '';
-    const cFreq = typeof c.frequency === 'number' ? c.frequency : 0;
+  // ── Modern definition nodes — second orbit, LEFT arc (Murex Ash) ────────
+  // Arc from lower-left to upper-left, mirroring the LSJ arc on the other side.
+  const modCount = Math.min(modernDefs.length, 5);
+  const modStart = Math.PI * 0.6;   // ~108° — lower-left
+  const modSpan  = Math.PI * 0.8;   // ~144° sweep → ends at ~252°
+
+  for (let i = 0; i < modCount; i++) {
+    const id = `mod-${i}`;
+    const angle = modStart + (i / Math.max(modCount - 1, 1)) * modSpan;
+    const def = modernDefs[i];
     nodes.push({
       id,
-      label: cText,
-      gloss: `${cText} (${cFreq.toLocaleString()}×)`,
+      label: def,
+      gloss: def,
+      type: 'definition',
+      x: CX + Math.cos(angle) * MOD_R,
+      y: CY + Math.sin(angle) * MOD_R,
+      knot: { id: `orrery-mod-${i}`, text: def, lemma, pos: 'MOD', definition: def },
+    });
+    edges.push({ source: 'center', target: id, relation: 'definition' });
+  }
+
+  // ── Collocation / ngram nodes — mid orbit, bottom arc (Egyptian Frit) ───
+  // Bottom arc keeps them spatially distinct from the definition arcs above.
+  const colCount = collocEntries.length;
+  const colStart = Math.PI * 0.45;   // ~81° (right-bottom)
+  const colSpan  = Math.PI * 1.1;    // ~198° sweep → ends at ~279°
+
+  for (let i = 0; i < colCount; i++) {
+    const id = `colloc-${i}`;
+    const angle = colStart + (i / Math.max(colCount, 1)) * colSpan;
+    const entry = collocEntries[i];
+    nodes.push({
+      id,
+      label: entry.label,
+      gloss: entry.gloss,
       type: 'collocation',
       x: CX + Math.cos(angle) * MID_R,
       y: CY + Math.sin(angle) * MID_R,
       knot: {
         id: `orrery-colloc-${i}`,
-        text: cText,
+        text: entry.label,
         lemma,
-        pos: 'COLL',
-        definition: `Collocation: ${cText} — ${cFreq.toLocaleString()} occurrences`,
+        pos: 'HNC',
+        definition: entry.gloss,
       },
     });
     edges.push({ source: 'center', target: id, relation: 'collocation' });
   }
 
-  // ── Idiom nodes (outer orbit) ─────────────────────────────────────────
+  // ── Idiom nodes — outer orbit, upper arc (Verdigris Chalk) ──────────────
+  // Spread across the top portion, flanking the ancestor node.
   const idiomCount = Math.min(idioms.length, 5);
+  const idiomStart = -Math.PI * 0.38;  // -68° (upper-right)
+  const idiomSpan  =  Math.PI * 0.76;  // 137° sweep → ends at +68° (upper-left)
+
   for (let i = 0; i < idiomCount; i++) {
     const id = `idiom-${i}`;
-    const angle = -Math.PI * 0.3 + (i / Math.max(idiomCount, 1)) * Math.PI * 0.6;
+    const angle = idiomStart + (i / Math.max(idiomCount, 1)) * idiomSpan;
     const idiom = idioms[i];
     const expr = idiom.expression || '';
     const trans = idiom.translation || '';
@@ -210,19 +245,19 @@ function buildDynamicGraph(
 
 // ── Edge Colors ─────────────────────────────────────────────────────────────
 
-const EDGE_COLOR = '#4c535b';
+// Warm parchment-tinted filaments — subtle antiquity feel on the dark void
+const EDGE_COLOR   = 'rgba(223, 206, 159, 0.18)';
 const EDGE_STROKE_W = 1.5;
 
-// ── Node Colors ─────────────────────────────────────────────────────────────
-
-// Obsidian Orrery — strict high-contrast palette with per-node text colors
+// ── Node Colors — Faded Antiquity Pigments ───────────────────────────────────
+// All pigments are light pastels on the dark void. Text is always dark ink.
 const NODE_CONFIG: Record<OrreryNode['type'], { fill: string; text: string; stroke: string; r: number; glow: string }> = {
-  center:      { fill: '#ffd33d', text: '#000000', stroke: 'rgba(255, 211, 61, 0.35)',  r: 46, glow: 'rgba(255, 211, 61, 0.18)' },
-  lsj:         { fill: '#ff9800', text: '#000000', stroke: 'rgba(255, 152, 0, 0.35)',  r: 30, glow: 'rgba(255, 152, 0, 0.15)' },
-  definition:  { fill: '#e93188', text: '#ffffff', stroke: 'rgba(233, 49, 136, 0.35)', r: 30, glow: 'rgba(233, 49, 136, 0.15)' },
-  ancestor:    { fill: '#ff9800', text: '#000000', stroke: 'rgba(255, 152, 0, 0.35)',  r: 34, glow: 'rgba(255, 152, 0, 0.15)' },
-  collocation: { fill: '#58a6ff', text: '#000000', stroke: 'rgba(88, 166, 255, 0.35)', r: 26, glow: 'rgba(88, 166, 255, 0.12)' },
-  idiom:       { fill: '#42b883', text: '#000000', stroke: 'rgba(66, 184, 131, 0.35)', r: 32, glow: 'rgba(66, 184, 131, 0.15)' },
+  center:      { fill: P.ELECTRUM,        text: '#111413', stroke: 'rgba(223, 206, 159, 0.55)', r: 46, glow: 'rgba(223, 206, 159, 0.22)' },
+  lsj:         { fill: P.FADED_CINNABAR,  text: '#111413', stroke: 'rgba(213, 160, 150, 0.55)', r: 30, glow: 'rgba(213, 160, 150, 0.20)' },
+  definition:  { fill: P.MUREX_ASH,       text: '#111413', stroke: 'rgba(181, 163, 196, 0.55)', r: 30, glow: 'rgba(181, 163, 196, 0.20)' },
+  ancestor:    { fill: P.ELECTRUM,        text: '#111413', stroke: 'rgba(223, 206, 159, 0.45)', r: 34, glow: 'rgba(223, 206, 159, 0.16)' },
+  collocation: { fill: P.EGYPTIAN_FRIT,   text: '#111413', stroke: 'rgba(147, 168, 186, 0.55)', r: 26, glow: 'rgba(147, 168, 186, 0.18)' },
+  idiom:       { fill: P.VERDIGRIS_CHALK, text: '#111413', stroke: 'rgba(161, 184, 160, 0.55)', r: 32, glow: 'rgba(161, 184, 160, 0.20)' },
 };
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -287,13 +322,13 @@ export default function OrreryScreen() {
     openInspector(node.knot as any, 'knot');
   };
 
-  // ── Legend ─────────────────────────────────────────────────────────────
+  // ── Legend — Faded Antiquity Pigments ─────────────────────────────────
   const legendItems = [
-    { color: '#ffd33d',  label: 'Center' },
-    { color: '#ff9800',  label: 'LSJ / Ancestor' },
-    { color: '#e93188',  label: 'Modern Definition' },
-    { color: '#58a6ff',  label: 'Collocation' },
-    { color: '#42b883',  label: 'Idiom / MWE' },
+    { color: P.ELECTRUM,        label: 'Center' },
+    { color: P.FADED_CINNABAR,  label: 'LSJ / Ancient' },
+    { color: P.MUREX_ASH,       label: 'Modern · Kaikki' },
+    { color: P.VERDIGRIS_CHALK, label: 'Idiom / MWE' },
+    { color: P.EGYPTIAN_FRIT,   label: 'Collocation · HNC' },
   ];
 
   // ── Loading State ─────────────────────────────────────────────────────
