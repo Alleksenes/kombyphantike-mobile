@@ -64,7 +64,10 @@ export default function VoyageReader() {
   }, [isFirst, previousSentence]);
 
   // ── Loading ───────────────────────────────────────────────────────────────
-  if ((loading && !sentence) || (!sentence && !error)) {
+  // Guard ONLY on the isLoading flag. The old condition
+  // `(!sentence && !error)` trapped the UI on the spinner indefinitely
+  // if loadVoyageById resolved with no manifest and no error.
+  if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>

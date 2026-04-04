@@ -130,13 +130,13 @@ export const useVoyageStore = create<VoyageState>()(
         try {
           const island = await ApiService.getIsland(islandId);
           loadVoyage(island);
-          set({ isLoading: false, error: null });
         } catch (e: any) {
           console.error('[VoyageStore] API fetch failed:', e.message);
-          set({
-            isLoading: false,
-            error: `API unreachable. (${e.message})`,
-          });
+          set({ error: `API unreachable. (${e.message})` });
+        } finally {
+          // ALWAYS release the loader — even if storage or API throws.
+          // Without this, the UI stays stuck on the ActivityIndicator.
+          set({ isLoading: false });
         }
       },
 

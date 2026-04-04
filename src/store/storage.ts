@@ -28,23 +28,48 @@ function warnFallback(op: string, error: unknown): void {
 }
 
 // ── The Adapter ─────────────────────────────────────────────────────────────
+// CRITICAL: Zustand persist may pass raw objects to setItem despite the string
+// type signature. The Android Native Bridge will throw a ReadableNativeMap cast
+// error if a non-string reaches AsyncStorage. We enforce serialization here.
 
 export const resilientStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     try {
-      return await AsyncStorage.getItem(name);
+      const raw = await AsyncStorage.getItem(name);
+      if (raw === null || raw === undefined) return null;
+
+      // Attempt to parse stored JSON back into an object.
+      // If the value is valid JSON, return the parsed result (Zustand expects this).
+      // If it's a raw string that isn't JSON, return it as-is.
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return raw;
+      }
     } catch (e) {
       warnFallback('getItem', e);
-      return memoryStore.get(name) ?? null;
+      const fallback = memoryStore.get(name) ?? null;
+      if (fallback === null) return null;
+      try {
+        return JSON.parse(fallback);
+      } catch {
+        return fallback;
+      }
     }
   },
 
-  setItem: async (name: string, value: string): Promise<void> => {
+  setItem: async (name: string, value: unknown): Promise<void> => {
+    // ── STRING ENFORCEMENT ───────────────────────────────────────────────
+    // The native bridge ONLY accepts strings. If Zustand's persist middleware
+    // passes an object (e.g. the voyage-progress manifest), serialize it.
+    const stringValue: string =
+      typeof value === 'string' ? value : JSON.stringify(value);
+
     try {
-      await AsyncStorage.setItem(name, value);
+      await AsyncStorage.setItem(name, stringValue);
     } catch (e) {
       warnFallback('setItem', e);
-      memoryStore.set(name, value);
+      memoryStore.set(name, stringValue);
     }
   },
 
