@@ -21,20 +21,28 @@
     },
     "plugins": [
       "expo-router",
+      "expo-video",
+      "expo-secure-store",
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#1a1918",
-          "dark": {
-            "backgroundColor": "#1a1918"
-          }
+          "backgroundColor": "#1a1918"
         }
       ],
-      "expo-video",
-      "expo-secure-store"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0",
+            "ndkVersion": "26.1.10909125"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
