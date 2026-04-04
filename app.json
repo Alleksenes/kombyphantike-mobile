@@ -6,10 +6,12 @@
     "newArchEnabled": false,
     "android": {
       "package": "com.alleksenes.kombyphantike",
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0",
       "ndkVersion": "26.1.10909125",
       "usesCleartextTraffic": true,
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
