@@ -13,6 +13,7 @@
 //   If the API returns 'void' (404), the frosted-glass Void card renders gracefully.
 
 import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
@@ -140,6 +141,10 @@ export default function PhilologicalInspector() {
       closeInspector();
       return;
     }
+    // Haptic tick on disclosure level transitions
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     // Sync disclosure level from snap position
     if (index === 0) setDisclosureLevel('translation');
     else if (index === 1) setDisclosureLevel('knot');
@@ -147,6 +152,9 @@ export default function PhilologicalInspector() {
   }, [closeInspector, setDisclosureLevel]);
 
   const handleLevelPress = useCallback((level: DisclosureLevel) => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
     setDisclosureLevel(level);
     const snapIdx = LEVEL_SNAP_INDEX[level] ?? 0;
     sheetRef.current?.snapToIndex(snapIdx);
@@ -224,7 +232,7 @@ export default function PhilologicalInspector() {
     </View>
   );
 
-  // ── LAYER 2: THE KNOT (metadata + Davidian Note + LSJ) ──────────────────
+  // ── LAYER 2: THE KNOT (POS + morphology → Davidian Note → Scholia) ──────
   const renderKnotLayer = () => {
     if (!knot) return null;
 
@@ -233,8 +241,26 @@ export default function PhilologicalInspector() {
 
     return (
       <>
-        {/* Word metadata: lemma, badges, KDS — moved here from Level 1 */}
+        {/* Word metadata: lemma, badges, KDS */}
         {renderWordMetadata()}
+
+        {/* ── POS & Morphological Parsing — prominent, before the note ────── */}
+        {(knot.pos || knot.morphology) ? (
+          <View style={styles.morphCard}>
+            {knot.pos ? (
+              <View style={styles.morphPosRow}>
+                <Text style={styles.morphPosLabel}>Part of Speech</Text>
+                <Text style={styles.morphPosValue}>{knot.pos}</Text>
+              </View>
+            ) : null}
+            {knot.morphology ? (
+              <View style={styles.morphParseRow}>
+                <Text style={styles.morphParseLabel}>Morphological Parse</Text>
+                <Text style={styles.morphParseValue}>{knot.morphology}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* The Davidian Note */}
         <View style={styles.noteCard}>
@@ -255,7 +281,7 @@ export default function PhilologicalInspector() {
           )}
         </View>
 
-        {/* The RAG Scholia — Holton citation (the Witness beside the Synthesis) */}
+        {/* The RAG Scholia — Holton citation */}
         {knot.rag_scholia ? (
           <View style={styles.scholiaCard}>
             <View style={styles.scholiaCardHeader}>
@@ -283,8 +309,26 @@ export default function PhilologicalInspector() {
             <Text style={styles.noteCardBody}>{knot.grammar_scholia}</Text>
           </View>
         ) : null}
+      </>
+    );
+  };
 
-        {/* LSJ Definitions */}
+  // ── LAYER 3: ETYMOLOGY (Ancestor → LSJ → Paradigm → Idioms → Collocations) ──
+  const renderEtymologyLayer = () => {
+    if (!knot) return null;
+    if (inspectError === 'void') return null;
+
+    return (
+      <>
+        {/* ── Ancient Ancestor — linked visually to LSJ ────────────────── */}
+        {knot.ancient_ancestor ? (
+          <View style={styles.ancestorCard}>
+            <Text style={styles.ancestorLabel}>Ancient Ancestor</Text>
+            <Text style={styles.ancestorText}>{knot.ancient_ancestor}</Text>
+          </View>
+        ) : null}
+
+        {/* ── LSJ Definitions — Ancient Jewels, placed with ancestor ───── */}
         {!isLoading && knot.lsj_definitions && knot.lsj_definitions.length > 0 ? (
           <View style={styles.lsjCard}>
             <View style={styles.noteCardHeader}>
@@ -301,26 +345,8 @@ export default function PhilologicalInspector() {
             ))}
           </View>
         ) : null}
-      </>
-    );
-  };
 
-  // ── LAYER 3: ETYMOLOGY (Scholia + Paradigm + Ancient Ancestor + Idioms) ──
-  const renderEtymologyLayer = () => {
-    if (!knot) return null;
-    if (inspectError === 'void') return null; // Void already rendered in knot layer
-
-    return (
-      <>
-        {/* Ancient Ancestor */}
-        {knot.ancient_ancestor ? (
-          <View style={styles.ancestorCard}>
-            <Text style={styles.ancestorLabel}>Ancient Ancestor</Text>
-            <Text style={styles.ancestorText}>{knot.ancient_ancestor}</Text>
-          </View>
-        ) : null}
-
-        {/* The Paradigm */}
+        {/* ── Paradigm Grid — modern morphology, distinct from ancient ──── */}
         {isLoading ? (
           <View style={styles.emptyCard}>
             <ActivityIndicator size="small" color={C.GOLD} />
@@ -535,13 +561,14 @@ const styles = StyleSheet.create({
 
   // ── Layer content ──────────────────────────────────────────────────────
   layerContent: {
-    paddingBottom: 40,
-    gap: 12,
+    paddingBottom: 48,
+    paddingHorizontal: 4,
+    gap: 16,
   },
 
   // ── Word header section ──────────────────────────────────────────────────
   wordSection: {
-    gap: 8,
+    gap: 10,
   },
   wordRow: {
     flexDirection: 'row',
@@ -632,16 +659,67 @@ const styles = StyleSheet.create({
   },
   definitionText: {
     fontFamily: F.BODY,
-    fontSize: 14,
+    fontSize: 15,
     color: C.PARCHMENT,
-    lineHeight: 20,
+    lineHeight: 24,
     paddingHorizontal: 4,
+    letterSpacing: 0.15,
   },
 
   sectionDivider: {
     height: 1,
     backgroundColor: C.GRAY_BORDER,
     marginVertical: 4,
+  },
+
+  // ── POS & Morphological Parse (Level 2 — before Davidian Note) ──────────
+  morphCard: {
+    backgroundColor: C.SURFACE,
+    borderWidth: 1,
+    borderColor: C.MORPH_BORDER,
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+  },
+  morphPosRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  morphPosLabel: {
+    fontFamily: F.LABEL,
+    fontSize: 9,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    color: C.GRAY_TEXT,
+  },
+  morphPosValue: {
+    fontFamily: F.DISPLAY,
+    fontSize: 18,
+    color: C.MORPH_TEXT,
+    fontWeight: 'bold',
+  },
+  morphParseRow: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(180, 83, 9, 0.2)',
+    paddingTop: 10,
+  },
+  morphParseLabel: {
+    fontFamily: F.LABEL,
+    fontSize: 9,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    color: C.GRAY_TEXT,
+    marginBottom: 4,
+  },
+  morphParseValue: {
+    fontFamily: F.BODY,
+    fontSize: 14,
+    color: C.PARCHMENT,
+    fontStyle: 'italic',
+    lineHeight: 22,
   },
 
   // ── THE KNOT (Davidian Note) ─────────────────────────────────────────────
@@ -684,7 +762,8 @@ const styles = StyleSheet.create({
     fontFamily: F.BODY,
     fontSize: 14,
     color: C.PARCHMENT,
-    lineHeight: 22,
+    lineHeight: 23,
+    letterSpacing: 0.1,
   },
 
   // ── THE SCHOLIA (RAG) ────────────────────────────────────────────────────
@@ -727,7 +806,8 @@ const styles = StyleSheet.create({
     fontFamily: F.BODY,
     fontSize: 13,
     color: C.SCHOLIA_TEXT,
-    lineHeight: 21,
+    lineHeight: 22,
+    letterSpacing: 0.1,
   },
 
   // ── Ancient Ancestor ─────────────────────────────────────────────────────
@@ -889,12 +969,12 @@ const styles = StyleSheet.create({
   // ── Philological Void ─────────────────────────────────────────────────
   voidCard: {
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 5, 24, 0.5)',
+    backgroundColor: 'rgba(10, 15, 13, 0.5)',
     borderWidth: 1,
-    borderColor: 'rgba(55, 65, 81, 0.4)',
+    borderColor: 'rgba(55, 65, 81, 0.3)',
     borderRadius: 20,
-    paddingVertical: 40,
-    paddingHorizontal: 28,
+    paddingVertical: 44,
+    paddingHorizontal: 32,
   },
   voidSymbol: {
     fontFamily: F.DISPLAY,
@@ -984,7 +1064,7 @@ const styles = StyleSheet.create({
   },
   webSheet: {
     maxHeight: '85%',
-    backgroundColor: 'rgba(15, 5, 24, 0.95)',
+    backgroundColor: 'rgba(10, 15, 13, 0.95)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderTopWidth: 1,

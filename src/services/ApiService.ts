@@ -10,6 +10,7 @@ import {
   ContrastiveProfile,
   IslandDTO,
   UserProfile,
+  mapIslandDTO,
 } from '../types';
 
 // ── Payload & Response Types ─────────────────────────────────────────────────
@@ -104,6 +105,7 @@ async function authFetch(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  console.log(`[ApiService] FETCH → ${url}`);
   const response = await fetch(url, { ...options, headers });
 
   // 401: attempt a single token refresh + retry
@@ -155,7 +157,8 @@ export const ApiService = {
   getIsland: async (id: string): Promise<IslandDTO> => {
     const response = await authFetch(`${API_BASE_URL}/islands/${encodeURIComponent(id)}`);
     if (!response.ok) await throwApiError(response);
-    return response.json();
+    const raw = await response.json();
+    return mapIslandDTO(raw);
   },
 
   /** GET /inspect/{lemma} — Returns ContrastiveProfile, or null on 404 (Philological Void). */

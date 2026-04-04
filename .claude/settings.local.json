@@ -13,7 +13,14 @@
       "Bash(grep -E \"app/.*\\\\.\\(tsx|ts\\)$\")",
       "Bash(ls -la /c/Users/alleksenes/kombyphantike-mobile/app/\\\\\\(tabs\\\\\\)/)",
       "Bash(cat \"/c/Users/alleksenes/kombyphantike-mobile/app/\\(tabs\\)/_layout.tsx\")",
-      "Bash(cat \"/c/Users/alleksenes/kombyphantike-mobile/app/\\(tabs\\)/index.tsx\")"
+      "Bash(cat \"/c/Users/alleksenes/kombyphantike-mobile/app/\\(tabs\\)/index.tsx\")",
+      "Bash(python3 -c:*)",
+      "Bash(Arrival\" \\(3 sentences, 7 knots with full david_note/rag_scholia/paradigm:*)",
+      "Bash(find /c/Users/alleksenes/kombyphantike-mobile/src -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.py \\\\\\))",
+      "Bash(grep -r \"API_BASE_URL\\\\|apiConfig\" /c/Users/alleksenes/kombyphantike-mobile/src --include=*.ts --include=*.tsx)",
+      "Bash(find /c/Users/alleksenes/kombyphantike-mobile -type f \\\\\\(-name README* -o -name *.md \\\\\\) ! -path */node_modules/* ! -path */.claude/worktrees/*)",
+      "Bash(grep -r \"seed\\\\|Island.*Zero\\\\|KnotDTO\\\\|ContrastiveProfile\" /c/Users/alleksenes/kombyphantike-mobile/src --include=*.ts --include=*.tsx -n)",
+      "Bash(grep -vE \"^$\")"
     ]
   }
 }

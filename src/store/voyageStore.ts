@@ -3,11 +3,11 @@
 // No new backend endpoints — consumes the existing GET /islands/{id} data.
 //
 // Manages: sentence-by-sentence navigation, mastery tracking, position persistence.
-// Persisted via Zustand persist middleware + AsyncStorage.
+// Persisted via Zustand persist middleware + resilient storage adapter.
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persist } from 'zustand/middleware';
+import { resilientStorage } from './storage';
 import {
   CuratedSentenceDTO,
   IslandDTO,
@@ -29,7 +29,7 @@ interface VoyageState {
 
   // Actions
   loadVoyage: (island: IslandDTO) => void;
-  /** Fetch island from API by ID and initialize the voyage. Falls back to mock on failure. */
+  /** Fetch island from API by ID and initialize the voyage. */
   loadVoyageById: (islandId: string) => Promise<void>;
   nextSentence: () => void;
   previousSentence: () => void;
@@ -132,13 +132,10 @@ export const useVoyageStore = create<VoyageState>()(
           loadVoyage(island);
           set({ isLoading: false, error: null });
         } catch (e: any) {
-          console.warn('[VoyageStore] API fetch failed, using mock fallback:', e.message);
-          // Import mock at runtime to avoid circular deps
-          const { MOCK_ISLAND } = require('../data/mockPayload');
-          loadVoyage(MOCK_ISLAND);
+          console.error('[VoyageStore] API fetch failed:', e.message);
           set({
             isLoading: false,
-            error: `API unreachable — using mock data. (${e.message})`,
+            error: `API unreachable. (${e.message})`,
           });
         }
       },
@@ -192,7 +189,7 @@ export const useVoyageStore = create<VoyageState>()(
     }),
     {
       name: 'voyage-progress',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: resilientStorage,
       // Persist the full manifest (includes mastery states + current_index)
       partialize: (state) => ({ manifest: state.manifest }),
     },

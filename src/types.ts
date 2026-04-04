@@ -67,31 +67,132 @@ export class ApiError extends Error {
 // used by UI components — mappers convert between the two.
 
 export interface KnotDTO {
-  target_word_mg: string;       // The Modern Greek word form in context
-  lexis_ag: string;             // The Ancient Greek lexical ancestor
-  knot_type: string;            // Classification (NOUN, VERB, ADJ, etc.)
-  david_note: string;           // AI-compiled diachronic evolutionary note
-  rag_scholia: string;          // Raw academic citation from Holton et al.
+  target_word_mg?: string;      // The Modern Greek word form in context
+  lexis_ag?: string;            // The Ancient Greek lexical ancestor
+  knot_type?: string;           // Classification (NOUN, VERB, ADJ, etc.)
+  david_note?: string;          // AI-compiled diachronic evolutionary note
+  rag_scholia?: string;         // Raw academic citation from Holton et al.
   ancient_ancestor?: string;    // Deep etymon (if present in backend response)
+  // ── Fields the backend may send in either DTO or Knot shape ──────────
+  text?: string;                // Already-mapped text (if backend uses Knot shape)
+  lemma?: string;               // Already-mapped lemma
+  pos?: string;                 // Already-mapped pos
+  word?: string;                // Alternative key some backends use for the surface form
+  surface_form?: string;        // Another alternative surface-form key
+  transliteration?: string;     // Latin-script transliteration
+  cefr_level?: string;          // CEFR proficiency level
+  definition?: string;          // Short lexical definition
+  morphology?: string;          // Human-readable morphological description
+  tag?: string;                 // Morphological tags
+  has_paradigm?: boolean;       // Whether paradigm data is present
+  paradigm?: any[];             // Raw backend shape — normalized by mapKnotDTO
+  [key: string]: any;           // Catch-all for unknown backend fields
 }
 
 export interface CuratedSentenceBackendDTO {
-  greek_text: string;
-  english_translation: string;
-  audio_url: string | null;
-  knots: KnotDTO[];
+  greek_text?: string;
+  english_translation?: string;
+  translation?: string;         // Alternate key the backend may send
+  audio_url?: string | null;
+  knots?: KnotDTO[];
+  words?: KnotDTO[];            // Alternate key the backend may send for knots
+  // ── Fields present if the backend uses the frontend shape directly ────
+  id?: string;
+  [key: string]: any;           // Catch-all for unknown backend keys
 }
 
-/** Map a raw backend KnotDTO into the frontend Knot shape. */
+// ── PARADIGM NORMALIZER ─────────────────────────────────────────────────────
+// The backend may send paradigm data in many shapes:
+//   - string[]:                ["κόσμου", "κόσμῳ", ...]
+//   - { form, tags }[]:        [{ form: "κόσμου", tags: ["Gen","Sing"] }]
+//   - { word, features }[]:    [{ word: "κόσμου", features: "Gen.Sing" }]
+//   - { text, label }[]:       [{ text: "κόσμου", label: "genitive" }]
+// This normalizer coerces ALL of the above into the canonical { form, tags }[].
+
+function normalizeParadigmEntry(entry: any): { form: string; tags: string[] } | null {
+  if (!entry) return null;
+
+  // Plain string: "κόσμου"
+  if (typeof entry === 'string') {
+    const trimmed = entry.trim();
+    return trimmed ? { form: trimmed, tags: [] } : null;
+  }
+
+  // Object: extract form from any plausible key
+  if (typeof entry === 'object') {
+    const form = String(
+      entry.form ?? entry.word ?? entry.text ?? entry.surface_form ?? entry.surface ?? ''
+    ).trim();
+
+    let tags: string[] = [];
+    const rawTags = entry.tags ?? entry.features ?? entry.morphology ?? entry.label;
+    if (Array.isArray(rawTags)) {
+      tags = rawTags.map(String);
+    } else if (typeof rawTags === 'string' && rawTags.length > 0) {
+      tags = rawTags.split(/[|,;]/).map((t: string) => t.trim()).filter(Boolean);
+    }
+
+    return form ? { form, tags } : null;
+  }
+
+  // Fallback: coerce to string
+  const str = String(entry).trim();
+  return str ? { form: str, tags: [] } : null;
+}
+
+function normalizeParadigm(raw: any): { form: string; tags: string[] }[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const normalized = raw
+    .map(normalizeParadigmEntry)
+    .filter((p): p is { form: string; tags: string[] } => p !== null && p.form.length > 0);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+/**
+ * THE IRON MAPPER — Map a raw backend KnotDTO into the frontend Knot shape.
+ * Accepts BOTH the raw DTO schema (target_word_mg, lexis_ag, knot_type) AND
+ * the frontend Knot schema (text, lemma, pos). Gracefully handles missing fields.
+ *
+ * Fallback chain for text: target_word_mg → text → word → surface_form → lemma → lexis_ag
+ * Fallback chain for lemma: lexis_ag → lemma → target_word_mg → text → word
+ * Paradigm is normalized from any backend shape into canonical { form, tags }[].
+ */
 export function mapKnotDTO(dto: KnotDTO, index: number): Knot {
+  // Defensive: if dto is null/undefined, return a shell
+  if (!dto) {
+    return {
+      id: `knot-${index}`,
+      text: '',
+      lemma: '',
+      pos: '',
+      david_note: '',
+      rag_scholia: '',
+    };
+  }
+
+  // Aggressive fallback — terminal 'UNKNOWN' makes mapper failures visible in UI
+  const text = dto.target_word_mg || dto.text || dto.word || dto.surface_form || dto.lemma || dto.lexis_ag || 'UNKNOWN';
+  const lemma = dto.lexis_ag || dto.lemma || dto.target_word_mg || dto.text || dto.word || 'UNKNOWN';
+  const pos = dto.knot_type || dto.pos || '';
+
+  // Normalize the paradigm from whatever shape the backend sends
+  const paradigm = normalizeParadigm(dto.paradigm);
+
   return {
     id: `knot-${index}`,
-    text: dto.target_word_mg,
-    lemma: dto.lexis_ag,
-    pos: dto.knot_type,
-    david_note: dto.david_note,
-    rag_scholia: dto.rag_scholia,
+    text,
+    lemma,
+    pos,
+    david_note: dto.david_note ?? '',
+    rag_scholia: dto.rag_scholia ?? '',
     ancient_ancestor: dto.ancient_ancestor,
+    transliteration: dto.transliteration,
+    cefr_level: dto.cefr_level as CefrLevel | undefined,
+    definition: dto.definition,
+    morphology: dto.morphology,
+    tag: dto.tag,
+    has_paradigm: dto.has_paradigm ?? (paradigm !== undefined && paradigm.length > 0),
+    paradigm,
   };
 }
 
@@ -100,11 +201,45 @@ export function mapCuratedSentenceDTO(
   dto: CuratedSentenceBackendDTO,
   index: number,
 ): CuratedSentenceDTO {
+  if (!dto) {
+    return { id: `sentence-${index}`, greek_text: '', translation: '', knots: [] };
+  }
+
+  // Fallback chain: knots → words → annotations → tokens (backends use varying keys)
+  const rawKnots: any[] =
+    Array.isArray(dto.knots) && dto.knots.length > 0 ? dto.knots :
+    Array.isArray(dto.words) && dto.words.length > 0 ? dto.words :
+    Array.isArray((dto as any).annotations) ? (dto as any).annotations :
+    Array.isArray((dto as any).tokens) ? (dto as any).tokens :
+    [];
+
   return {
-    id: `sentence-${index}`,
-    greek_text: dto.greek_text,
-    translation: dto.english_translation,
-    knots: dto.knots.map(mapKnotDTO),
+    id: dto.id || `sentence-${index}`,
+    greek_text: dto.greek_text || (dto as any).text || '',
+    translation: dto.english_translation || dto.translation || '',
+    knots: rawKnots.map(mapKnotDTO),
+  };
+}
+
+/**
+ * THE IRON GATE — Normalize an entire IslandDTO from raw backend JSON.
+ * Call this on the raw response.json() to ensure every knot is mapped,
+ * every array is safe, and every field has a sane default.
+ */
+export function mapIslandDTO(raw: any): IslandDTO {
+  if (!raw) {
+    return { id: '', title: '', level: '', progress: 0, locked: false, sentences: [] };
+  }
+
+  const rawSentences = Array.isArray(raw.sentences) ? raw.sentences : [];
+
+  return {
+    id: raw.id || '',
+    title: raw.title || '',
+    level: raw.level || '',
+    progress: raw.progress ?? 0,
+    locked: raw.locked ?? false,
+    sentences: rawSentences.map(mapCuratedSentenceDTO),
   };
 }
 

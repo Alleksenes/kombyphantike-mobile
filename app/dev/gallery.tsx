@@ -1,157 +1,147 @@
-// ── COMPONENT LABORATORY ─────────────────────────────────────────────────────
-// Un-gated sandbox. No API calls. All data is hardcoded mock payloads.
-// Boot target: the root index redirects here while the backend is offline.
-//
-// Sections:
-//   § PhilologyCard   — sentence display with KnotWord gold highlights
-//   § Mock Knots      — tap any knot row to open the Inspector at 'knot' depth
+// ── THE NAVIGATION HUB ──────────────────────────────────────────────────────
+// Sleek dev menu routing to isolated, full-screen sandbox environments.
+// Includes a live network diagnostic panel at the top.
 
-import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Link, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ParadigmChallenge from '../../components/lapidary/ParadigmChallenge';
-import PhilologyCard from '../../components/PhilologyCard';
-import { mockCuratedSentence } from '../../src/services/mock_data';
-import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
-import type { Knot } from '../../src/types';
+import { API_BASE_URL } from '../../src/services/apiConfig';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 
-// ── Mock Paradigm for the Workbench demo ────────────────────────────────────
-const MOCK_PARADIGM = [
-  { form: 'κόσμος', tags: ['Nom', 'Sg'] },
-  { form: 'κόσμου', tags: ['Gen', 'Sg'] },
-  { form: 'κόσμο', tags: ['Acc', 'Sg'] },
-  { form: 'κόσμε', tags: ['Voc', 'Sg'] },
-  { form: 'κόσμοι', tags: ['Nom', 'Pl'] },
-  { form: 'κόσμων', tags: ['Gen', 'Pl'] },
-  { form: 'κόσμους', tags: ['Acc', 'Pl'] },
-  { form: 'κόσμοι', tags: ['Voc', 'Pl'] },
-];
+const ENV_URL = process.env.EXPO_PUBLIC_API_URL ?? '(not set)';
+
+const NAV_CARDS = [
+  {
+    title: 'The Reader',
+    subtitle: 'Curated Sentence Voyage',
+    symbol: '\u2736',
+    route: '/voyage/island-zero',
+  },
+  {
+    title: 'The Lapidary',
+    subtitle: 'Morphological Workbench',
+    symbol: '\u25C7',
+    route: '/lapidary/iz-sentence-1',
+  },
+  {
+    title: 'The Orrery',
+    subtitle: 'Semantic Constellation Navigator',
+    symbol: '\u2726',
+    route: '/orrery',
+  },
+] as const;
 
 export default function GalleryScreen() {
-  const openInspector = useInspectorStore((s) => s.openInspector);
   const router = useRouter();
 
-  const handleKnotPress = (knot: Knot) => {
-    openInspector(knot, 'translation');
-  };
+  // ── Diagnostic state ────────────────────────────────────────────────────
+  const [diagResult, setDiagResult] = useState<string | null>(null);
+  const [diagStatus, setDiagStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+
+  const checkConnection = useCallback(async () => {
+    const url = `${API_BASE_URL}/health`;
+    setDiagStatus('loading');
+    setDiagResult(`Fetching ${url} ...`);
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      const text = await response.text();
+      setDiagStatus(response.ok ? 'ok' : 'error');
+      setDiagResult(
+        `Status: ${response.status} ${response.statusText}\n` +
+        `URL: ${url}\n` +
+        `Body: ${text}`
+      );
+    } catch (e: any) {
+      setDiagStatus('error');
+      // Surface the FULL error — name, message, and stack trace
+      const name = e?.name ?? 'UnknownError';
+      const message = e?.message ?? String(e);
+      const stack = e?.stack ?? '';
+      setDiagResult(
+        `${name}: ${message}\n\n` +
+        `URL: ${url}\n` +
+        (stack ? `Stack:\n${stack}` : '')
+      );
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── Network Diagnostic Panel ───────────────────────────────────── */}
+        <View style={styles.diagPanel}>
+          <Text style={styles.diagTitle}>NETWORK DIAGNOSTIC</Text>
+          <Text style={styles.diagUrl} selectable>
+            {'ENV: ' + ENV_URL + '\n'}
+            {'Resolved: ' + API_BASE_URL + '\n'}
+            {'Platform: ' + Platform.OS}
+          </Text>
+
+          <Pressable
+            style={({ pressed }) => [styles.diagButton, pressed && styles.diagButtonPressed]}
+            onPress={checkConnection}
+          >
+            <Text style={styles.diagButtonText}>
+              {diagStatus === 'loading' ? 'Pinging...' : 'Ping Backend (/health)'}
+            </Text>
+          </Pressable>
+
+          {diagResult ? (
+            <View style={[
+              styles.diagResultBox,
+              diagStatus === 'ok' && styles.diagResultOk,
+              diagStatus === 'error' && styles.diagResultError,
+            ]}>
+              <Text style={styles.diagResultText} selectable>{diagResult}</Text>
+            </View>
+          ) : null}
+        </View>
+
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>KOMBYPHANTIKE · DEV</Text>
-          <Text style={styles.title}>Component Laboratory</Text>
+          <Text style={styles.eyebrow}>KOMBYPHANTIKE</Text>
+          <Text style={styles.title}>Dev Atelier</Text>
           <View style={styles.statusRow}>
             <View style={styles.statusDot} />
-            <Text style={styles.statusText}>Sandbox · No API · Mock Data</Text>
+            <Text style={styles.statusText}>Sandbox</Text>
           </View>
         </View>
 
-        {/* ── § PhilologyCard ─────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>§ PhilologyCard</Text>
-          <Text style={styles.hint}>
-            Tap a shimmering gold word to open the Inspector
-          </Text>
-          <PhilologyCard
-            sentence={mockCuratedSentence.greek_text}
-            translation={mockCuratedSentence.translation}
-            knots={mockCuratedSentence.knots}
-            onTokenPress={(token) => {
-              const match = mockCuratedSentence.knots.find(
-                (k) => k.text === token.text,
-              );
-              if (match) handleKnotPress(match);
-            }}
-          />
-          <Text style={styles.metaLabel}>
-            {mockCuratedSentence.source} · Level {mockCuratedSentence.level}
-          </Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* ── § Mock Knots ──────────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>
-            § Mock Knots ({mockCuratedSentence.knots.length})
-          </Text>
-          <Text style={styles.hint}>
-            Tap a row to open the Inspector at Knot depth
-          </Text>
-          {mockCuratedSentence.knots.map((knot) => (
-            <TouchableOpacity
-              key={knot.id}
-              style={styles.knotRow}
-              onPress={() => openInspector(knot, 'knot')}
-              activeOpacity={0.7}
+        {/* ── Navigation Cards ───────────────────────────────────────────── */}
+        <View style={styles.cards}>
+          {NAV_CARDS.map((card) => (
+            <Pressable
+              key={card.route}
+              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+              onPress={() => router.push(card.route as any)}
             >
-              <View style={styles.knotLeft}>
-                <Text style={styles.knotText}>{knot.text}</Text>
-                <Text style={styles.knotLemma}>{knot.lemma}</Text>
+              <View style={styles.cardLeft}>
+                <Text style={styles.cardSymbol}>{card.symbol}</Text>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardTitle}>{card.title}</Text>
+                  <Text style={styles.cardSubtitle}>{card.subtitle}</Text>
+                </View>
               </View>
-              <View style={styles.posBadge}>
-                <Text style={styles.posText}>{knot.pos}</Text>
-              </View>
-            </TouchableOpacity>
+              <Text style={styles.cardChevron}>{'\u203A'}</Text>
+            </Pressable>
           ))}
         </View>
 
-        <View style={styles.divider} />
-
-        {/* ── § Paradigm Challenge (Lapidary's Table) ──────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>§ Lapidary's Table</Text>
-          <Text style={styles.hint}>
-            Fill the blank with the correct form of κόσμος
-          </Text>
-          <ParadigmChallenge
-            sentence={'τον ________ και τον λόγος κατανοώ'}
-            blankedWord="κόσμον"
-            lemma="κόσμος"
-            paradigm={MOCK_PARADIGM}
-            pos="NOUN"
-            knotLabel="II.2.1.1 · Masculine -ος/-οι Declension"
-          />
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* ── § Orrery ──────────────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>§ Diachronic Orrery</Text>
-          <Text style={styles.hint}>
-            Explore the semantic constellation of κόσμος
-          </Text>
-          <TouchableOpacity
-            style={styles.orreryLaunch}
-            onPress={() => router.push({ pathname: '/orrery/[lemma]', params: { lemma: 'κόσμος' } } as any)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.orreryLaunchIcon}>✦</Text>
-            <Text style={styles.orreryLaunchText}>Launch Orrery: κόσμος</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* ── § Stubs ──────────────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>§ Upcoming Stubs</Text>
-          {['SentenceReader', 'KnotWord'].map((name) => (
-            <View key={name} style={styles.stubCard}>
-              <Text style={styles.stubName}>{name}</Text>
-              <Text style={styles.stubStatus}>Sprint 3</Text>
-            </View>
-          ))}
-        </View>
-
+        {/* ── Footer ─────────────────────────────────────────────────────── */}
         <View style={styles.footer}>
+          <Link href="/_sitemap" style={styles.sitemapLink}>
+            <Text style={styles.sitemapLinkText}>View Route Sitemap</Text>
+          </Link>
           <Text style={styles.footerText}>
             Inspector is a global overlay — rendered in _layout.tsx
           </Text>
@@ -164,35 +154,98 @@ export default function GalleryScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: C.VOID,
+    backgroundColor: 'transparent',
   },
-  scroll: {
-    paddingBottom: 60,
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+
+  // ── Diagnostic Panel ──────────────────────────────────────────────────
+  diagPanel: {
+    backgroundColor: 'rgba(10, 15, 13, 0.6)',
+    borderWidth: 1,
+    borderColor: C.GRAY_BORDER,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 24,
+    gap: 8,
+  },
+  diagTitle: {
+    fontFamily: F.LABEL,
+    fontSize: 9,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    color: C.GRAY_TEXT,
+    textTransform: 'uppercase',
+  },
+  diagUrl: {
+    fontFamily: F.BODY,
+    fontSize: 11,
+    color: C.PARCHMENT,
+    opacity: 0.7,
+  },
+  diagButton: {
+    backgroundColor: 'rgba(197, 160, 89, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.3)',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  diagButtonPressed: {
+    backgroundColor: 'rgba(197, 160, 89, 0.25)',
+    borderColor: C.GOLD,
+  },
+  diagButtonText: {
+    fontFamily: F.LABEL,
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: C.GOLD,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  diagResultBox: {
+    backgroundColor: 'rgba(10, 15, 13, 0.5)',
+    borderWidth: 1,
+    borderColor: C.GRAY_BORDER,
+    borderRadius: 8,
+    padding: 10,
+  },
+  diagResultOk: {
+    borderColor: 'rgba(52, 211, 153, 0.4)',
+  },
+  diagResultError: {
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+  },
+  diagResultText: {
+    fontFamily: F.BODY,
+    fontSize: 12,
+    color: C.PARCHMENT,
+    lineHeight: 18,
   },
 
   // ── Header ──────────────────────────────────────────────────────────────
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 24,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: C.GOLD_DIM,
+    marginBottom: 32,
   },
   eyebrow: {
     fontFamily: F.LABEL,
     fontSize: 9,
     fontWeight: 'bold',
-    letterSpacing: 3,
+    letterSpacing: 4,
     color: C.GOLD,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   title: {
     fontFamily: F.DISPLAY,
-    fontSize: 28,
+    fontSize: 32,
     color: C.PARCHMENT,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   statusRow: {
     flexDirection: 'row',
@@ -212,145 +265,79 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // ── Section ─────────────────────────────────────────────────────────────
-  section: {
+  // ── Cards ───────────────────────────────────────────────────────────────
+  cards: {
+    gap: 16,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: C.SURFACE,
+    borderWidth: 1,
+    borderColor: C.GOLD_DIM,
+    borderRadius: 16,
+    paddingVertical: 20,
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 8,
-    gap: 12,
   },
-  sectionLabel: {
-    fontFamily: F.LABEL,
-    fontSize: 11,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
+  cardPressed: {
+    backgroundColor: C.GOLD_DIM,
+    borderColor: C.GOLD,
+  },
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  cardSymbol: {
+    fontFamily: F.DISPLAY,
+    fontSize: 24,
     color: C.GOLD,
+    width: 36,
+    textAlign: 'center',
   },
-  hint: {
+  cardText: {
+    gap: 4,
+    flex: 1,
+  },
+  cardTitle: {
+    fontFamily: F.DISPLAY,
+    fontSize: 20,
+    color: C.PARCHMENT,
+  },
+  cardSubtitle: {
     fontFamily: F.LABEL,
     fontSize: 11,
     color: C.GRAY_TEXT,
     letterSpacing: 0.3,
-    marginTop: -4,
   },
-  metaLabel: {
-    fontFamily: F.LABEL,
-    fontSize: 10,
-    color: 'rgba(156, 163, 175, 0.4)',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: C.GRAY_BORDER,
-    marginHorizontal: 20,
-    marginTop: 8,
-  },
-
-  // ── Knot Rows ─────────────────────────────────────────────────────────
-  knotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: C.SURFACE,
-    borderWidth: 1,
-    borderColor: C.GRAY_BORDER,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  knotLeft: {
-    gap: 2,
-  },
-  knotText: {
-    fontFamily: F.DISPLAY,
-    fontSize: 18,
-    color: C.PARCHMENT,
-  },
-  knotLemma: {
-    fontFamily: F.LABEL,
-    fontSize: 11,
-    color: C.GRAY_TEXT,
-    fontStyle: 'italic',
-  },
-  posBadge: {
-    backgroundColor: C.GOLD_DIM,
-    borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.3)',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  posText: {
-    fontFamily: F.LABEL,
-    fontSize: 9,
-    fontWeight: 'bold',
+  cardChevron: {
+    fontSize: 28,
     color: C.GOLD,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-
-  // ── Stub Cards ──────────────────────────────────────────────────────────
-  stubCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(15, 5, 24, 0.3)',
-    borderWidth: 1,
-    borderColor: C.GRAY_BORDER,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  stubName: {
-    fontFamily: F.DISPLAY,
-    fontSize: 16,
-    color: 'rgba(227, 220, 203, 0.3)',
-    fontStyle: 'italic',
-  },
-  stubStatus: {
-    fontFamily: F.LABEL,
-    fontSize: 9,
-    color: 'rgba(156, 163, 175, 0.4)',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-
-  // ── Orrery Launch ────────────────────────────────────────────────────────
-  orreryLaunch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: C.SURFACE,
-    borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.3)',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  orreryLaunchIcon: {
-    fontFamily: F.DISPLAY,
-    fontSize: 16,
-    color: C.GOLD,
-  },
-  orreryLaunchText: {
-    fontFamily: F.LABEL,
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: C.GOLD,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+    fontWeight: '300',
+    marginLeft: 8,
   },
 
   // ── Footer ──────────────────────────────────────────────────────────────
   footer: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
     alignItems: 'center',
+    marginTop: 32,
+    gap: 12,
+  },
+  sitemapLink: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: C.GRAY_BORDER,
+    borderRadius: 8,
+  },
+  sitemapLinkText: {
+    fontFamily: F.LABEL,
+    fontSize: 10,
+    color: C.GRAY_TEXT,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   footerText: {
     fontFamily: F.LABEL,

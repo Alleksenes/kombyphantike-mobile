@@ -1,234 +1,256 @@
-// ── THE DIACHRONIC ORRERY ────────────────────────────────────────────────────
-// A constellation visualization for a given lemma's semantic neighborhood.
-// Mock implementation: hardcoded graph for κόσμος with SVG node/edge rendering.
-// Uses pure React Native + react-native-svg (no Skia, no D3).
+// ── THE DIACHRONIC ORRERY (DYNAMIC) ─────────────────────────────────────────
+// A constellation visualization for ANY lemma's semantic neighborhood.
+// Fully dynamic: the graph is built entirely from the API's ContrastiveProfile.
+// No hardcoded mock data — every node comes from live data.
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
+import { ActivityIndicator, Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Defs, Line, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { ApiService } from '../../src/services/ApiService';
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
-import type { ContrastiveProfile, Knot } from '../../src/types';
+import type { Collocation, ContrastiveProfile, Idiom, Knot } from '../../src/types';
 
-// ── Mock Graph Data ─────────────────────────────────────────────────────────
+// ── Graph Types ─────────────────────────────────────────────────────────────
 
 interface OrreryNode {
   id: string;
   label: string;
   gloss: string;
-  type: 'center' | 'synonym' | 'root' | 'derived' | 'idiom';
+  type: 'center' | 'definition' | 'lsj' | 'idiom' | 'collocation' | 'ancestor';
   x: number;
   y: number;
-  cefr?: string;
   knot?: Partial<Knot>;
+}
+
+/** Split a long label into multiple lines at word boundaries (~20 chars each). */
+function wrapLabel(text: string, maxChars = 20): string[] {
+  if (text.length <= maxChars) return [text];
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    if (current.length + word.length + 1 > maxChars && current.length > 0) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = current ? `${current} ${word}` : word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length > 0 ? lines : [text];
 }
 
 interface OrreryEdge {
   source: string;
   target: string;
-  relation: 'synonym' | 'antonym' | 'derived' | 'mwe' | 'ancestor';
+  relation: 'definition' | 'idiom' | 'collocation' | 'ancestor';
 }
+
+// ── Layout Constants ────────────────────────────────────────────────────────
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const GRAPH_W = Math.min(SCREEN_W - 40, 600);
-const GRAPH_H = 500;
+const GRAPH_H = 520;
 const CX = GRAPH_W / 2;
 const CY = GRAPH_H / 2;
 
-function buildKosmosGraph(): { nodes: OrreryNode[]; edges: OrreryEdge[] } {
-  const nodes: OrreryNode[] = [
-    {
-      id: 'kosmos',
-      label: 'κόσμος',
-      gloss: 'world, order, ornament',
-      type: 'center',
-      x: CX,
-      y: CY,
-      cefr: 'A2',
-      knot: {
-        id: 'orrery-kosmos',
-        text: 'κόσμος',
-        lemma: 'κόσμος',
-        pos: 'NOUN',
-        definition: 'world, order, ornament',
-        david_note: "From Homeric 'order/ornament' to Pythagorean 'universe' — the semantic journey of κόσμος mirrors Greek philosophy itself.",
-        rag_scholia: 'Holton et al. notes κόσμος as a standard masculine noun (II.2.1.1) with regular -ος/-οι declension.',
-        ancient_ancestor: 'κόσμος (Homeric: order, ornament)',
-        cefr_level: 'A2',
-        kds_score: 0.85,
-      },
-    },
-    {
-      id: 'oikoumene',
-      label: 'οἰκουμένη',
-      gloss: 'the inhabited world',
-      type: 'synonym',
-      x: CX - 140,
-      y: CY - 130,
-      cefr: 'C1',
-      knot: {
-        id: 'orrery-oikoumene',
-        text: 'οἰκουμένη',
-        lemma: 'οἰκουμένη',
-        pos: 'NOUN',
-        definition: 'the inhabited world, ecumene',
-        david_note: "From οἰκέω (to inhabit). The participle 'the inhabited [land]' became a noun for the known world. Survives in 'ecumenical'.",
-        rag_scholia: 'A feminine participle-noun. Classical usage denotes the Greek-inhabited world; modern usage is literary/ecclesiastical.',
-      },
-    },
-    {
-      id: 'sympan',
-      label: 'σύμπαν',
-      gloss: 'universe, totality',
-      type: 'synonym',
-      x: CX + 150,
-      y: CY - 110,
-      cefr: 'B2',
-      knot: {
-        id: 'orrery-sympan',
-        text: 'σύμπαν',
-        lemma: 'σύμπαν',
-        pos: 'NOUN',
-        definition: 'universe, totality, the whole',
-        david_note: "From σύν + πᾶν (all together). The neuter substantive of σύμπας. In modern Greek, the standard word for 'universe' in scientific contexts.",
-        rag_scholia: 'Neuter noun (τὸ σύμπαν). Holton classifies as standard neuter II.2.3.1.',
-      },
-    },
-    {
-      id: 'kosmeo',
-      label: 'κοσμέω',
-      gloss: 'to order, to adorn',
-      type: 'root',
-      x: CX - 120,
-      y: CY + 140,
-      cefr: 'C2',
-      knot: {
-        id: 'orrery-kosmeo',
-        text: 'κοσμέω',
-        lemma: 'κοσμέω',
-        pos: 'VERB',
-        definition: 'to arrange, to adorn, to order',
-        david_note: "The verbal root from which κόσμος derives. The original sense 'to arrange' reveals why κόσμος means both 'ornament' and 'world-order'.",
-        rag_scholia: 'Ancient Greek contracted verb (-έω). Survives in Modern Greek as κοσμώ (literary) and in compounds like καλλωπίζω.',
-      },
-    },
-    {
-      id: 'kosmikos',
-      label: 'κοσμικός',
-      gloss: 'cosmic, worldly, secular',
-      type: 'derived',
-      x: CX + 130,
-      y: CY + 120,
-      cefr: 'B1',
-      knot: {
-        id: 'orrery-kosmikos',
-        text: 'κοσμικός',
-        lemma: 'κοσμικός',
-        pos: 'ADJ',
-        definition: 'cosmic, worldly, secular',
-        david_note: "The -ικός suffix creates the relational adjective. In Modern Greek, κοσμικός has split: 'cosmic' (scientific) vs 'secular/social' (everyday).",
-        rag_scholia: 'Standard -ικός/-ική/-ικό adjective. Holton II.3.1. Regular comparison.',
-      },
-    },
-    {
-      id: 'idiom-ano-kato',
-      label: 'κάνω τον κόσμο\nάνω κάτω',
-      gloss: 'to turn the world upside down',
-      type: 'idiom',
-      x: CX,
-      y: CY - 180,
-      knot: {
-        id: 'orrery-idiom-1',
-        text: 'κάνω τον κόσμο άνω κάτω',
-        lemma: 'κόσμος',
-        pos: 'MWE',
-        definition: 'to turn the world upside down; to cause chaos',
-        david_note: "A vivid idiom combining κόσμος (world) with the spatial adverbs ἄνω-κάτω (up-down). The image of inverting world-order echoes the original cosmological meaning.",
-        rag_scholia: 'METIS idiom registry. Frequency: common in spoken Greek.',
-      },
-    },
-    {
-      id: 'taxi',
-      label: 'τάξη',
-      gloss: 'order, class, rank',
-      type: 'synonym',
-      x: CX - 170,
-      y: CY + 20,
-      cefr: 'A2',
-      knot: {
-        id: 'orrery-taxi',
-        text: 'τάξη',
-        lemma: 'τάξη',
-        pos: 'NOUN',
-        definition: 'order, class, classroom, rank',
-        david_note: "From τάσσω (to arrange). Shares the semantic field of 'arrangement' with κόσμος. In modern Greek, primarily 'classroom' or 'social class'.",
-        rag_scholia: 'Feminine noun (-η, plural -εις). Holton II.2.2.2. Standard parisyllabic.',
-      },
-    },
-  ];
+// Orbit radii
+const INNER_R = 120;  // definitions
+const MID_R = 170;    // collocations
+const OUTER_R = 200;  // idioms
 
-  const edges: OrreryEdge[] = [
-    { source: 'kosmos', target: 'oikoumene', relation: 'synonym' },
-    { source: 'kosmos', target: 'sympan', relation: 'synonym' },
-    { source: 'kosmos', target: 'kosmeo', relation: 'ancestor' },
-    { source: 'kosmos', target: 'kosmikos', relation: 'derived' },
-    { source: 'kosmos', target: 'idiom-ano-kato', relation: 'mwe' },
-    { source: 'kosmos', target: 'taxi', relation: 'synonym' },
-    { source: 'kosmeo', target: 'kosmikos', relation: 'derived' },
-  ];
+// ── Build Graph from API Data ───────────────────────────────────────────────
+
+function buildDynamicGraph(
+  lemma: string,
+  profile: ContrastiveProfile,
+): { nodes: OrreryNode[]; edges: OrreryEdge[] } {
+  const nodes: OrreryNode[] = [];
+  const edges: OrreryEdge[] = [];
+
+  // ── SAFE CONSTANTS — never touch profile.xxx directly below this line ──
+  const defs: string[]         = Array.isArray(profile?.lsj_definitions) ? profile.lsj_definitions.filter(Boolean) : [];
+  const collocs: Collocation[] = Array.isArray(profile?.collocations) ? profile.collocations.filter((c) => c && c.text) : [];
+  const idioms: Idiom[]        = Array.isArray(profile?.idioms) ? profile.idioms.filter((i) => i && i.expression) : [];
+  const ancestor: string       = profile?.ancient_ancestor ?? '';
+  const davidNote: string      = profile?.david_note ?? '';
+  const ragScholia: string     = profile?.rag_scholia ?? '';
+  const kdsScore: number | undefined = profile?.kds_score;
+
+  // ── Center Star: the queried lemma ──────────────────────────────────────
+  const primaryDef = defs[0] ?? davidNote.slice(0, 60) ?? '';
+  nodes.push({
+    id: 'center',
+    label: lemma,
+    gloss: primaryDef,
+    type: 'center',
+    x: CX,
+    y: CY,
+    knot: {
+      id: 'orrery-center',
+      text: lemma,
+      lemma,
+      pos: 'NOUN',
+      definition: defs.join('; '),
+      david_note: davidNote,
+      rag_scholia: ragScholia,
+      ancient_ancestor: ancestor || undefined,
+      kds_score: kdsScore,
+    },
+  });
+
+  // ── Ancestor node (if present) ──────────────────────────────────────────
+  if (ancestor) {
+    const id = 'ancestor';
+    nodes.push({
+      id,
+      label: ancestor,
+      gloss: 'Ancient etymon',
+      type: 'ancestor',
+      x: CX,
+      y: CY - OUTER_R,
+      knot: {
+        id: 'orrery-ancestor',
+        text: ancestor,
+        lemma,
+        pos: 'ETYM',
+        definition: ancestor,
+        david_note: davidNote,
+      },
+    });
+    edges.push({ source: 'center', target: id, relation: 'ancestor' });
+  }
+
+  // ── Definition nodes (inner orbit) ──────────────────────────────────────
+  const defCount = Math.min(defs.length, 5);
+  const hasAncestor = !!ancestor;
+  const defStartAngle = hasAncestor ? -Math.PI * 0.3 : -Math.PI / 2;
+
+  for (let i = 0; i < defCount; i++) {
+    const id = `def-${i}`;
+    const angle = defStartAngle + (i / Math.max(defCount - 1, 1)) * (hasAncestor ? Math.PI * 1.6 : Math.PI * 2);
+    const def = defs[i] || '';
+    nodes.push({
+      id,
+      label: def,
+      gloss: def,
+      type: 'lsj',
+      x: CX + Math.cos(angle) * INNER_R,
+      y: CY + Math.sin(angle) * INNER_R,
+      knot: {
+        id: `orrery-def-${i}`,
+        text: def,
+        lemma,
+        pos: 'DEF',
+        definition: def,
+      },
+    });
+    edges.push({ source: 'center', target: id, relation: 'definition' });
+  }
+
+  // ── Collocation nodes (mid orbit) ─────────────────────────────────────
+  const collocCount = Math.min(collocs.length, 6);
+  for (let i = 0; i < collocCount; i++) {
+    const id = `colloc-${i}`;
+    const angle = (Math.PI * 0.8) + (i / Math.max(collocCount, 1)) * Math.PI * 1.2;
+    const c = collocs[i];
+    const cText = c.text || '';
+    const cFreq = typeof c.frequency === 'number' ? c.frequency : 0;
+    nodes.push({
+      id,
+      label: cText,
+      gloss: `${cText} (${cFreq.toLocaleString()}×)`,
+      type: 'collocation',
+      x: CX + Math.cos(angle) * MID_R,
+      y: CY + Math.sin(angle) * MID_R,
+      knot: {
+        id: `orrery-colloc-${i}`,
+        text: cText,
+        lemma,
+        pos: 'COLL',
+        definition: `Collocation: ${cText} — ${cFreq.toLocaleString()} occurrences`,
+      },
+    });
+    edges.push({ source: 'center', target: id, relation: 'collocation' });
+  }
+
+  // ── Idiom nodes (outer orbit) ─────────────────────────────────────────
+  const idiomCount = Math.min(idioms.length, 5);
+  for (let i = 0; i < idiomCount; i++) {
+    const id = `idiom-${i}`;
+    const angle = -Math.PI * 0.3 + (i / Math.max(idiomCount, 1)) * Math.PI * 0.6;
+    const idiom = idioms[i];
+    const expr = idiom.expression || '';
+    const trans = idiom.translation || '';
+    nodes.push({
+      id,
+      label: expr,
+      gloss: trans,
+      type: 'idiom',
+      x: CX + Math.cos(angle) * OUTER_R,
+      y: CY + Math.sin(angle) * OUTER_R,
+      knot: {
+        id: `orrery-idiom-${i}`,
+        text: expr,
+        lemma,
+        pos: 'MWE',
+        definition: trans,
+        david_note: `Idiom: ${expr}`,
+        rag_scholia: idiom.source || 'METIS idiom registry',
+      },
+    });
+    edges.push({ source: 'center', target: id, relation: 'idiom' });
+  }
 
   return { nodes, edges };
 }
 
 // ── Edge Colors ─────────────────────────────────────────────────────────────
 
-const EDGE_COLORS: Record<OrreryEdge['relation'], string> = {
-  synonym: '#64A0FF',
-  antonym: '#EF4444',
-  derived: C.GOLD,
-  mwe: '#B464FF',
-  ancestor: '#FFD700',
-};
-
-const EDGE_DASH: Record<OrreryEdge['relation'], string> = {
-  synonym: '',
-  antonym: '',
-  derived: '6,4',
-  mwe: '4,6',
-  ancestor: '8,4',
-};
+const EDGE_COLOR = '#4c535b';
+const EDGE_STROKE_W = 1.5;
 
 // ── Node Colors ─────────────────────────────────────────────────────────────
 
-const NODE_CONFIG: Record<OrreryNode['type'], { fill: string; stroke: string; r: number }> = {
-  center: { fill: C.INK, stroke: C.GOLD, r: 42 },
-  synonym: { fill: C.INK, stroke: '#64A0FF', r: 32 },
-  root: { fill: C.INK, stroke: C.GOLD, r: 32 },
-  derived: { fill: 'rgba(15, 5, 24, 0.8)', stroke: 'rgba(197, 160, 89, 0.7)', r: 28 },
-  idiom: { fill: 'rgba(15, 5, 24, 0.8)', stroke: C.GRAY_TEXT, r: 36 },
+// Obsidian Orrery — strict high-contrast palette with per-node text colors
+const NODE_CONFIG: Record<OrreryNode['type'], { fill: string; text: string; stroke: string; r: number; glow: string }> = {
+  center:      { fill: '#ffd33d', text: '#000000', stroke: 'rgba(255, 211, 61, 0.35)',  r: 46, glow: 'rgba(255, 211, 61, 0.18)' },
+  lsj:         { fill: '#ff9800', text: '#000000', stroke: 'rgba(255, 152, 0, 0.35)',  r: 30, glow: 'rgba(255, 152, 0, 0.15)' },
+  definition:  { fill: '#e93188', text: '#ffffff', stroke: 'rgba(233, 49, 136, 0.35)', r: 30, glow: 'rgba(233, 49, 136, 0.15)' },
+  ancestor:    { fill: '#ff9800', text: '#000000', stroke: 'rgba(255, 152, 0, 0.35)',  r: 34, glow: 'rgba(255, 152, 0, 0.15)' },
+  collocation: { fill: '#58a6ff', text: '#000000', stroke: 'rgba(88, 166, 255, 0.35)', r: 26, glow: 'rgba(88, 166, 255, 0.12)' },
+  idiom:       { fill: '#42b883', text: '#000000', stroke: 'rgba(66, 184, 131, 0.35)', r: 32, glow: 'rgba(66, 184, 131, 0.15)' },
 };
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export default function OrreryScreen() {
-  const { lemma } = useLocalSearchParams<{ lemma: string }>();
+  const { lemma: rawLemma } = useLocalSearchParams<{ lemma: string }>();
+  const lemma = decodeURIComponent(rawLemma || '');
   const router = useRouter();
   const openInspector = useInspectorStore((s) => s.openInspector);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ContrastiveProfile | null>(null);
   const [apiLoading, setApiLoading] = useState(true);
 
-  // Fetch the ContrastiveProfile for this lemma to augment the graph
+  // Fetch the ContrastiveProfile for this lemma
   useEffect(() => {
+    // Guard: Expo Router passes the literal "[lemma]" during the initial
+    // unresolved render cycle. Firing inspectLemma with that string causes a 404.
+    if (!lemma || lemma === '[lemma]') return;
     let cancelled = false;
+    setApiLoading(true);
+    setProfile(null);
+    setSelectedId(null);
     (async () => {
       try {
-        const data = await ApiService.inspectLemma(decodeURIComponent(lemma || 'κόσμος'));
+        const data = await ApiService.inspectLemma(lemma);
         if (!cancelled && data) setProfile(data);
       } catch (e) {
-        console.warn('[Orrery] API unreachable — using mock graph only');
+        console.warn('[Orrery] API unreachable for', lemma);
       } finally {
         if (!cancelled) setApiLoading(false);
       }
@@ -236,43 +258,10 @@ export default function OrreryScreen() {
     return () => { cancelled = true; };
   }, [lemma]);
 
-  // Build mock graph, then augment with API data (idioms, collocations)
+  // Build dynamic graph from API data
   const { nodes, edges } = useMemo(() => {
-    const mock = buildKosmosGraph();
-
-    if (!profile) return mock;
-
-    // Augment: add idiom nodes from API that aren't already in mock
-    const existingIds = new Set(mock.nodes.map((n) => n.id));
-
-    // Add API idioms as MWE wormhole nodes
-    if (profile.idioms?.length) {
-      profile.idioms.forEach((idiom, i) => {
-        const id = `api-idiom-${i}`;
-        if (existingIds.has(id)) return;
-        const angle = Math.PI * 0.3 + (i * Math.PI * 0.4 / Math.max(profile.idioms?.length || 1, 1));
-        mock.nodes.push({
-          id,
-          label: idiom.expression.length > 20 ? idiom.expression.slice(0, 20) + '...' : idiom.expression,
-          gloss: idiom.translation,
-          type: 'idiom',
-          x: CX + Math.cos(angle) * 160,
-          y: CY + Math.sin(angle) * 140,
-          knot: {
-            id,
-            text: idiom.expression,
-            lemma: decodeURIComponent(lemma || 'κόσμος'),
-            pos: 'MWE',
-            definition: idiom.translation,
-            david_note: `Idiom: ${idiom.expression}`,
-            rag_scholia: idiom.source || 'METIS idiom registry',
-          },
-        });
-        mock.edges.push({ source: 'kosmos', target: id, relation: 'mwe' });
-      });
-    }
-
-    return mock;
+    if (!profile) return { nodes: [], edges: [] };
+    return buildDynamicGraph(lemma, profile);
   }, [profile, lemma]);
 
   const nodeMap = useMemo(() => {
@@ -284,45 +273,88 @@ export default function OrreryScreen() {
   const selectedNode = selectedId ? nodeMap[selectedId] : null;
 
   const handleNodePress = (node: OrreryNode) => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
     setSelectedId(node.id === selectedId ? null : node.id);
   };
 
   const handleInspect = (node: OrreryNode) => {
     if (!node.knot) return;
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     openInspector(node.knot as any, 'knot');
   };
 
-  // ── Legend items
+  // ── Legend ─────────────────────────────────────────────────────────────
   const legendItems = [
-    { color: '#64A0FF', label: 'Synonym', dash: false },
-    { color: '#FFD700', label: 'Ancestor', dash: true },
-    { color: C.GOLD, label: 'Derived', dash: true },
-    { color: '#B464FF', label: 'Idiom (MWE)', dash: true },
+    { color: '#ffd33d',  label: 'Center' },
+    { color: '#ff9800',  label: 'LSJ / Ancestor' },
+    { color: '#e93188',  label: 'Modern Definition' },
+    { color: '#58a6ff',  label: 'Collocation' },
+    { color: '#42b883',  label: 'Idiom / MWE' },
   ];
+
+  // ── Loading State ─────────────────────────────────────────────────────
+  if (apiLoading) {
+    return (
+      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={C.GOLD} />
+        <Text style={styles.loadingText}>
+          Charting the constellation for {lemma}...
+        </Text>
+      </View>
+    );
+  }
+
+  // ── Philological Void: API returned nothing ───────────────────────────
+  if (!profile) {
+    return (
+      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed, { position: 'absolute', top: 48, left: 16 }]}
+          hitSlop={12}
+        >
+          <Text style={styles.backIcon}>{'\u2039'}</Text>
+        </Pressable>
+        <Text style={{ fontFamily: F.DISPLAY, fontSize: 24, color: C.GOLD, marginBottom: 8 }}>
+          Philological Void
+        </Text>
+        <Text style={{ fontFamily: F.BODY, fontSize: 14, color: C.GRAY_TEXT, textAlign: 'center', lineHeight: 22 }}>
+          The diachronic link for "{lemma}" is lost to time.{'\n'}
+          No constellation data could be retrieved.
+        </Text>
+        <Pressable
+          style={({ pressed }) => [styles.searchAgainButton, pressed && styles.searchAgainButtonPressed]}
+          onPress={() => router.replace('/orrery' as any)}
+        >
+          <Text style={styles.searchAgainText}>Search Again</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
-      {/* ── Back Button ──────────────────────────────────────────────── */}
+      {/* ── Back + Title ──────────────────────────────────────────────── */}
       <View style={styles.hudTop}>
         <Pressable
           onPress={() => router.back()}
           style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
           hitSlop={12}
         >
-          <Text style={styles.backIcon}>{'‹'}</Text>
+          <Text style={styles.backIcon}>{'\u2039'}</Text>
         </Pressable>
         <View style={styles.titleBlock}>
           <Text style={styles.eyebrow}>DIACHRONIC ORRERY</Text>
           <View style={styles.titleRow}>
-            <Text style={styles.titleText}>{decodeURIComponent(lemma || 'κόσμος')}</Text>
-            {apiLoading ? (
-              <ActivityIndicator size="small" color={C.GOLD} style={{ marginLeft: 8 }} />
-            ) : profile ? (
-              <View style={styles.liveIndicator}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
-              </View>
-            ) : null}
+            <Text style={styles.titleText}>{lemma}</Text>
+            <View style={styles.liveIndicator}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -334,6 +366,18 @@ export default function OrreryScreen() {
         {/* ── The Constellation SVG ──────────────────────────────────── */}
         <View style={styles.graphContainer}>
           <Svg width={GRAPH_W} height={GRAPH_H}>
+            <Defs>
+              {nodes.map((node) => {
+                const cfg = NODE_CONFIG[node.type];
+                return (
+                  <RadialGradient key={`glow-${node.id}`} id={`glow-${node.id}`} cx="50%" cy="50%" r="50%">
+                    <Stop offset="0%" stopColor={cfg.glow} stopOpacity="1" />
+                    <Stop offset="100%" stopColor={cfg.glow} stopOpacity="0" />
+                  </RadialGradient>
+                );
+              })}
+            </Defs>
+
             {/* Edges */}
             {edges.map((edge, i) => {
               const src = nodeMap[edge.source];
@@ -346,14 +390,30 @@ export default function OrreryScreen() {
                   y1={src.y}
                   x2={tgt.x}
                   y2={tgt.y}
-                  stroke={EDGE_COLORS[edge.relation]}
-                  strokeWidth={2}
-                  strokeDasharray={EDGE_DASH[edge.relation]}
+                  stroke={EDGE_COLOR}
+                  strokeWidth={EDGE_STROKE_W}
+                  strokeLinecap="round"
                 />
               );
             })}
 
-            {/* Nodes */}
+            {/* Node Glow Halos */}
+            {nodes.map((node) => {
+              const cfg = NODE_CONFIG[node.type];
+              const isSelected = node.id === selectedId;
+              return (
+                <Circle
+                  key={`halo-${node.id}`}
+                  cx={node.x}
+                  cy={node.y}
+                  r={cfg.r + 14}
+                  fill={`url(#glow-${node.id})`}
+                  opacity={isSelected ? 0.8 : 0.4}
+                />
+              );
+            })}
+
+            {/* Nodes — solid jewel-tone circles */}
             {nodes.map((node) => {
               const cfg = NODE_CONFIG[node.type];
               const isSelected = node.id === selectedId;
@@ -362,28 +422,28 @@ export default function OrreryScreen() {
                   key={node.id}
                   cx={node.x}
                   cy={node.y}
-                  r={isSelected ? cfg.r + 4 : cfg.r}
+                  r={isSelected ? cfg.r + 3 : cfg.r}
                   fill={cfg.fill}
-                  stroke={isSelected ? C.GOLD : cfg.stroke}
-                  strokeWidth={isSelected ? 4 : 2}
+                  stroke={isSelected ? C.PARCHMENT : cfg.stroke}
+                  strokeWidth={isSelected ? 2.5 : 1.5}
                   fillOpacity={1}
                   onPress={() => handleNodePress(node)}
                 />
               );
             })}
 
-            {/* Node Labels */}
+            {/* Node Labels — outside nodes, word-wrapped, no truncation */}
             {nodes.map((node) => {
-              const lines = node.label.split('\n');
+              const cfg = NODE_CONFIG[node.type];
+              const lines = wrapLabel(node.label, 20);
               return lines.map((line, li) => (
                 <SvgText
                   key={`${node.id}-label-${li}`}
                   x={node.x}
-                  y={node.y + (li * 14) - ((lines.length - 1) * 7)}
+                  y={node.y + cfg.r + 15 + li * 14}
                   textAnchor="middle"
-                  alignmentBaseline="central"
-                  fill={node.type === 'center' ? C.GOLD : C.PARCHMENT}
-                  fontSize={node.type === 'center' ? 14 : 11}
+                  fill={C.PARCHMENT}
+                  fontSize={11}
                   fontWeight={node.type === 'center' ? 'bold' : 'normal'}
                   fontFamily={F.DISPLAY}
                   onPress={() => handleNodePress(node)}
@@ -399,7 +459,7 @@ export default function OrreryScreen() {
         <View style={styles.legend}>
           {legendItems.map((item) => (
             <View key={item.label} style={styles.legendItem}>
-              <View style={[styles.legendLine, { backgroundColor: item.color }, item.dash && styles.legendDash]} />
+              <View style={[styles.legendDot, { backgroundColor: item.color }]} />
               <Text style={styles.legendLabel}>{item.label}</Text>
             </View>
           ))}
@@ -410,11 +470,6 @@ export default function OrreryScreen() {
           <View style={styles.evidencePanel}>
             <View style={styles.evidenceHeader}>
               <Text style={styles.evidenceWord}>{selectedNode.label.replace('\n', ' ')}</Text>
-              {selectedNode.cefr && (
-                <View style={styles.cefrBadge}>
-                  <Text style={styles.cefrText}>{selectedNode.cefr}</Text>
-                </View>
-              )}
             </View>
 
             <Text style={styles.evidenceGloss}>{selectedNode.gloss}</Text>
@@ -433,24 +488,32 @@ export default function OrreryScreen() {
               )}
             </View>
 
-            {/* Davidian Note excerpt */}
-            {selectedNode.knot?.david_note ? (
+            {/* Davidian Note (center node only) */}
+            {selectedNode.knot?.david_note && selectedNode.id === 'center' ? (
               <View style={styles.noteExcerpt}>
                 <Text style={styles.noteExcerptLabel}>Diachronic Note</Text>
                 <Text style={styles.noteExcerptBody}>{selectedNode.knot.david_note}</Text>
               </View>
             ) : null}
 
-            {/* API-sourced: KDS score (if this is the center node and profile loaded) */}
-            {profile && selectedNode.id === 'kosmos' && profile.kds_score != null ? (
+            {/* Grammar Scholia (center node only) */}
+            {profile.grammar_scholia && selectedNode.id === 'center' ? (
+              <View style={styles.noteExcerpt}>
+                <Text style={styles.noteExcerptLabel}>Grammar Scholia</Text>
+                <Text style={styles.noteExcerptBody}>{profile.grammar_scholia}</Text>
+              </View>
+            ) : null}
+
+            {/* KDS Score (center node only) */}
+            {selectedNode.id === 'center' && profile.kds_score != null ? (
               <View style={styles.kdsRow}>
                 <Text style={styles.kdsLabel}>KDS Score</Text>
                 <Text style={styles.kdsValue}>{profile.kds_score.toFixed(2)}</Text>
               </View>
             ) : null}
 
-            {/* API-sourced: HNC Collocations */}
-            {profile && selectedNode.id === 'kosmos' && (profile.collocations?.length || 0) > 0 ? (
+            {/* HNC Collocations (center node) */}
+            {selectedNode.id === 'center' && (profile.collocations?.length || 0) > 0 ? (
               <View style={styles.collocationsRow}>
                 <Text style={styles.noteExcerptLabel}>HNC Collocations</Text>
                 <View style={styles.collocChips}>
@@ -479,6 +542,16 @@ export default function OrreryScreen() {
             </Text>
           </View>
         )}
+
+        {/* ── Search Again shortcut ──────────────────────────────────── */}
+        <View style={styles.searchAgainRow}>
+          <Pressable
+            style={({ pressed }) => [styles.searchAgainButton, pressed && styles.searchAgainButtonPressed]}
+            onPress={() => router.replace('/orrery' as any)}
+          >
+            <Text style={styles.searchAgainText}>Search Another Lemma</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -490,6 +563,15 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: 'transparent',
+  },
+
+  // ── Loading ─────────────────────────────────────────────────────────────
+  loadingText: {
+    fontFamily: F.BODY,
+    fontSize: 13,
+    color: C.GRAY_TEXT,
+    marginTop: 16,
+    fontStyle: 'italic',
   },
 
   // ── HUD ──────────────────────────────────────────────────────────────────
@@ -505,9 +587,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(15, 5, 24, 0.7)',
+    backgroundColor: 'rgba(10, 15, 13, 0.7)',
     borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.5)',
+    borderColor: 'rgba(197, 160, 89, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -577,9 +659,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginHorizontal: 20,
     borderWidth: 1,
-    borderColor: C.GRAY_BORDER,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 16,
-    backgroundColor: C.VOID,
+    backgroundColor: 'transparent',
     overflow: 'hidden',
   },
 
@@ -597,13 +679,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  legendLine: {
-    width: 20,
-    height: 2,
-    borderRadius: 1,
-  },
-  legendDash: {
-    opacity: 0.7,
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   legendLabel: {
     fontFamily: F.LABEL,
@@ -632,21 +711,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: C.PARCHMENT,
     flex: 1,
-  },
-  cefrBadge: {
-    backgroundColor: C.GOLD_DIM,
-    borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.3)',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  cefrText: {
-    fontFamily: F.LABEL,
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: C.GOLD,
-    letterSpacing: 1,
   },
   evidenceGloss: {
     fontFamily: F.BODY,
@@ -688,11 +752,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   noteExcerpt: {
-    backgroundColor: 'rgba(15, 5, 24, 0.4)',
+    backgroundColor: 'rgba(10, 15, 13, 0.4)',
     borderWidth: 1,
-    borderColor: C.GRAY_BORDER,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 10,
-    padding: 14,
+    padding: 16,
   },
   noteExcerptLabel: {
     fontFamily: F.LABEL,
@@ -796,5 +860,33 @@ const styles = StyleSheet.create({
     color: 'rgba(156, 163, 175, 0.5)',
     letterSpacing: 0.5,
     fontStyle: 'italic',
+  },
+
+  // ── Search Again ─────────────────────────────────────────────────────────
+  searchAgainRow: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  searchAgainButton: {
+    backgroundColor: 'rgba(10, 15, 13, 0.5)',
+    borderWidth: 1,
+    borderColor: C.GRAY_BORDER,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 16,
+  },
+  searchAgainButtonPressed: {
+    backgroundColor: C.GOLD_DIM,
+    borderColor: C.GOLD,
+  },
+  searchAgainText: {
+    fontFamily: F.LABEL,
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: C.GRAY_TEXT,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });

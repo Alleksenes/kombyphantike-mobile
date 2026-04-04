@@ -9,25 +9,10 @@
 //   without crashing on missing fields (david_note, grammar_scholia, etc.)
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persist } from 'zustand/middleware';
+import { resilientStorage } from './storage';
 import { Knot, ContrastiveProfile, DisclosureLevel } from '../types';
 import { ApiService } from '../services/ApiService';
-
-// ── Mock Fallback Profile ───────────────────────────────────────────────────
-// Used when the API is unreachable (UI-First Mode).
-// Synthesizes a ContrastiveProfile from the knot's existing fields.
-function buildMockProfile(knot: Knot): ContrastiveProfile {
-  return {
-    david_note: knot.david_note || `Diachronic note for '${knot.lemma}' — awaiting philological excavation.`,
-    rag_scholia: knot.rag_scholia || 'Holton et al. — reference pending integration.',
-    grammar_scholia: knot.grammar_scholia || `The morphological profile of '${knot.lemma}' (${knot.pos}) reflects standard Modern Greek inflection patterns.`,
-    lsj_definitions: knot.lsj_definitions ?? [`${knot.lemma}: ${knot.definition ?? 'definition pending'}`],
-    kds_score: knot.kds_score ?? 0.42,
-    paradigm: knot.paradigm ?? [],
-    ancient_ancestor: knot.ancient_ancestor,
-  };
-}
 
 // ── Shallow Knot Adapter ────────────────────────────────────────────────────
 // Token objects from constellation.tsx / results.tsx lack david_note, rag_scholia.
@@ -175,24 +160,8 @@ export const useInspectorStore = create<UnifiedInspectorState>()(
             };
           });
         } catch (e) {
-          console.warn('API unreachable — falling back to mock profile:', e);
-          // UI-FIRST MODE: Synthesize a mock ContrastiveProfile so the Inspector
-          // always has something to render, even without a backend.
-          const mockProfile = buildMockProfile(knot);
-          set((state) => {
-            if (state.knot && state.knot.lemma === knot.lemma) {
-              return {
-                knot: enrichKnot(state.knot, mockProfile),
-                isLoading: false,
-                inspectError: null, // No error — mock data is valid
-                profileCache: {
-                  ...state.profileCache,
-                  [knot.lemma]: mockProfile,
-                },
-              };
-            }
-            return { isLoading: false };
-          });
+          console.error('[Inspector] GET /inspect/{lemma} failed:', e);
+          set({ isLoading: false, inspectError: 'network' });
         }
       },
 
@@ -205,7 +174,7 @@ export const useInspectorStore = create<UnifiedInspectorState>()(
     }),
     {
       name: 'inspector-profile-cache',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: resilientStorage,
       // Only persist the profile cache — not the sheet UI state
       partialize: (state) => ({ profileCache: state.profileCache }),
     },
