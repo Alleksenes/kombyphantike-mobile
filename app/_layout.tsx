@@ -7,24 +7,98 @@
 // background of rgb(242, 242, 242). Without it the navigation container paints
 // a white/grey hospital ward behind every transparent screen on web.
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { PaperProvider } from 'react-native-paper';
+import { IconButton, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { GlobalErrorBoundary } from '../components/ErrorBoundary';
 import OmegaLoader from '../components/OmegaLoader';
 import CosmicBackground from '../components/ui/CosmicBackground';
 import PhilologicalInspector from '../components/ui/PhilologicalInspector';
+import { API_BASE_URL } from '../src/services/apiConfig';
 import { initDatabase } from '../src/services/Database';
-import { PhilologicalColors, ScriptoriumTheme } from '../src/theme';
+import { PhilologicalColors, PhilologicalFonts, ScriptoriumTheme } from '../src/theme';
+
+function DevScriptoriumOverlay() {
+  const [isVisible, setIsVisible] = useState(false);
+  const router = useRouter();
+
+  const handlePing = () => {
+    fetch(API_BASE_URL)
+      .then((res) => {
+        Alert.alert('Ping Backend', `Status: ${res.status} OK\nURL: ${API_BASE_URL}`);
+      })
+      .catch((e) => {
+        Alert.alert('Ping Backend Failed', `URL: ${API_BASE_URL}\nError: ${e.message}`);
+      });
+  };
+
+  const handleClearStorage = () => {
+    AsyncStorage.clear()
+      .then(() => Alert.alert('AsyncStorage Cleared', 'State has been purged.'))
+      .catch((e) => Alert.alert('Error', e.message));
+  };
+
+  return (
+    <>
+      {/* Percentage line / Loading line at the very top */}
+      <View style={styles.devTopLine} />
+
+      {/* Floating Sentinel Button */}
+      <View style={styles.devSentinelContainer}>
+        <TouchableOpacity
+          style={styles.devSentinelButton}
+          onPress={() => setIsVisible(true)}
+        >
+          <IconButton icon="orbit" iconColor={PhilologicalColors.GOLD} size={28} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Dev Scriptorium Modal */}
+      <Modal visible={isVisible} transparent animationType="fade">
+        <View style={styles.devModalOverlay}>
+          <View style={styles.devModalContent}>
+            <Text style={styles.devModalTitle}>GOD-MODE OVERLAY</Text>
+
+            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/voyage/alpha-001'); }}>
+              <Text style={styles.devModalButtonText}>Jump to Voyage (alpha-001)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/orrery'); }}>
+              <Text style={styles.devModalButtonText}>Jump to Orrery</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/_sitemap'); }}>
+              <Text style={styles.devModalButtonText}>Jump to Sitemap</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.devModalButton} onPress={handlePing}>
+              <Text style={styles.devModalButtonText}>Diagnostic Hub (Ping Backend)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.devModalButton, { borderColor: PhilologicalColors.ERROR }]} onPress={handleClearStorage}>
+              <Text style={[styles.devModalButtonText, { color: PhilologicalColors.ERROR }]}>Clear AsyncStorage</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.devModalClose} onPress={() => setIsVisible(false)}>
+              <Text style={styles.devModalCloseText}>CLOSE</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}
 
 export default function RootLayout() {
+  const isDevMode = process.env.EXPO_PUBLIC_DEV_MODE === 'true';
   const [isReady, setIsReady] = useState(false);
 
   const [fontsLoaded] = useFonts({
@@ -115,6 +189,9 @@ export default function RootLayout() {
                 {/* LAYER 2: GLOBAL OVERLAY */}
                 <PhilologicalInspector />
 
+                {/* LAYER 3: GOD-MODE OVERLAY */}
+                {isDevMode && <DevScriptoriumOverlay />}
+
               </ThemeProvider>
             </PaperProvider>
           </GestureHandlerRootView>
@@ -126,6 +203,75 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  devTopLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: 2,
+    backgroundColor: PhilologicalColors.GOLD,
+    zIndex: 9999,
+  },
+  devSentinelContainer: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    zIndex: 9999,
+  },
+  devSentinelButton: {
+    backgroundColor: 'rgba(15, 5, 24, 0.6)',
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.4)',
+    overflow: 'hidden',
+  },
+  devModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  devModalContent: {
+    width: '80%',
+    backgroundColor: PhilologicalColors.VOID,
+    borderColor: PhilologicalColors.GOLD,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 24,
+    gap: 12,
+  },
+  devModalTitle: {
+    fontFamily: PhilologicalFonts.DISPLAY,
+    fontSize: 20,
+    color: PhilologicalColors.GOLD,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  devModalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(197, 160, 89, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.3)',
+    alignItems: 'center',
+  },
+  devModalButtonText: {
+    fontFamily: PhilologicalFonts.LABEL,
+    fontSize: 14,
+    color: PhilologicalColors.PARCHMENT,
+  },
+  devModalClose: {
+    marginTop: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  devModalCloseText: {
+    fontFamily: PhilologicalFonts.LABEL,
+    fontSize: 12,
+    color: PhilologicalColors.GRAY_TEXT,
+    letterSpacing: 1,
+  },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
