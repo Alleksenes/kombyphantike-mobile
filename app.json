@@ -3,50 +3,27 @@
     "name": "kombyphantike",
     "slug": "kombyphantike",
     "version": "1.0.0",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "android": {
       "package": "com.alleksenes.kombyphantike",
-      "compileSdkVersion": 34,
-      "targetSdkVersion": 34,
-      "buildToolsVersion": "34.0.0",
-      "ndkVersion": "26.1.10909125",
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
       "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "single",
-      "favicon": "./assets/images/favicon.png",
-      "backgroundColor": "#0a0f0d"
     },
     "plugins": [
       "expo-router",
       "expo-video",
       "expo-secure-store",
       [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#1a1918"
-        }
-      ],
-      [
         "expo-build-properties",
         {
           "android": {
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "buildToolsVersion": "34.0.0",
-            "ndkVersion": "26.1.10909125"
+            "newArchEnabled": true,
+            "kotlinVersion": "2.1.20"
           }
         }
       ]
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    }
+    ]
   }
 }
