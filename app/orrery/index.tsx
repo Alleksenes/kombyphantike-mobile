@@ -1,265 +1,223 @@
-// ── THE ORRERY SEARCH HUB ────────────────────────────────────────────────────
-// Universal entry point to the Diachronic Orrery. A search bar invites the
-// user to query any Greek lemma. On submit, pushes to /orrery/<lemma>.
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import {
-  Keyboard,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useEffect, useState } from 'react';
+import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 
-export default function OrrerySearchHub() {
+const RECENT_KEY = '@recent_discoveries';
+
+export default function OrreryHubScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const [recent, setRecent] = useState<string[]>([]);
 
-  const handleSubmit = () => {
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    Keyboard.dismiss();
-    router.push(`/orrery/${encodeURIComponent(trimmed)}` as any);
+  useEffect(() => {
+    AsyncStorage.getItem(RECENT_KEY).then((data) => {
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) setRecent(parsed);
+        } catch (e) { }
+      }
+    });
+  }, []);
+
+  const saveRecent = async (word: string) => {
+    const updated = [word, ...recent.filter(w => w !== word)].slice(0, 5);
+    setRecent(updated);
+    await AsyncStorage.setItem(RECENT_KEY, JSON.stringify(updated));
+  };
+
+  const handleSearch = () => {
+    const trimmed = query.trim().toLowerCase();
+    if (trimmed) {
+      saveRecent(trimmed);
+      router.push(`/orrery/${encodeURIComponent(trimmed)}`);
+    }
+  };
+
+  const handleRecentPress = (word: string) => {
+    setQuery(word);
+    saveRecent(word);
+    router.push(`/orrery/${encodeURIComponent(word)}`);
   };
 
   return (
-    <SafeAreaView style={styles.root}>
-      <View style={styles.container}>
-        {/* ── Back Button ──────────────────────────────────────────────── */}
-        <View style={styles.backRow}>
-          <Pressable
-            onPress={() => router.back()}
-            style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
-            hitSlop={12}
-          >
-            <Text style={styles.backIcon}>{'\u2039'}</Text>
-          </Pressable>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <IconButton icon="arrow-left" iconColor={C.GOLD} size={24} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.eyebrow}>THE SEARCH HUB</Text>
+            <Text style={styles.title}>Obsidian Orrery</Text>
+          </View>
+          <View style={{ width: 48 }} />
         </View>
 
-        {/* ── Constellation Symbol ─────────────────────────────────────── */}
-        <Text style={styles.symbol}>{'\u2726'}</Text>
-
-        {/* ── Title ────────────────────────────────────────────────────── */}
-        <Text style={styles.eyebrow}>DIACHRONIC ORRERY</Text>
-        <Text style={styles.title}>Search the Constellation...</Text>
-        <Text style={styles.subtitle}>
-          Enter any Greek lemma to explore its semantic neighborhood
-        </Text>
-
-        {/* ── Search Bar ───────────────────────────────────────────────── */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={handleSubmit}
-            placeholder="e.g. δίκη, κόσμος, ψυχή..."
-            placeholderTextColor="rgba(156, 163, 175, 0.4)"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            selectionColor={C.GOLD}
-          />
-          <Pressable
-            style={({ pressed }) => [
-              styles.searchButton,
-              pressed && styles.searchButtonPressed,
-              !query.trim() && styles.searchButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={!query.trim()}
-          >
-            <Text style={[
-              styles.searchButtonText,
-              !query.trim() && styles.searchButtonTextDisabled,
-            ]}>
-              Navigate
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* ── Quick-access constellations ──────────────────────────────── */}
-        <View style={styles.quickAccess}>
-          <Text style={styles.quickLabel}>RECENT CONSTELLATIONS</Text>
-          <View style={styles.quickChips}>
-            {['κόσμος', 'δίκη', 'ψυχή', 'λόγος', 'ἀρετή'].map((lemma) => (
-              <Pressable
-                key={lemma}
-                style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
-                onPress={() => router.push(`/orrery/${encodeURIComponent(lemma)}` as any)}
-              >
-                <Text style={styles.chipText}>{lemma}</Text>
-              </Pressable>
-            ))}
+        <View style={styles.searchSection}>
+          <Text style={styles.prompt}>Enter a Greek lemma to trace its lineage</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={query}
+              onChangeText={setQuery}
+              placeholder="e.g. κόσμος, λόγος..."
+              placeholderTextColor="rgba(156, 163, 175, 0.5)"
+              onSubmitEditing={handleSearch}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+            />
+            <TouchableOpacity
+              style={[styles.searchButton, !query.trim() && styles.searchButtonDisabled]}
+              onPress={handleSearch}
+              disabled={!query.trim()}
+            >
+              <IconButton icon="magnify" iconColor={C.BACKGROUND} size={20} />
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
+
+        {recent.length > 0 && (
+          <View style={styles.recentSection}>
+            <Text style={styles.recentTitle}>Recent Discoveries</Text>
+            <FlatList
+              data={recent}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.recentItem} onPress={() => handleRecentPress(item)}>
+                  <IconButton icon="history" iconColor={C.GOLD_DIM} size={16} />
+                  <Text style={styles.recentItemText}>{item}</Text>
+                  <IconButton icon="chevron-right" iconColor="rgba(197, 160, 89, 0.3)" size={16} />
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.recentList}
+              scrollEnabled={false}
+            />
+          </View>
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  root: {
+  safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-    paddingBottom: 60,
   },
-
-  // ── Back ────────────────────────────────────────────────────────────────
-  backRow: {
-    position: 'absolute',
-    top: 12,
-    left: 20,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(197, 160, 89, 0.1)',
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(10, 15, 13, 0.7)',
-    borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.35)',
+    width: 48,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  backButtonPressed: {
-    backgroundColor: 'rgba(197, 160, 89, 0.15)',
-    borderColor: C.GOLD,
-  },
-  backIcon: {
-    color: C.GOLD,
-    fontSize: 28,
-    lineHeight: 32,
-    fontWeight: '300',
-    marginLeft: -2,
-  },
-
-  // ── Header ──────────────────────────────────────────────────────────────
-  symbol: {
-    fontFamily: F.DISPLAY,
-    fontSize: 48,
-    color: C.GOLD,
-    textAlign: 'center',
-    marginBottom: 16,
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
   eyebrow: {
     fontFamily: F.LABEL,
-    fontSize: 9,
-    fontWeight: 'bold',
-    letterSpacing: 4,
+    fontSize: 10,
     color: C.GOLD,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: 12,
+    letterSpacing: 2,
+    fontWeight: 'bold',
   },
   title: {
     fontFamily: F.DISPLAY,
-    fontSize: 28,
+    fontSize: 24,
     color: C.PARCHMENT,
-    textAlign: 'center',
-    marginBottom: 8,
+    marginTop: 4,
   },
-  subtitle: {
-    fontFamily: F.BODY,
-    fontSize: 13,
-    color: C.GRAY_TEXT,
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 20,
+  searchSection: {
+    padding: 24,
+    gap: 16,
+    marginTop: 40,
   },
-
-  // ── Search ──────────────────────────────────────────────────────────────
-  searchContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 32,
-  },
-  searchInput: {
-    flex: 1,
-    height: 52,
-    backgroundColor: 'rgba(10, 15, 13, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.3)',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    fontFamily: F.DISPLAY,
-    fontSize: 18,
-    color: C.PARCHMENT,
-  },
-  searchButton: {
-    height: 52,
-    paddingHorizontal: 20,
-    backgroundColor: C.GOLD_DIM,
-    borderWidth: 1,
-    borderColor: 'rgba(197, 160, 89, 0.4)',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchButtonPressed: {
-    backgroundColor: 'rgba(197, 160, 89, 0.3)',
-    borderColor: C.GOLD,
-  },
-  searchButtonDisabled: {
-    opacity: 0.4,
-  },
-  searchButtonText: {
-    fontFamily: F.LABEL,
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: C.GOLD,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-  },
-  searchButtonTextDisabled: {
-    color: C.GRAY_TEXT,
-  },
-
-  // ── Quick access ────────────────────────────────────────────────────────
-  quickAccess: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  quickLabel: {
-    fontFamily: F.LABEL,
-    fontSize: 9,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    color: 'rgba(156, 163, 175, 0.4)',
-    textTransform: 'uppercase',
-  },
-  quickChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  chip: {
-    backgroundColor: 'rgba(10, 15, 13, 0.5)',
-    borderWidth: 1,
-    borderColor: C.GRAY_BORDER,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  chipPressed: {
-    backgroundColor: C.GOLD_DIM,
-    borderColor: C.GOLD,
-  },
-  chipText: {
+  prompt: {
     fontFamily: F.DISPLAY,
     fontSize: 16,
+    color: C.GRAY_TEXT,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(197, 160, 89, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.3)',
+    borderRadius: 12,
+    paddingLeft: 16,
+    paddingRight: 4,
+    height: 56,
+  },
+  input: {
+    flex: 1,
+    fontFamily: F.DISPLAY,
+    fontSize: 20,
     color: C.PARCHMENT,
+    height: '100%',
+  },
+  searchButton: {
+    backgroundColor: C.GOLD,
+    borderRadius: 8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  searchButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: C.GOLD_DIM,
+  },
+  recentSection: {
+    paddingHorizontal: 24,
+    marginTop: 32,
+  },
+  recentTitle: {
+    fontFamily: F.LABEL,
+    fontSize: 12,
+    color: C.GOLD,
+    letterSpacing: 1,
+    marginBottom: 16,
+    textTransform: 'uppercase',
+  },
+  recentList: {
+    gap: 8,
+  },
+  recentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(197, 160, 89, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(197, 160, 89, 0.1)',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  recentItemText: {
+    flex: 1,
+    fontFamily: F.DISPLAY,
+    fontSize: 18,
+    color: 'rgba(227, 220, 203, 0.8)',
+    marginLeft: 8,
   },
 });

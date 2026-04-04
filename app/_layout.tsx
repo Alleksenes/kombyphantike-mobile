@@ -107,12 +107,10 @@ export default function RootLayout() {
                   <Stack.Screen name="index" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="dev/gallery" />
-                  <Stack.Screen name="dev/voyage" />
-                  <Stack.Screen name="dev/lapidary" />
-                  <Stack.Screen name="dev/orrery" />
                   <Stack.Screen name="voyage/[id]" />
                   <Stack.Screen name="orrery/[lemma]" />
                   <Stack.Screen name="lapidary/[sentenceId]" />
+                  <Stack.Screen name="constellation" />
                 </Stack>
 
                 {/* LAYER 2: GLOBAL OVERLAY */}

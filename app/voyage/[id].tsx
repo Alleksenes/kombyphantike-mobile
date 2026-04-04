@@ -3,35 +3,23 @@
 // separate word components wrapped in a flexbox. KnotWords in Byzantine Gold.
 // Tap a knot → PhilologicalInspector. Transliteration renders below each knot.
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconButton } from 'react-native-paper';
-import { useVoyageStore, getCurrentSentence, getSentenceCount } from '../../src/store/voyageStore';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import LexicalRenderer from '../../components/ui/LexicalRenderer';
 import { useInspectorStore } from '../../src/store/unifiedInspectorStore';
+import { getCurrentSentence, getSentenceCount, useVoyageStore } from '../../src/store/voyageStore';
 import { PhilologicalColors as C, PhilologicalFonts as F } from '../../src/theme';
 import type { Knot } from '../../src/types';
-
-// ── Lexical Array: find matching knot for a word chunk ──────────────────────
-// Strips residual punctuation from the chunk, lowercases, and checks against
-// every knot.text and knot.lemma. Returns the first match or undefined.
-
-function findKnot(chunk: string, knots: Knot[]): Knot | undefined {
-  if (!knots || knots.length === 0) return undefined;
-  const clean = chunk.replace(/[.,;:!?]/g, '').toLowerCase();
-  if (!clean) return undefined;
-  return knots.find(
-    (k) => k.text.toLowerCase() === clean || k.lemma.toLowerCase() === clean,
-  );
-}
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
@@ -57,11 +45,7 @@ export default function VoyageReader() {
   const isLast = currentIndex >= total - 1;
   const showPractice = sentence?.mastery !== 'unseen';
 
-  // ── Lexical Array: split sentence into chunks preserving delimiters ─────
-  const chunks = useMemo(
-    () => (sentence ? sentence.greek_text.split(/([\s.,;:!?]+)/g).filter(Boolean) : []),
-    [sentence],
-  );
+
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleKnotPress = useCallback(
@@ -109,13 +93,13 @@ export default function VoyageReader() {
 
         <View style={styles.progressArea}>
           <Text style={styles.progressCounter}>
-            {currentIndex + 1} / {total}
+            {currentIndex} / {total}
           </Text>
           <View style={styles.progressBarTrack}>
             <View
               style={[
                 styles.progressBarFill,
-                { width: total > 0 ? `${((currentIndex + 1) / total) * 100}%` : '0%' },
+                { width: total > 0 ? `${(currentIndex / total) * 100}%` : '0%' },
               ]}
             />
           </View>
@@ -128,53 +112,26 @@ export default function VoyageReader() {
       {/* ── Sentence Stage ──────────────────────────────────────────── */}
       <View style={styles.stage}>
         {sentence ? (
-          <>
-            {/* Greek text — Lexical Array: flexDirection row, flexWrap wrap */}
-            <View style={styles.greekTextRow}>
-              {chunks.map((chunk, i) => {
-                // ── Delimiter chunk (whitespace / punctuation) → plain Text ──
-                if (/^[\s.,;:!?]+$/.test(chunk)) {
-                  return (
-                    <Text key={i} style={styles.punctText}>{chunk}</Text>
-                  );
-                }
-
-                // ── Word chunk → check against knots ────────────────────────
-                const knot = findKnot(chunk, sentence.knots);
-
-                if (knot) {
-                  const isActive = activeKnot?.id === knot.id;
-                  return (
-                    <Pressable
-                      key={i}
-                      onPress={() => handleKnotPress(knot)}
-                      style={isActive ? styles.knotPressableActive : undefined}
-                    >
-                      <View style={styles.knotWordContainer}>
-                        <Text style={[styles.knotGreekText, isActive && styles.knotGreekTextActive]}>
-                          {chunk}
-                        </Text>
-                        {knot.transliteration ? (
-                          <Text style={styles.transliterationText}>{knot.transliteration}</Text>
-                        ) : null}
-                      </View>
-                    </Pressable>
-                  );
-                }
-
-                // ── Plain word — no knot match ──────────────────────────────
-                return (
-                  <Text key={i} style={styles.plainWordText}>{chunk}</Text>
-                );
-              })}
-            </View>
+          <Animated.View
+            key={sentence.id}
+            entering={FadeIn.duration(500)}
+            exiting={FadeOut.duration(300)}
+            style={styles.animatedStage}
+          >
+            {/* Greek text with KnotWords */}
+            <LexicalRenderer
+              greek_text={sentence.greek_text}
+              knots={sentence.knots}
+              activeKnotId={activeKnot?.id}
+              onKnotPress={handleKnotPress}
+            />
 
             {/* English anchor translation */}
             <View style={styles.translationAnchor}>
               <View style={styles.translationDivider} />
               <Text style={styles.translationText}>{sentence.translation}</Text>
             </View>
-          </>
+          </Animated.View>
         ) : (
           <View style={styles.voidContainer}>
             <Text style={styles.voidSymbol}>Ψ</Text>
@@ -309,59 +266,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     gap: 24,
   },
-
-  // ── Lexical Array: flex row with wrap ──────────────────────────────────
-  greekTextRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-
-  // Punctuation / whitespace chunk
-  punctText: {
-    fontFamily: F.DISPLAY,
-    fontSize: 26,
-    lineHeight: 42,
-    color: 'rgba(227, 220, 203, 0.5)',
-  },
-
-  // Plain word (no knot match)
-  plainWordText: {
-    fontFamily: F.DISPLAY,
-    fontSize: 26,
-    lineHeight: 42,
-    color: 'rgba(227, 220, 203, 0.7)',
-  },
-
-  // Knot word — Pressable container + inner stack
-  knotPressableActive: {
-    backgroundColor: 'rgba(197, 160, 89, 0.15)',
-    borderRadius: 6,
-  },
-  knotWordContainer: {
+  animatedStage: {
     alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  knotGreekText: {
-    fontFamily: F.DISPLAY,
-    fontSize: 26,
-    lineHeight: 42,
-    color: C.GOLD,
-    textAlign: 'center',
-  },
-  knotGreekTextActive: {
-    color: C.GOLD,
-  },
-
-  // Transliteration — 12px italic gray below each knot
-  transliterationText: {
-    fontFamily: F.BODY,
-    fontSize: 12,
-    color: C.GRAY_TEXT,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 2,
+    gap: 24,
   },
 
   // Translation
