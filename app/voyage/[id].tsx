@@ -4,7 +4,7 @@
 // Tap a knot → PhilologicalInspector. Transliteration renders below each knot.
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -47,6 +47,23 @@ export default function VoyageReader() {
 
 
 
+  // ── Hydration State ──────────────────────────────────────────────────────
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    // Zustand's persist middleware might have already hydrated by the time this runs.
+    setHasHydrated(useVoyageStore.persist.hasHydrated());
+
+    // Listen for hydration finish if not yet hydrated.
+    const unsub = useVoyageStore.persist.onFinishHydration(() => {
+      setHasHydrated(true);
+    });
+
+    return () => {
+      unsub();
+    };
+  }, []);
+
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleKnotPress = useCallback(
     (knot: Knot) => {
@@ -67,7 +84,8 @@ export default function VoyageReader() {
   // Guard ONLY on the isLoading flag. The old condition
   // `(!sentence && !error)` trapped the UI on the spinner indefinitely
   // if loadVoyageById resolved with no manifest and no error.
-  if (loading) {
+  // We also wait for the persist store to hydrate to prevent "starving" LexicalRenderer.
+  if (loading || !hasHydrated) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
