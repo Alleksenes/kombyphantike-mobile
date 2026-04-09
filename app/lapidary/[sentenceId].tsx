@@ -152,13 +152,14 @@ export default function LapidaryScreen() {
 
     const correct = correctForm.trim().toLowerCase();
 
-    // We now use challengeKnot.morphology directly as an array.
-    // If it's missing, fall back to parsing challengeKnot.tag.
-    const tagsSource = challengeKnot.morphology && challengeKnot.morphology.length > 0
-      ? challengeKnot.morphology
-      : (challengeKnot.tag?.split('|').filter(t => t !== '_') || []);
+    // Prefer challengeKnot.tag (split on '|' and filter '_') as the primary canonical tag source.
+    // If tag is missing or empty, fall back to morphology.
+    const tagsSource = challengeKnot.tag && challengeKnot.tag.split('|').filter(t => t !== '_').length > 0
+      ? challengeKnot.tag.split('|').filter(t => t !== '_')
+      : (challengeKnot.morphology && challengeKnot.morphology.length > 0 ? challengeKnot.morphology : []);
 
-    const targetTags = new Set(tagsSource.map(t => t.toLowerCase()));
+    // Normalize to lowercase and trim for meaningful comparisons
+    const targetTags = new Set(tagsSource.map(t => String(t).toLowerCase().trim()));
 
     const seen = new Set<string>();
     const incorrectForms: { form: string; score: number }[] = [];
@@ -175,7 +176,8 @@ export default function LapidaryScreen() {
 
       let score = 0;
       if (p.tags && Array.isArray(p.tags)) {
-        const pTags = p.tags.map((t: string) => t.toLowerCase());
+        // Normalize p.tags the same way: lowercase and trim
+        const pTags = p.tags.map((t: string) => String(t).toLowerCase().trim());
         for (const t of pTags) {
           if (targetTags.has(t)) {
             score += 1;

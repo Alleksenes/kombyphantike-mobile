@@ -243,28 +243,36 @@ export default function PhilologicalInspector() {
         {renderWordMetadata()}
 
         {/* ── POS & Morphological Parsing — prominent, before the note ────── */}
-        {(knot.pos || (knot.morphology && knot.morphology.length > 0)) ? (
-          <View style={styles.morphCard}>
-            {knot.pos ? (
-              <View style={styles.morphPosRow}>
-                <Text style={styles.morphPosLabel}>Part of Speech</Text>
-                <Text style={styles.morphPosValue}>{knot.pos}</Text>
-              </View>
-            ) : null}
-            {knot.morphology && knot.morphology.length > 0 ? (
-              <View style={styles.morphParseRow}>
-                <Text style={styles.morphParseLabel}>Morphological Parse</Text>
-                <View style={styles.morphologyChipsRow}>
-                  {knot.morphology.map((m, idx) => (
-                    <View key={`${m}-${idx}`} style={styles.morphChip}>
-                      <Text style={styles.morphChipText}>{m}</Text>
-                    </View>
-                  ))}
+        {(() => {
+          // Compute morphSource: prefer morphology, fall back to tag
+          const morphSource = (knot.morphology && knot.morphology.length > 0)
+            ? knot.morphology
+            : (Array.isArray(knot.tag) ? knot.tag : [knot.tag].filter(Boolean));
+
+          // Only show the card if we have POS or morphSource with items
+          return (knot.pos || morphSource.length > 0) ? (
+            <View style={styles.morphCard}>
+              {knot.pos ? (
+                <View style={styles.morphPosRow}>
+                  <Text style={styles.morphPosLabel}>Part of Speech</Text>
+                  <Text style={styles.morphPosValue}>{knot.pos}</Text>
                 </View>
-              </View>
-            ) : null}
-          </View>
-        ) : null}
+              ) : null}
+              {morphSource.length > 0 ? (
+                <View style={styles.morphParseRow}>
+                  <Text style={styles.morphParseLabel}>Morphological Parse</Text>
+                  <View style={styles.morphologyChipsRow}>
+                    {morphSource.map((m, idx) => (
+                      <View key={`${m}-${idx}`} style={styles.morphChip}>
+                        <Text style={styles.morphChipText}>{m}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          ) : null;
+        })()}
 
         {/* The Davidian Note */}
         <View style={styles.noteCard}>
@@ -328,20 +336,18 @@ export default function PhilologicalInspector() {
               These are the contemporary, user-facing meanings from the METIS
               corpus and Kaikki.org. Rendered before LSJ so the learner sees
               living Greek before the classical lexicon. */}
-        {!isLoading && knot.definitions && knot.definitions.length > 0 ? (
+        {!isLoading && knot.definition ? (
           <View style={styles.lsjCard}>
             <View style={styles.noteCardHeader}>
               <View style={[styles.lsjIcon, styles.modernDefsIcon]}>
                 <Text style={styles.lsjIconText}>M</Text>
               </View>
-              <Text style={styles.lsjLabel}>Modern Definitions</Text>
+              <Text style={styles.lsjLabel}>Modern Definition</Text>
             </View>
-            {knot.definitions.map((def: string, i: number) => (
-              <View key={i} style={styles.lsjRow}>
-                <Text style={styles.lsjBullet}>{'\u2022'}</Text>
-                <Text style={[styles.lsjText, styles.modernDefText]}>{def}</Text>
-              </View>
-            ))}
+            <View style={styles.lsjRow}>
+              <Text style={styles.lsjBullet}>{'\u2022'}</Text>
+              <Text style={[styles.lsjText, styles.modernDefText]}>{knot.definition}</Text>
+            </View>
           </View>
         ) : null}
 
