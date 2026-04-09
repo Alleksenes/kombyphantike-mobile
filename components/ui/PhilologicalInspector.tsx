@@ -211,9 +211,7 @@ export default function PhilologicalInspector() {
         {/* POS / morphology / CEFR badges */}
         <View style={styles.badgeRow}>
           {knot.pos ? <Badge label={knot.pos} /> : null}
-          {knot.tag?.split('|').filter(t => t !== '_').map((t) => (
-            <Badge key={t} label={t} variant="morph" />
-          ))}
+          {/* Tag badge removed as morphology provides this information natively as an array */}
           {knot.cefr_level ? <Badge label={knot.cefr_level} variant="gold" /> : null}
         </View>
       </>
@@ -245,7 +243,7 @@ export default function PhilologicalInspector() {
         {renderWordMetadata()}
 
         {/* ── POS & Morphological Parsing — prominent, before the note ────── */}
-        {(knot.pos || knot.morphology) ? (
+        {(knot.pos || (knot.morphology && knot.morphology.length > 0)) ? (
           <View style={styles.morphCard}>
             {knot.pos ? (
               <View style={styles.morphPosRow}>
@@ -253,10 +251,16 @@ export default function PhilologicalInspector() {
                 <Text style={styles.morphPosValue}>{knot.pos}</Text>
               </View>
             ) : null}
-            {knot.morphology ? (
+            {knot.morphology && knot.morphology.length > 0 ? (
               <View style={styles.morphParseRow}>
                 <Text style={styles.morphParseLabel}>Morphological Parse</Text>
-                <Text style={styles.morphParseValue}>{knot.morphology}</Text>
+                <View style={styles.morphologyChipsRow}>
+                  {knot.morphology.map((m, idx) => (
+                    <View key={`${m}-${idx}`} style={styles.morphChip}>
+                      <Text style={styles.morphChipText}>{m}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             ) : null}
           </View>
@@ -733,14 +737,28 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     color: C.GRAY_TEXT,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  morphParseValue: {
-    fontFamily: F.BODY,
-    fontSize: 14,
+  morphologyChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  morphChip: {
+    backgroundColor: 'rgba(55, 65, 81, 0.4)', // Dark variant of Murex Ash fallback
+    borderWidth: 1,
+    borderColor: 'rgba(156, 163, 175, 0.3)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  morphChipText: {
+    fontFamily: F.LABEL,
+    fontSize: 11,
+    fontWeight: 'bold',
     color: C.PARCHMENT,
-    fontStyle: 'italic',
-    lineHeight: 22,
+    textTransform: 'capitalize',
+    letterSpacing: 0.5,
   },
 
   // ── THE KNOT (Davidian Note) ─────────────────────────────────────────────

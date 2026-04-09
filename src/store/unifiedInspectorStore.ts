@@ -24,7 +24,7 @@ interface ShallowWordlike {
   pos: string;
   tag?: string;
   transliteration?: string;
-  morphology?: string;
+  morphology?: string[];
   definition?: string;
   david_note?: string;
   rag_scholia?: string;
