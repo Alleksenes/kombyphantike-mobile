@@ -19,7 +19,7 @@ const SENTENCE_1: CuratedSentenceDTO = {
       pos: 'NOUN',
       tag: 'Case=Nom|Gender=Masc|Number=Sing',
       transliteration: 'kyvernítis',
-      morphology: 'Nominative singular masculine',
+      morphology: ['Nominative', 'singular', 'masculine'],
       definition: 'governor, pilot, helmsman',
       david_note:
         'From Ancient Greek κυβερνήτης (kybernḗtēs, "helmsman, pilot"), ' +
@@ -54,7 +54,7 @@ const SENTENCE_1: CuratedSentenceDTO = {
       pos: 'VERB',
       tag: 'Aspect=Perf|Mood=Ind|Number=Sing|Person=3|Tense=Past|VerbForm=Fin',
       transliteration: 'égrapse',
-      morphology: '3rd person singular aorist indicative active',
+      morphology: ['3rd person', 'singular', 'aorist', 'indicative', 'active'],
       definition: 'he/she wrote',
       david_note:
         'From Ancient Greek ἔγραψε (égrapse), aorist of γράφω (gráphō, "to write, ' +

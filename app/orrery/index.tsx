@@ -80,7 +80,7 @@ export default function OrreryHubScreen() {
               onPress={handleSearch}
               disabled={!query.trim()}
             >
-              <IconButton icon="magnify" iconColor={C.BACKGROUND} size={20} />
+              <IconButton icon="magnify" iconColor={C.VOID} size={20} />
             </TouchableOpacity>
           </View>
         </View>

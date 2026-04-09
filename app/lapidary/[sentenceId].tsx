@@ -151,22 +151,54 @@ export default function LapidaryScreen() {
     }
 
     const correct = correctForm.trim().toLowerCase();
-    // Collect unique incorrect forms — extractForm handles strings AND objects
+
+    // Prefer challengeKnot.tag (split on '|' and filter '_') as the primary canonical tag source.
+    // If tag is missing or empty, fall back to morphology.
+    const tagsSource = challengeKnot.tag && challengeKnot.tag.split('|').filter(t => t !== '_').length > 0
+      ? challengeKnot.tag.split('|').filter(t => t !== '_')
+      : (challengeKnot.morphology && challengeKnot.morphology.length > 0 ? challengeKnot.morphology : []);
+
+    // Normalize to lowercase and trim for meaningful comparisons
+    const targetTags = new Set(tagsSource.map(t => String(t).toLowerCase().trim()));
+
     const seen = new Set<string>();
-    const incorrectForms: string[] = [];
+    const incorrectForms: { form: string; score: number }[] = [];
+
+    // Score each paradigm entry by morphological similarity (intersection over tags)
     for (const p of challengeKnot.paradigm) {
       const form = extractForm(p);
       if (!form) continue;
+
       const normalized = form.toLowerCase();
-      if (normalized !== correct && !seen.has(normalized)) {
-        seen.add(normalized);
-        incorrectForms.push(form);
+      if (normalized === correct || seen.has(normalized)) continue;
+
+      seen.add(normalized);
+
+      let score = 0;
+      if (p.tags && Array.isArray(p.tags)) {
+        // Normalize p.tags the same way: lowercase and trim
+        const pTags = p.tags.map((t: string) => String(t).toLowerCase().trim());
+        for (const t of pTags) {
+          if (targetTags.has(t)) {
+            score += 1;
+          }
+        }
       }
+
+      // Add small random noise to break ties among equally similar distractors
+      score += Math.random() * 0.1;
+      incorrectForms.push({ form, score });
     }
 
-    // Shuffle and pick up to 4 distractors
-    const shuffled = [...incorrectForms].sort(() => Math.random() - 0.5);
-    const picked = shuffled.slice(0, 4);
+    // Sort descending by score to get high intersection but different forms
+    incorrectForms.sort((a, b) => b.score - a.score);
+
+    // Pick top distractors
+    const picked = incorrectForms.slice(0, 4).map(item => item.form);
+
+    // We already sorted all `incorrectForms` by their score in descending order,
+    // and picked the top 4. If we have less than 4 `incorrectForms` in total,
+    // `picked` will naturally be smaller, and we use whatever is available.
 
     // Combine with correct form and shuffle all 5
     const options = [...picked, correctForm].sort(() => Math.random() - 0.5);

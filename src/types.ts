@@ -84,7 +84,7 @@ export interface KnotDTO {
   transliteration?: string;     // Latin-script transliteration
   cefr_level?: string;          // CEFR proficiency level
   definition?: string;          // Short lexical definition
-  morphology?: string;          // Human-readable morphological description
+  morphology?: string[];        // Array of morphological descriptions
   tag?: string;                 // Morphological tags
   has_paradigm?: boolean;       // Whether paradigm data is present
   paradigm?: any[];             // Raw backend shape — normalized by mapKnotDTO
@@ -266,7 +266,7 @@ export interface Knot {
   pos: string;               // Part of speech (NOUN, VERB, ADJ, etc.)
   tag?: string;              // Morphological tags (pipe-separated: Case=Nom|Number=Sing)
   transliteration?: string;  // Latin-script transliteration
-  morphology?: string;       // Human-readable morphological description
+  morphology?: string[];     // Array of morphological descriptions
   definition?: string;       // Short lexical definition
 
   // THE KNOT: Davidian Note — AI-compiled evolutionary note
