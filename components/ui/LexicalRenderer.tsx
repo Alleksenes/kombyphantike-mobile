@@ -243,8 +243,8 @@ const styles = StyleSheet.create({
   },
   greekWord: {
     fontFamily: F.DISPLAY,
-    fontSize: 16,
-    lineHeight: 26,
+    fontSize: 24,
+    lineHeight: 34,
     textAlign: 'center',
   },
   plainWord: {
@@ -252,8 +252,8 @@ const styles = StyleSheet.create({
   },
   greekPunct: {
     fontFamily: F.DISPLAY,
-    fontSize: 16,
-    lineHeight: 26,
+    fontSize: 24,
+    lineHeight: 34,
     color: 'rgba(227, 220, 203, 0.5)',
     marginLeft: -2,
   },

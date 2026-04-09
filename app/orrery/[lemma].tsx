@@ -27,6 +27,9 @@ interface OrreryNode {
 
 /** Split a long label into multiple lines at word boundaries (~20 chars each). */
 function wrapLabel(text: string, maxChars = 20): string[] {
+  // Guard: node.label can arrive as null/undefined/object from malformed API
+  // responses. text.split is not a function on non-strings → crash.
+  if (!text || typeof text !== 'string') return [''];
   if (text.length <= maxChars) return [text];
   const words = text.split(/\s+/);
   const lines: string[] = [];

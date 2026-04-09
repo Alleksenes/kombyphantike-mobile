@@ -320,6 +320,27 @@ export default function PhilologicalInspector() {
 
     return (
       <>
+        {/* ── Modern Definitions (METIS / Kaikki) — surfaced FIRST ────────
+              These are the contemporary, user-facing meanings from the METIS
+              corpus and Kaikki.org. Rendered before LSJ so the learner sees
+              living Greek before the classical lexicon. */}
+        {!isLoading && knot.definitions && knot.definitions.length > 0 ? (
+          <View style={styles.lsjCard}>
+            <View style={styles.noteCardHeader}>
+              <View style={[styles.lsjIcon, styles.modernDefsIcon]}>
+                <Text style={styles.lsjIconText}>M</Text>
+              </View>
+              <Text style={styles.lsjLabel}>Modern Definitions</Text>
+            </View>
+            {knot.definitions.map((def: string, i: number) => (
+              <View key={i} style={styles.lsjRow}>
+                <Text style={styles.lsjBullet}>{'\u2022'}</Text>
+                <Text style={[styles.lsjText, styles.modernDefText]}>{def}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {/* ── Ancient Ancestor — linked visually to LSJ ────────────────── */}
         {knot.ancient_ancestor ? (
           <View style={styles.ancestorCard}>
@@ -915,6 +936,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: C.PARCHMENT,
     lineHeight: 22,
+  },
+  // Modern definitions icon — Murex Ash tint to distinguish from LSJ gold
+  modernDefsIcon: {
+    backgroundColor: 'rgba(181, 163, 196, 0.14)',
+  },
+  // Modern definition text — slightly brighter than LSJ; these are living meanings
+  modernDefText: {
+    color: C.PARCHMENT,
+    opacity: 0.92,
   },
 
   // ── Idioms (METIS) ───────────────────────────────────────────────────────
