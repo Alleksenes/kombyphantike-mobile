@@ -32,12 +32,15 @@ export function tokenizeSentence(greekText: string, knots: Knot[], blankedKnotTe
   while (remaining.length > 0) {
     let matched = false;
 
+    const normalizedRemaining = remaining.toLowerCase().replace(/[\p{P}\p{S}]/gu, '');
+
     // Check against knots
     for (const knot of sortedKnots) {
       const knotText = knot.text.trim();
       if (!knotText) continue;
 
-      if (remaining.startsWith(knotText)) {
+      const normalizedKnot = knotText.toLowerCase().replace(/[\p{P}\p{S}]/gu, '');
+      if (normalizedRemaining.startsWith(normalizedKnot)) {
         const rest = remaining.slice(knotText.length);
         const punctMatch = rest.match(PUNCT_RE);
         const trailingPunct = punctMatch ? punctMatch[1] : '';
@@ -52,7 +55,15 @@ export function tokenizeSentence(greekText: string, knots: Knot[], blankedKnotTe
 
     if (!matched) {
       // Check if it perfectly matches the blanked text even without a knot
-      if (blankedKnotText && remaining.startsWith(blankedKnotText)) {
+      // Guard against undefined or null knot text
+      if (!blankedKnotText) {
+        console.warn("LexicalRenderer: Encountered a knot with no text property.");
+        continue; // Skip this knot or handle it gracefully
+      }
+
+      const normalizedBlanked = blankedKnotText.toLowerCase().replace(/[\p{P}\p{S}]/gu, '');
+
+      if (blankedKnotText && normalizedRemaining.startsWith(normalizedBlanked)) {
         const rest = remaining.slice(blankedKnotText.length);
         const punctMatch = rest.match(PUNCT_RE);
         const trailingPunct = punctMatch ? punctMatch[1] : '';
@@ -288,12 +299,11 @@ const styles = StyleSheet.create({
     backgroundColor: C.GOLD,
   },
   transliterationText: {
-    fontFamily: F.BODY,
+    fontFamily: F.LABEL,
     fontSize: 12,
-    color: C.GRAY_TEXT,
-    fontStyle: 'italic',
+    color: C.PARCHMENT,
     textAlign: 'center',
-    marginTop: 3,
+    marginTop: 2,
     opacity: 0.5,
   },
   knotCefrBadge: {

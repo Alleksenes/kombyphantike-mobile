@@ -71,12 +71,12 @@ function DevScriptoriumOverlay() {
               <Text style={styles.devModalButtonText}>Jump to Voyage (alpha-001)</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/orrery'); }}>
-              <Text style={styles.devModalButtonText}>Jump to Orrery</Text>
+            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/lapidary/alpha-001'); }}>
+              <Text style={styles.devModalButtonText}>Jump to Lapidary (alpha-001)</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/_sitemap'); }}>
-              <Text style={styles.devModalButtonText}>Jump to Sitemap</Text>
+            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/orrery'); }}>
+              <Text style={styles.devModalButtonText}>Jump to Orrery</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.devModalButton} onPress={handlePing}>

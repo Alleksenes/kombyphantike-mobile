@@ -88,7 +88,7 @@ const SENTENCE_1: CuratedSentenceDTO = {
       pos: 'NOUN',
       tag: 'Case=Acc|Gender=Neut|Number=Sing',
       transliteration: 'vivlío',
-      morphology: 'Accusative singular neuter',
+      morphology: ['Accusative', 'singular', 'neuter'],
       definition: 'book',
       david_note:
         'From Ancient Greek βιβλίον (biblíon), diminutive of βίβλος (bíblos, ' +
@@ -123,7 +123,7 @@ const SENTENCE_1: CuratedSentenceDTO = {
       pos: 'NOUN',
       tag: 'Case=Acc|Gender=Fem|Number=Sing',
       transliteration: 'prosochí',
-      morphology: 'Accusative singular feminine',
+      morphology: ['Accusative', 'singular', 'feminine'],
       definition: 'care, attention, caution',
       david_note:
         'From Ancient Greek προσοχή (prosokhḗ, "attention, heedfulness"), a ' +
@@ -158,7 +158,7 @@ const SENTENCE_2: CuratedSentenceDTO = {
       pos: 'NOUN',
       tag: 'Case=Nom|Gender=Fem|Number=Sing',
       transliteration: 'thálassa',
-      morphology: 'Nominative singular feminine',
+      morphology: ['Nominative', 'singular', 'feminine'],
       definition: 'sea',
       david_note:
         'From Ancient Greek θάλασσα (thálassa) or θάλαττα (thálatta) in ' +
@@ -182,7 +182,7 @@ const SENTENCE_2: CuratedSentenceDTO = {
       pos: 'VERB',
       tag: 'Aspect=Imp|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin',
       transliteration: 'férni',
-      morphology: '3rd person singular present indicative active',
+      morphology: ['3rd person', 'singular', 'present', 'indicative', 'active'],
       definition: 'brings, carries',
       david_note:
         'From Ancient Greek φέρω (phérō, "to carry, to bear"), one of the ' +
@@ -201,14 +201,40 @@ const SENTENCE_2: CuratedSentenceDTO = {
   ],
 };
 
-// ── The Mock Island ─────────────────────────────────────────────────────────
+// ── Sentence 3: Ancient Greek with blanked text ──
+const SENTENCE_3: CuratedSentenceDTO = {
+  id: 'mock-sentence-ancient-1',
+  greek_text: 'τὸν σῖτον ἤνεγκαν οἱ πολῖται τῆς πόλεως ὡς δῶρον τῷ θεῷ.',
+  translation: 'The citizens brought the grain as a gift to the god.',
+  source: 'Adapted from Classical Greek inscriptions',
+  level: 'A1',
+  knots: [
+    {
+      id: 'knot_0000960e-4f7e-772e-95c4-62be7e8c4b05',
+      text: 'σῖτον',
+      lemma: 'σῖτος',
+      pos: 'NOUN',
+      tag: 'Case=Acc|Gender=Masc|Number=Sing',
+      transliteration: 'siton',
+      morphology: ['Noun', 'accusative', 'singular', 'masculine'],
+      definition: 'grain, wheat',
+    },
+  ],
+};
+
+// ── The Mock Island ────────
+
 export const MOCK_ISLAND: IslandDTO = {
   id: 'mock-island-1',
   title: 'The Governor\'s Quill',
   level: 'B1',
   progress: 35,
   locked: false,
-  sentences: [SENTENCE_1, SENTENCE_2],
+  sentences: [SENTENCE_1, SENTENCE_2, SENTENCE_3],
 };
 
-export const MOCK_SENTENCES: CuratedSentenceDTO[] = [SENTENCE_1, SENTENCE_2];
+export const MOCK_SENTENCES: CuratedSentenceDTO[] = [
+  SENTENCE_1,
+  SENTENCE_2,
+  SENTENCE_3,
+];

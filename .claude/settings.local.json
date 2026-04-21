@@ -25,7 +25,14 @@
       "Bash(find C:Usersallekseneskombyphantike-mobile/src -type f -name *.ts)",
       "Bash(ls -la \"C:\\\\Users\\\\alleksenes\\\\kombyphantike-mobile/app/\\(tabs\\)/\")",
       "Bash(find C:Usersallekseneskombyphantike-mobile/app -type f -name *.tsx -o -name *.ts)",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(grep -E \"\\\\.\\(js|json|ts|tsx|md|yml|yaml|config\\)$\")",
+      "Read(//Users/alleksenes-max/.claude/plugins/cache/caveman/caveman/c2ed24b3e5d4/skills/compress/**)",
+      "Bash(python3 -m scripts /Users/alleksenes-max/kombyphantike_workspace/kombyphantike-mobile/CLAUDE.md)",
+      "Bash(npm run *)",
+      "Bash(npx expo *)",
+      "Bash(curl -s http://localhost:8082)",
+      "Bash(node *)"
     ]
   }
 }

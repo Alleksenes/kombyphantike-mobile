@@ -507,7 +507,7 @@ export default function OrreryScreen() {
         {selectedNode ? (
           <View style={styles.evidencePanel}>
             <View style={styles.evidenceHeader}>
-              <Text style={styles.evidenceWord}>{selectedNode.label.replace('\n', ' ')}</Text>
+              <Text style={styles.evidenceWord}>{String(selectedNode?.label || "").replace('\n', ' ')}</Text>
             </View>
 
             <Text style={styles.evidenceGloss}>{selectedNode.gloss}</Text>

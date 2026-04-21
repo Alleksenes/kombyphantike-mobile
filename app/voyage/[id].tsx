@@ -297,6 +297,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingTop: 8,
+    width: '100%',
+    paddingHorizontal: 20,
   },
   translationDivider: {
     width: 40,
@@ -311,7 +313,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     lineHeight: 22,
-    maxWidth: '90%',
+    width: '100%',
   },
 
   // Void / error state

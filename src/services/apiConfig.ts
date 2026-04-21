@@ -8,12 +8,10 @@ export const getBaseUrl = () => {
     }
 
     // 2. If we are on Web, force localhost.
-    if (Platform.OS === 'web') {
-        return 'http://127.0.0.1:8000';
+    else {
+        return 'http://localhost:8000';
     }
 
-    // 3. Fallback for physical devices (uses the .env variable)
-    return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 };
 
 export const API_BASE_URL = getBaseUrl();

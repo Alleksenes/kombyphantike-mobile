@@ -1,0 +1,152 @@
+.
+├── CLAUDE.md
+├── CLAUDE.original.md
+├── README.md
+├── ROADMAP.md
+├── app
+│   ├── (tabs)
+│   │   ├── _layout.tsx
+│   │   └── index.tsx
+│   ├── _layout.tsx
+│   ├── index.tsx
+│   ├── island
+│   │   └── [id].tsx
+│   ├── lapidary
+│   │   └── [sentenceId].tsx
+│   ├── login.tsx
+│   ├── orrery
+│   │   ├── [lemma].tsx
+│   │   └── index.tsx
+│   ├── paywall.tsx
+│   ├── results.tsx
+│   └── voyage
+│       └── [id].tsx
+├── app.json
+├── assets
+│   ├── fonts
+│   │   ├── GFSDidot.otf
+│   │   ├── GFSDidot.ttf
+│   │   ├── NeueHaasGrotesk.otf
+│   │   ├── NeueHaasGrotesk.ttf
+│   │   └── NeueHaasGroteskLight.otf
+│   └── images
+│       ├── android-icon-background.png
+│       ├── android-icon-foreground.png
+│       ├── android-icon-monochrome.png
+│       ├── favicon.png
+│       ├── icon.png
+│       ├── noise.jpg
+│       ├── partial-react-logo.png
+│       ├── react-logo.png
+│       ├── react-logo@2x.png
+│       ├── react-logo@3x.png
+│       └── splash-icon.png
+├── babel.config.js
+├── bun.lock
+├── components
+│   ├── ErrorBoundary.tsx
+│   ├── IslandCard.tsx
+│   ├── KnotWord.tsx
+│   ├── OmegaLoader.tsx
+│   ├── ParadigmGrid.test.tsx
+│   ├── ParadigmGrid.tsx
+│   ├── PhilologyCard.tsx
+│   ├── SentenceReader.tsx
+│   ├── WordChip.tsx
+│   ├── external-link.tsx
+│   ├── haptic-tab.tsx
+│   ├── hello-wave.tsx
+│   ├── lapidary
+│   │   └── ParadigmChallenge.tsx
+│   ├── parallax-scroll-view.tsx
+│   ├── themed-text.tsx
+│   ├── themed-view.tsx
+│   └── ui
+│       ├── CosmicBackground.native.tsx
+│       ├── CosmicBackground.tsx
+│       ├── CosmicBackground.web.tsx
+│       ├── LexicalRenderer.tsx
+│       ├── MonolithButton.tsx
+│       ├── PhilologicalInspector.tsx
+│       ├── WeaverControls.tsx
+│       ├── collapsible.tsx
+│       ├── icon-symbol.ios.tsx
+│       └── icon-symbol.tsx
+├── error.png
+├── error_screenshot.png
+├── eslint.config.js
+├── expo_web.log
+├── expo_web_2.log
+├── expo_web_3.log
+├── expo_web_gallery.log
+├── expo_web_skia.log
+├── expo_web_skia_2.log
+├── gallery_error.png
+├── gallery_initial.png
+├── gallery_inspector.png
+├── global.css
+├── hooks
+│   ├── use-color-scheme.ts
+│   ├── use-color-scheme.web.ts
+│   ├── use-theme-color.test.ts
+│   ├── use-theme-color.test.tsx
+│   └── use-theme-color.ts
+├── metro.config.js
+├── nativewind-env.d.ts
+├── package-lock.json
+├── package.json
+├── patch_api.py
+├── patch_bg.py
+├── patch_inspector.py
+├── patch_island_id.py
+├── patch_layout.py
+├── patch_layout_bg.py
+├── patch_shipyard.py
+├── patch_store.py
+├── project_structure.txt
+├── screens
+│   └── ConstellationMap.tsx
+├── scripts
+│   ├── benchmark_json_parse.js
+│   ├── reset-project.js
+│   └── verify_frontend.py
+├── server.log
+├── src
+│   ├── data
+│   │   └── mockPayload.ts
+│   ├── hooks
+│   │   └── useIslandData.ts
+│   ├── services
+│   │   ├── ApiService.ts
+│   │   ├── AudioPlayer.ts
+│   │   ├── Database.ts
+│   │   ├── apiConfig.test.ts
+│   │   ├── apiConfig.ts
+│   │   ├── mock_data.ts
+│   │   └── supabaseClient.ts
+│   ├── store
+│   │   ├── authStore.ts
+│   │   ├── curriculumStore.ts
+│   │   ├── philologicalInspectorStore.ts
+│   │   ├── storage.ts
+│   │   ├── unifiedInspectorStore.ts
+│   │   └── voyageStore.ts
+│   ├── theme.ts
+│   └── types.ts
+├── tailwind.config.js
+├── test_shipyard.py
+├── tsconfig.json
+├── utils
+│   ├── paradigm_utils.test.ts
+│   └── paradigm_utils.ts
+├── verification_encore.py
+├── verification_failure.png
+├── verification_paradigm_grid.png
+├── verification_screenshot.png
+├── verify_constellation.py
+├── verify_fix.py
+├── verify_gallery.py
+├── verify_script_2.py
+└── verify_weaver.py
+
+22 directories, 128 files
