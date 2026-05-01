@@ -67,12 +67,22 @@ function DevScriptoriumOverlay() {
           <View style={styles.devModalContent}>
             <Text style={styles.devModalTitle}>GOD-MODE OVERLAY</Text>
 
-            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/voyage/alpha-001'); }}>
-              <Text style={styles.devModalButtonText}>Jump to Voyage (alpha-001)</Text>
+            <TouchableOpacity style={styles.devModalButton} onPress={() => {
+              Alert.prompt('Jump to Voyage', 'Enter voyage ID:', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Go', onPress: (id) => { if (id) { setIsVisible(false); router.push(`/voyage/${id}`); } }, style: 'default' },
+              ]);
+            }}>
+              <Text style={styles.devModalButtonText}>Jump to Voyage (enter ID)</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/lapidary/alpha-001'); }}>
-              <Text style={styles.devModalButtonText}>Jump to Lapidary (alpha-001)</Text>
+            <TouchableOpacity style={styles.devModalButton} onPress={() => {
+              Alert.prompt('Jump to Lapidary', 'Enter sentence ID:', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Go', onPress: (id) => { if (id) { setIsVisible(false); router.push(`/lapidary/${id}`); } }, style: 'default' },
+              ]);
+            }}>
+              <Text style={styles.devModalButtonText}>Jump to Lapidary (enter ID)</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.devModalButton} onPress={() => { setIsVisible(false); router.push('/orrery'); }}>
@@ -179,7 +189,6 @@ export default function RootLayout() {
                   }}
                 >
                   <Stack.Screen name="index" />
-                  <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="voyage/[id]" />
                   <Stack.Screen name="orrery/index" />
                   <Stack.Screen name="orrery/[lemma]" />

@@ -1,0 +1,56 @@
+{
+  "plugin": ["opencode-lmstudio@latest"],
+  "provider": {
+    "lmstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LM Studio (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:1234/v1"
+      }
+    }
+  },
+  "mcp": {
+    "lemma": {
+      "type": "local",
+      "command": ["npx", "-y", "lemma-mcp"],
+      "enabled": false
+    },
+    "@modelcontextprotocol/server-filesystem": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/alleksenes-max/kombyphantike_workspace/kombyphantike-mobile",
+        "/Users/alleksenes-max/Library/CloudStorage/GoogleDrive-ibrahimmertinan@gmail.com/My Drive/obsidian/alleksenes/6 - Full Notes"
+      ],
+      "enabled": true
+    },
+    "obsidian": {
+      "type": "local",
+      "command": [
+        "env",
+        "OBSIDIAN_VAULT_PATH=/Users/alleksenes-max/Library/CloudStorage/GoogleDrive-ibrahimmertinan@gmail.com/My Drive/obsidian/alleksenes/6 - Full Notes",
+        "npx",
+        "-y",
+        "obsidian-mcp-pro"
+      ],
+      "enabled": true
+    },
+    "codebase-memory-mcp": {
+      "type": "local",
+      "command": ["/Users/alleksenes-max/.local/bin/codebase-memory-mcp"],
+      "enabled": false
+    },
+    "depwire": {
+      "type": "local",
+      "command": ["npx", "-y", "depwire-cli", "mcp"],
+      "enabled": false
+    },
+    "mobile-mcp": {
+      "type": "local",
+      "command": ["npx", "-y", "@mobilenext/mobile-mcp@latest"],
+      "enabled": false
+    }
+  }
+}
